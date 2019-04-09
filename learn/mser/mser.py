@@ -6,7 +6,7 @@ def getArea(region):
     return len(region)
 
 def getPerimeter(box):
-    tmp = edgesImg[box[0]:box[0]+box[2], box[1]:box[1]+box[3]]
+    tmp = edgesImg[box[1]:box[1]+box[3], box[0]:box[0]+box[2]]
     return len(np.where(tmp != 0)[0])
     
 def getAspectRatio(region):
@@ -23,7 +23,7 @@ def getCompactness(region, box):
 
 
 
-img = cv2.imread("/Users/panderan/Documents/PythonEnv/mserocr/data/YKT1.bmp")
+img = cv2.imread("../../../data/YKT1.bmp")
 grayImg = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
 v = np.median(img)
 lower = int(max(0, (1.0 - 0.33) * v))
@@ -61,7 +61,8 @@ for i,box in enumerate(bboxes):
         continue
 
     print(i)
-    retImg = cv2.rectangle(retImg, (box[0], box[1]), (box[2], box[3]), (255, 0, 0))
+    retImg = cv2.rectangle(retImg, (box[0], box[1]), (box[0]+box[2], box[1]+box[3]), (255, 0, 0))
 
 plt.imshow(retImg)
 plt.show()
+
