@@ -120,7 +120,7 @@ class TextDetection(object):
             self.res10 = self.colorRegion(self.res10, region)
             tbox = bboxes[i]
             x, y, w, h = cv2.boundingRect(region)
-            self.res10 = cv2.rectangle(self.res10, (x, y), (x+w, y+h), (255, 0, 0))
+            self.final = cv2.rectangle(self.final, (x, y), (x+w, y+h), (255, 0, 0))
     
         bar.finish()
 
