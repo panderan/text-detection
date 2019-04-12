@@ -13,15 +13,11 @@ class graycluster:
        pixels = np.float32(pixels) 
        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
        flags = cv2.KMEANS_RANDOM_CENTERS
-       compactness,labels,centers = cv2.kmeans(pixels,2,None,criteria,10,flags)
+       compactness,labels,centers = cv2.kmeans(pixels,k,None,criteria,10,flags)
 
        for i in range(0,k):
            pixels[labels==i] = centers[i]
 
-       retGrayImg = pixels.reshape((self.width, self.height))
-       return retGrayImg
+       retGrayImg = pixels.reshape((self.height, self.width))
+       return np.uint8(retGrayImg)
 
-
-grayImg = cv2.imread("../../../data/YKT1.bmp", 0)
-cr = graycluster(grayImg)
-ret = cr.cluster(64)
