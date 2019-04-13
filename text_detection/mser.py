@@ -1,29 +1,31 @@
+from math import sqrt
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 
-class mser_extraction:
+class mser_cls:
 
     def __init__(self, IMAGE_PATH):
-        self.gray_img = cv2.imread(IMAGE_PATH, 0)
+        img = cv2.imread(IMAGE_PATH, 0)
+        mul = sqrt(img.shape[0]*img.shape[1]/400000)
+        self.gray_img = cv2.resize(img, (int(img.shape[1]/mul), int(img.shape[0]/mul)))
         self.delta = 5
         self.min_area = 60
         self.max_area = 14400
         self.variation = 0.25
 
     def extraction(self):
-        mser = cv2.MSER_create()
-        msers, bboxes = mser.detectRegions(grayImg256)
+        mser = cv2.MSER_create(_delta = self.delta, _min_area = self.min_area, _max_area = self.max_area)
+        msers, bboxes = mser.detectRegions(self.gray_img)
         return msers, bboxes
 
     def extraction_with_labels(self):
         rect_img = self.gray_img.copy()
-        binarized = np.zeros_like(grayImg256)
+        binarized = np.zeros_like(self.gray_img)
         msers, bboxes = self.extraction()
         for i,box in enumerate(bboxes):
-            if ft800.verification(retImg, msers[i], box):
-                rect_img = cv2.rectangle(rect_img, (box[0], box[1]), (box[0]+box[2], box[1]+box[3]), (255, 0, 0))
-                binarized[ msers[i][:, 1], msers[i][:, 0]] = 255
+            rect_img = cv2.rectangle(rect_img, (box[0], box[1]), (box[0]+box[2], box[1]+box[3]), (255, 0, 0))
+            binarized[ msers[i][:, 1], msers[i][:, 0]] = 255
         return rect_img, binarized
 
     @property
