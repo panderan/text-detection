@@ -10,19 +10,22 @@ class mser_cls:
         mul = sqrt(img.shape[0]*img.shape[1]/400000)
         self.gray_img = cv2.resize(img, (int(img.shape[1]/mul), int(img.shape[0]/mul)))
         self.delta = 5
-        self.min_area = 60
-        self.max_area = 14400
+        self.min_area = 9 
+        self.max_area =500 
         self.variation = 0.25
 
-    def extraction(self):
+    def extraction(self, direction = 0):
         mser = cv2.MSER_create(_delta = self.delta, _min_area = self.min_area, _max_area = self.max_area)
-        msers, bboxes = mser.detectRegions(self.gray_img)
+        if direction == 0:
+            msers, bboxes = mser.detectRegions(self.gray_img)
+        else:
+            msers, bboxes = mser.detectRegions(255 - self.gray_img)
         return msers, bboxes
 
-    def extraction_with_labels(self):
+    def extraction_with_labels(self, direction = 0):
         rect_img = self.gray_img.copy()
         binarized = np.zeros_like(self.gray_img)
-        msers, bboxes = self.extraction()
+        msers, bboxes = self.extraction(direction)
         for i,box in enumerate(bboxes):
             rect_img = cv2.rectangle(rect_img, (box[0], box[1]), (box[0]+box[2], box[1]+box[3]), (255, 0, 0))
             binarized[ msers[i][:, 1], msers[i][:, 0]] = 255
