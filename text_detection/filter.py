@@ -10,20 +10,17 @@ class mser_filter:
         self.aspect_ratio_lim = 0.0
         self.occupation_lim = (0.0, 0.0)
         self.compactness_lim = (0.0, 0.0)
-
+        
+        self.gray_img = grayImg
         v = np.median(grayImg)
         lower = int(max(0, (1.0 - 0.33) * v))
         upper = int(min(255, (1.0 + 0.33) * v))
         self.edgesImg = cv2.Canny(grayImg, lower, upper)
 
-    def verification(self, img, region, box):
-        ## 面积
-        retval = self.getArea(region)
-        if retval < img.shape[0]*img.shape[1]*self.area_lim:
-            return False
+    def verification(self, region, box):
         ## 周长
         retval = self.getPerimeter(box)
-        if retval <  2 * (img.shape[0] + img.shape[1]) * self.perimeter_lim:
+        if retval <  12:
             return False
         ## 横纵比
         retval = self.getAspectRatio(region)
@@ -107,10 +104,10 @@ class mser_filter:
         self.__COMPACTNESS_LIM = val
 
 
-class mser_filter800(mser_filter):
+class mser_filter400k(mser_filter):
 
     def __init__(self, grayImg):
-        super(mser_filter800, self).__init__(grayImg)
+        super(mser_filter400k, self).__init__(grayImg)
         self.area_lim = 2.0e-4
         self.perimeter_lim = 1e-4
         self.aspect_ratio_lim = 5.0

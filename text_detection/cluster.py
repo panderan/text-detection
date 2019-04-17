@@ -8,7 +8,7 @@ class graycluster:
         self.width = grayImg.shape[1]
         self.height = grayImg.shape[0]
 
-    def cluster(self, k):
+    def kmeans(self, k):
        pixels = self.grayImg.reshape((self.width*self.height, 1))
        pixels = np.float32(pixels) 
        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 10, 1.0)
