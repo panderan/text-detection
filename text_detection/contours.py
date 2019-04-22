@@ -4,8 +4,9 @@ import matplotlib.pyplot as plt
 
 class tdcontours:
 
-    def __init__(self, binaries):
+    def __init__(self, binaries, name):
         self.binaries = binaries
+        self.name = name
 
     def get_contours(self):
         image, contours, hierarchies = cv2.findContours(self.binaries, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
@@ -25,43 +26,45 @@ class tdcontours:
         tmp = np.zeros_like(self.binaries)
         for i, (ctr, hiry) in enumerate(zip(contours, hierarchies[0])):
             if hiry[3] == -1:
+                # Mask seg image
                 mask = np.zeros_like(self.binaries)
-                # tmp[ctr[:,0,1], ctr[:,0,0]] = 255
-                rect = cv2.minAreaRect(ctr)
-                box = cv2.boxPoints(rect)
+                mask = cv2.drawContours(mask, [ctr], 0, 255, thickness=cv2.FILLED)
+                x,y,w,h = cv2.boundingRect(ctr)
+                mask_seg = mask[y:y+h, x:x+w]
+                
+                # seg image
+                gray_img = np.zeros_like(self.binaries)
+                gray_img[mask > 0] = orig_img[mask > 0]
+                gray_img_seg = gray_img[ y:y+h, x:x+w]
+                
+                # show image
+                ro_rect = cv2.minAreaRect(ctr)
+                box = cv2.boxPoints(ro_rect)
                 box = np.int0(box)
-                # cv2.drawContours(tmp, [box], 0, (255,255,255))
-                cv2.fillPoly(mask,[box], (255,255,255))
-                tmp[mask > 0] = orig_img[mask > 0]
+                bx,by,bw,bh = cv2.boundingRect(box)
+                gray_img_copy = cv2.drawContours(gray_img.copy(), [box], 0, 255)
+                
+                # label and save
                 plt.ion()
-                plt.imshow(tmp, "gray")
-                plt.pause(1)
-        plt.ioff()
-        plt.imshow(tmp, "gray")
-        plt.show()
+                plt.imshow(gray_img_copy[by:by+bh, bx:bx+bw], "gray")
+                plt.pause(0.5)
+                judge = input("is text region? : ")
+                if (judge == 'Y'):
+                    cv2.imwrite(self.name+"-"+str(i)+"-Y.jpg", gray_img_seg)
+                    cv2.imwrite("mask/"+self.name+"-"+str(i)+"-Y-mask.jpg", mask_seg)
+                else:
+                    cv2.imwrite(self.name+"-"+str(i)+"-N.jpg", gray_img_seg)
+                    cv2.imwrite("mask/"+self.name+"-"+str(i)+"-N-mask.jpg", mask_seg)
 
 
-            # box = cv2.boxPoints(rect)
-            # xs = np.int32(np.sort(np.unique(box[:,0])))
-            # ys = np.int32(np.sort(np.unique(box[:,1])))
-            # tmp[ys[0]:ys[1], xs[0]:xs[1]] = 255
-        #     rect = cv2.minAreaRect(item)
-        #     box = cv2.boxPoints(rect)
-        #     xs = np.int32(np.sort(np.unique(box[:,0])))
-        #     ys = np.int32(np.sort(np.unique(box[:,1])))
-        #     w = xs[1] - xs[0]
-        #     h = ys[1] - ys[0]
-        #     retimg[ys[0]:ys[1] , xs[0]:xs[1]] = orig_img[ys[0]:ys[1] , xs[0]:xs[1]]
 
-            # rect = cv2.minAreaRect(item)
-            # box = cv2.boxPoints(rect)
-            # xs = np.int32(np.sort(np.unique(box[:,0])))
-            # ys = np.int32(np.sort(np.unique(box[:,1])))
-            # w = xs[1] - xs[0]
-            # h = ys[1] - ys[0]
-            # tmp = np.ndarray((h,w))
-            # tmp[:,:] = orig_img[ys[0]:ys[1], xs[0]:xs[1]]
-            # plt.ion()
-            # plt.imshow(tmp)
-            # plt.pause(1)
+                # tmp[mask > 0] = orig_img[mask > 0]
+                # cv2.drawContours(tmp, [box], 0, (255,255,255))
+                # plt.ion()
+                # plt.imshow(tmp, "gray")
+                # plt.pause(1)
+        # plt.ioff()
+        # plt.imshow(tmp, "gray")
+        # plt.show()
+
 

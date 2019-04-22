@@ -13,7 +13,7 @@ kl = cv2.getStructuringElement(cv2.MORPH_RECT, (8,8))
 binaries = cv2.dilate(binaries, kl)
 binaries = morph.morph.closeing(binaries)
 
-ctr = contours.tdcontours(binaries)
+ctr = contours.tdcontours(binaries, IMAGE_PATH.split('/')[-1][0:-4])
 #ctr.get_contours_verbose()
 ctr.save_each_contours(msr.gray_img)
 
