@@ -1,16 +1,46 @@
+#!/usr/bin/env python
+
+## @package text_detection
+#   
+# @file contours.py
+# 提取连通域边界模块
+#   
+# @author panderan@163.com 
+#
+
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 
+## 边界处理类
+#
+# 用于从二值图像中取得连通域边界
+#
 class tdcontours:
-
-    def __init__(self, binaries, name):
+    
+    ## 构造函数
+    #
+    # @param binaries 输入的二值图像
+    # @param name 文件名
+    #
+    def __init__(self, binaries, name, save_path=""):
         self.binaries = binaries
         self.name = name
+        self.save_path = save_path
+        if len(self.save_path) > 0:
+            if self.save_path[-1] != '/':
+                self.save_path += '/'
 
+    ## 获取轮廓
+    # 直接调用 cv2.findContours 方法
+    #
     def get_contours(self):
         image, contours, hierarchies = cv2.findContours(self.binaries, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+        return (image, contours, hierarchies)
 
+    ## 获取轮廓
+    # 直接调用 cv2.findContours 方法,结果可视
+    #
     def get_contours_verbose(self):
         image, contours, hierarchies = cv2.findContours(self.binaries, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
         for item in contours:
@@ -20,6 +50,11 @@ class tdcontours:
             plt.imshow(tmp)
             plt.pause(1)
 
+    ## 将每一个候选区域存为图像文件
+    # 将每一个候选区域交互保存为图像文件，并在过程中人为交互标记该候选区是否是文字区域
+    #
+    # @param orig_img 原图
+    #
     def save_each_contours(self, orig_img):
         image, contours, hierarchies = cv2.findContours(self.binaries, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE)
         retimg = np.zeros_like(orig_img)
@@ -50,21 +85,10 @@ class tdcontours:
                 plt.pause(0.5)
                 judge = input("is text region? : ")
                 if (judge == 'Y'):
-                    cv2.imwrite(self.name+"-"+str(i)+"-Y.jpg", gray_img_seg)
-                    cv2.imwrite("mask/"+self.name+"-"+str(i)+"-Y-mask.jpg", mask_seg)
+                    cv2.imwrite(self.save_path + self.name+"-"+str(i)+"-Y.jpg", gray_img_seg)
+                    cv2.imwrite(self.save_path + "mask/"+self.name+"-"+str(i)+"-Y-mask.jpg", mask_seg)
                 else:
-                    cv2.imwrite(self.name+"-"+str(i)+"-N.jpg", gray_img_seg)
-                    cv2.imwrite("mask/"+self.name+"-"+str(i)+"-N-mask.jpg", mask_seg)
-
-
-
-                # tmp[mask > 0] = orig_img[mask > 0]
-                # cv2.drawContours(tmp, [box], 0, (255,255,255))
-                # plt.ion()
-                # plt.imshow(tmp, "gray")
-                # plt.pause(1)
-        # plt.ioff()
-        # plt.imshow(tmp, "gray")
-        # plt.show()
+                    cv2.imwrite(self.save_path + self.name+"-"+str(i)+"-N.jpg", gray_img_seg)
+                    cv2.imwrite(self.save_path + "mask/"+self.name+"-"+str(i)+"-N-mask.jpg", mask_seg)
 
 
