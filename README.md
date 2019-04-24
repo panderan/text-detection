@@ -1,4 +1,4 @@
 # text-detection
 
-Mainly using MSER and Morphological Image Processing to locate text position in various card.
+Mainly using MSER and DLBP to locate text position in various card.
 
