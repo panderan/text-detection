@@ -35,10 +35,5 @@ binaries = morph.morph.closeing(binaries)
 # 创建选区处理实例，并从二值图像中提起候选区域分别保存为图片
 ctr = contours.tdcontours(binaries, IMAGE_PATH.split('/')[-1][0:-4], SAVE_PATH)
 ctr.aggreate_contours()
-retimg = ctr.save_each_contours(msr.gray_img, saveflag)
-
-plt.ioff()
-plt.imshow(retimg, "gray")
-plt.show()
 
 
