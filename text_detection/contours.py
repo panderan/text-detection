@@ -266,11 +266,6 @@ class tdcontours:
         self.binaries = lines_img
         return len(contours)
 
-        # plt.subplot(121)
-        # plt.imshow(self.binaries)
-        # plt.subplot(122)
-        # plt.imshow(lines_img)
-        # plt.show()
 
     def delsmallregions(self):
         boxes = []
@@ -317,35 +312,35 @@ class tdcontours:
             ratio = 1/ratio
         return ratio
 
-    def getUpleftPnt(self, box):
-        mostleft2x = np.sort(box[:,0])[0:2]
-        mostup2y = np.sort(box[:,1])[0:2]
-        for x in mostleft2x:
-            for y in mostup2y:
-                if self.isPointinBox(x, y, box):
-                    return [x,y]
-
-    def getUprightPnt(self, box):
-        mostleft2x = np.sort(box[:,0])[-2:]
-        mostup2y = np.sort(box[:,1])[0:2]
-        for x in mostleft2x:
-            for y in mostup2y:
-                if self.isPointinBox(x, y, box):
-                    return [x,y]
-
-    def getDownleftPnt(self, box):
-        mostleft2x = np.sort(box[:,0])[0:2]
-        mostup2y = np.sort(box[:,1])[-2:]
-        for x in mostleft2x:
-            for y in mostup2y:
-                if self.isPointinBox(x, y, box):
-                    return [x,y]
-
-    def isPointinBox(self, x, y, box):
-        for i in range(0,4):
-            if (x,y) == tuple(box[i]):
-                return True
-        return False
+    # def getUpleftPnt(self, box):
+    #     mostleft2x = np.sort(box[:,0])[0:2]
+    #     mostup2y = np.sort(box[:,1])[0:2]
+    #     for x in mostleft2x:
+    #         for y in mostup2y:
+    #             if self.isPointinBox(x, y, box):
+    #                 return [x,y]
+    #
+    # def getUprightPnt(self, box):
+    #     mostleft2x = np.sort(box[:,0])[-2:]
+    #     mostup2y = np.sort(box[:,1])[0:2]
+    #     for x in mostleft2x:
+    #         for y in mostup2y:
+    #             if self.isPointinBox(x, y, box):
+    #                 return [x,y]
+    #
+    # def getDownleftPnt(self, box):
+    #     mostleft2x = np.sort(box[:,0])[0:2]
+    #     mostup2y = np.sort(box[:,1])[-2:]
+    #     for x in mostleft2x:
+    #         for y in mostup2y:
+    #             if self.isPointinBox(x, y, box):
+    #                 return [x,y]
+    #
+    # def isPointinBox(self, x, y, box):
+    #     for i in range(0,4):
+    #         if (x,y) == tuple(box[i]):
+    #             return True
+    #     return False
 
     def getDirectionFor2Box(self, boxa, boxb):
         minx2boxa = np.sort(boxa[:,0])[0]
