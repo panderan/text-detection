@@ -6,7 +6,7 @@
 # @author panderan@163.com 
 #
 
-from text_detection import mser, filter, morph, contours, svm, regions
+from text_detection import mser, filter, morph, contours, svm, regions 
 import matplotlib.pyplot as plt
 import cv2
 import sys
@@ -35,7 +35,7 @@ binaries = morph.morph.closeing(binaries)
 
 # 创建选区处理实例，并从二值图像中提起候选区域分别保存为图片
 ctr = contours.tdcontours(binaries, IMAGE_PATH.split('/')[-1][0:-4])
-ctr.aggreate_contours()
+ctr.aggreate_contours_using_boxes()
 
 text_regions_binaries = ctr.binaries.copy()
 if ENABLE_SVM:

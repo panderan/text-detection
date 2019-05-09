@@ -27,6 +27,7 @@ class tdcontours:
     def __init__(self, binaries, name, save_path=""):
         self.binaries = binaries
         self.name = name
+        self.boxes = []
         self.save_path = save_path
         if len(self.save_path) > 0:
             if self.save_path[-1] != '/':
@@ -277,7 +278,202 @@ class tdcontours:
             if self.boxPointsArea(box) > 300:
                 img = cv2.drawContours(img, [np.int0(box)], 0, 255, thickness=cv2.FILLED)
         self.binaries = img
+
+    def aggreate_contours_using_boxes(self):
+        image, contours, hierarchies = cv2.findContours(self.binaries, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+        for i, ctr in enumerate(contours):
+            ro_rect = cv2.minAreaRect(ctr)
+            box = np.int0(cv2.boxPoints(ro_rect))
+            self.boxes.append(np.int0(box))
+
+        num1 = self.aggreate_contours_using_boxes_once()
+        self.generate_binaries_using_boxes()
+        numx = self.aggreate_contours_using_boxes_once()
+        self.generate_binaries_using_boxes()
+        while (numx != num1):
+            num1 = numx
+            numx = self.aggreate_contours_using_boxes_once()
+            self.generate_binaries_using_boxes()
+        self.delsmallregions_using_boxes()
+        self.generate_binaries_using_boxes()
+         
+
+    def aggreate_contours_using_boxes_once(self):
+        boxes = []
+        for i, box  in enumerate(self.boxes):
+            downleft = box[0]
+            upleft = box[1] 
+            upright = box[2] 
+            areasize = self.boxPointsArea(box)
+            direction = self.boxDirection(np.array(upleft), np.array(upright), np.array(downleft))
+            aspectratio = self.boxAspectRatio(np.array(upleft), np.array(upright), np.array(downleft))
+            boxes.append((box, upleft, upright, downleft, areasize, direction, aspectratio))
+
+        lines_img = np.zeros_like(self.binaries)
+        retflag = False
+        for i,boxa in enumerate(boxes):
+            for j,boxb in enumerate(boxes[i+1:]):
+                bbox_points = np.int0(np.array(boxa[0].tolist()+boxb[0].tolist()))
+                bbox = cv2.boxPoints(cv2.minAreaRect(bbox_points))
+                 
+                # 占比判断(相似度，邻近度）
+                areasize_a = boxa[4]
+                areasize_b = boxb[4]
+                areaplus = areasize_a + areasize_b
+                areatotal = self.boxPointsArea(bbox)
     
+                # Debug
+                print("arearatio: " + str(areaplus/areatotal))
+                #
+
+                # 非常接近，直接合并
+                if areaplus/areatotal > 0.98:
+                    retboxes = self.aggreate_contours_2boxes(self.boxes, i, i+j+1)
+                    self.boxes = retboxes
+                    self.debug_aggreate_contours_show(boxa[0], boxb[0], True)
+                    return len(self.boxes)
+
+                # 大小差异过于悬殊
+                sizeratio = areasize_a/areasize_b
+                if sizeratio < 1.0:
+                    sizeratio = 1.0 / sizeratio
+
+                if sizeratio > 10:
+                    self.debug_aggreate_contours_show(boxa[0], boxb[0], False)
+                    continue
+                 
+                # 非常接近，直接合并
+                if areaplus/areatotal > 0.90:
+                    retboxes = self.aggreate_contours_2boxes(self.boxes, i, i+j+1)
+                    self.boxes = retboxes
+                    self.debug_aggreate_contours_show(boxa[0], boxb[0], True)
+                    return len(self.boxes)
+                
+                # checkarearatio = 0.65
+                # checkarearatio = -0.00247*(sizeratio-10)*(sizeratio-10)+0.80
+                # checkarearatio = 0.0278*sizeratio+0.6222
+                checkarearatio = self.getCheckAreaRatio(areasize_a, areasize_b)
+
+                # Debug
+                print("sizeratio : " + str(sizeratio) +"(" + str(areasize_a) +","+str(areasize_b) +")")
+                print("checkarearatio: " + str(checkarearatio))
+                #
+
+                if areaplus/areatotal > checkarearatio:
+
+                    # 横纵比判断
+                    aspectratio_a = boxa[6]
+                    aspectratio_b = boxb[6]
+
+                    # Debug
+                    print("aspectratio: " + str(aspectratio_a) + " " + str(aspectratio_b))
+                    #
+
+                    if aspectratio_a < 1.5 or aspectratio_b < 1.5:
+
+                        # 方向平行或垂直
+                        direction_a = boxa[5]
+                        direction_b = boxb[5]
+                        direction_2boxes = self.getDirectionFor2Box(boxa[0], boxb[0])
+                        delta_direction = abs(direction_a-direction_b)
+                        if delta_direction > math.pi/2:
+                            delta_direction = math.pi - delta_direction
+
+                        # Debug
+                        print("Direction1: " + str(delta_direction))
+                        #
+
+                        # 判断两个BOX的方向
+                        if delta_direction < math.pi/180*10 or delta_direction > math.pi/180*80:
+                            delta_direction = abs(direction_a - direction_2boxes)
+                            if delta_direction > math.pi/2:
+                                delta_direction = math.pi - delta_direction
+
+                            # Debug
+                            print("Direction2: " + str(delta_direction))
+                            #
+
+                            # 判断BOX与两个BOX中心点连线方向
+                            if delta_direction < math.pi/180*10 or delta_direction > math.pi/180*80:
+                                # 是平行或垂直方向
+                                retboxes = self.aggreate_contours_2boxes(self.boxes, i, i+j+1)
+                                self.boxes = retboxes
+                                self.debug_aggreate_contours_show(boxa[0], boxb[0], True)
+                                return len(self.boxes)
+                            else:
+                                self.debug_aggreate_contours_show(boxa[0], boxb[0], False)
+                                pass
+                        else:
+                            self.debug_aggreate_contours_show(boxa[0], boxb[0], False)
+                            pass
+                    else:
+                    # 只能平行方向
+
+                        # 方向平行
+                        direction_a = boxa[5]
+                        direction_b = boxb[5]
+                        direction_2boxes = self.getDirectionFor2Box(boxa[0], boxb[0])
+                        delta_direction = abs(direction_a-direction_b)
+                        if delta_direction > math.pi/2:
+                            delta_direction = math.pi - delta_direction
+
+                        # Debug
+                        print("Direction1: " + str(delta_direction))
+                        #
+
+                        # 判断两个BOX的方向
+                        if delta_direction < math.pi/180*10:
+                            delta_direction = abs(direction_a - direction_2boxes)
+                            if delta_direction > math.pi/2:
+                                delta_direction = math.pi - delta_direction
+                            # 判断BOX与两个BOX中心点连线方向
+
+                            # Debug
+                            print("Direction2: " + str(delta_direction))
+                            #
+
+                            if delta_direction < math.pi/180*10:
+                                # 是平行或垂直方向
+                                retboxes = self.aggreate_contours_2boxes(self.boxes, i, i+j+1)
+                                self.boxes = retboxes
+                                self.debug_aggreate_contours_show(boxa[0], boxb[0], True)
+                                return len(self.boxes)
+                            else:
+                                self.debug_aggreate_contours_show(boxa[0], boxb[0], False)
+                                pass
+                        else:
+                            self.debug_aggreate_contours_show(boxa[0], boxb[0], False)
+                            pass
+                else:
+                    self.debug_aggreate_contours_show(boxa[0], boxb[0], False)
+                    pass
+                
+        return len(self.boxes)
+
+    def aggreate_contours_2boxes(self, boxes, idxi, idxj):
+        retboxes = []
+        for i,box in enumerate(boxes):
+            if i != idxi and i !=idxj:
+                retboxes.append(box)
+
+        bbox_points = np.int0(np.array(boxes[idxi].tolist()+boxes[idxj].tolist()))
+        bbox = cv2.boxPoints(cv2.minAreaRect(bbox_points))
+        retboxes.append(bbox)
+        return retboxes
+
+    def delsmallregions_using_boxes(self):
+        retboxes = []
+        for i,box in enumerate(self.boxes):
+            if self.boxPointsArea(box) > 300:
+                retboxes.append(box)
+        self.boxes = retboxes
+
+    def generate_binaries_using_boxes(self):
+        binaries = np.zeros_like(self.binaries)
+        for i,box in enumerate(self.boxes):
+            if self.boxPointsArea(box) > 300:
+                binaries = cv2.drawContours(binaries, [np.int0(box)], 0, 255, thickness=cv2.FILLED)
+        self.binaries = binaries
 
     def boxPointsArea(self, box):
         p0=np.array(box[0])
@@ -383,7 +579,17 @@ class tdcontours:
 
         return 0.75
 
+    def debug_aggreate_contours_show(self, boxa, boxb, flag):
+        if flag:
+            print("True")
+        else:
+            print("False")
 
+        tmp = self.binaries.copy()
+        tmp = cv2.drawContours(tmp, [np.int0(boxa)], 0, 85, thickness=cv2.FILLED)
+        tmp = cv2.drawContours(tmp, [np.int0(boxb)], 0, 170, thickness=cv2.FILLED)
+        # cv2.imshow("Debug", tmp)
+        # cv2.waitKey(0)
 
 
 
