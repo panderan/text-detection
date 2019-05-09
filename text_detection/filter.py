@@ -76,7 +76,10 @@ class mser_filter:
     def getAspectRatio(self, region):
         h = max(region[:, 1]) - min(region[:, 1])
         w = max(region[:, 0]) - min(region[:, 0])
-        return float(w) / float(h)
+        ratio = float(w) /float(h)
+        if ratio < 1.0:
+            ratio = 1.0 / ratio
+        return ratio
 
     ## 获取选区占有率
     #
