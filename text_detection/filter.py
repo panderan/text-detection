@@ -20,13 +20,23 @@ class mser_filter:
     #
     # @param grayImg 待过滤的灰度图像（MSER 选区从该图像中提取）
     #
-    def __init__(self, grayImg):
+    def __init__(self, grayImg=0):
         self.area_lim = 0.0
         self.perimeter_lim = 0.0
         self.aspect_ratio_lim = 0.0
         self.occupation_lim = (0.0, 0.0)
         self.compactness_lim = (0.0, 0.0)
-        
+        self.gray_img = None
+        self.edgesImg = None 
+
+        if type(grayImg) != type(0):
+            self.gray_img = grayImg
+            v = np.median(grayImg)
+            lower = int(max(0, (1.0 - 0.33) * v))
+            upper = int(min(255, (1.0 + 0.33) * v))
+            self.edgesImg = cv2.Canny(grayImg, lower, upper)
+
+    def set_image(self, grayImg):
         self.gray_img = grayImg
         v = np.median(grayImg)
         lower = int(max(0, (1.0 - 0.33) * v))
@@ -145,7 +155,7 @@ class mser_filter:
 #
 class mser_filter400k(mser_filter):
 
-    def __init__(self, grayImg):
+    def __init__(self, grayImg=0):
         super(mser_filter400k, self).__init__(grayImg)
         self.area_lim = 2.0e-4
         self.perimeter_lim = 1e-4

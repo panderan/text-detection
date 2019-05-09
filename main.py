@@ -25,8 +25,8 @@ if len(sys.argv) > 2:
 
 # 创建 MSER 实例和几何过滤实例，提取 MSER 选区
 msr = mser.mser_cls(IMAGE_PATH)
-flt = filter.mser_filter400k(msr.gray_img)
-rect, binaries = msr.extraction_with_labels(flt = flt)
+flt = filter.mser_filter400k()
+binaries = msr.extraction_in_all_channel_with_labels(flt = flt)
 
 # 对由候选区组成的二值图像进行形态学处理
 kl = cv2.getStructuringElement(cv2.MORPH_RECT, (8,8))
