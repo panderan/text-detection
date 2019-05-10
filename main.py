@@ -29,9 +29,8 @@ flt = filter.mser_filter400k()
 binaries = msr.extraction_in_all_channel_with_labels(flt = flt)
 
 # 对由候选区组成的二值图像进行形态学处理
-kl = cv2.getStructuringElement(cv2.MORPH_RECT, (8,8))
-binaries = cv2.dilate(binaries, kl)
-binaries = morph.morph.closeing(binaries)
+mph = morph.morph()
+binaries = mph.morph_operation(binaries)
 
 # 创建选区处理实例，并从二值图像中提起候选区域分别保存为图片
 ctr = contours.tdcontours(binaries, IMAGE_PATH.split('/')[-1][0:-4])
@@ -43,7 +42,8 @@ if ENABLE_SVM:
     classification.train("IDCards/Rear/Training")
     text_regions_binaries = classification.filter_regions(msr.gray_img, ctr.binaries)
 
-ret_img = regions.regions.label_image(msr.gray_img, text_regions_binaries)
+# ret_img = regions.regions.label_image(msr.gray_img, text_regions_binaries)
+ret_img = regions.regions.label_image_with_box(msr.gray_img, ctr.boxes)
 plt.imshow(ret_img, "gray")
 plt.show()
 
