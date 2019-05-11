@@ -85,6 +85,7 @@ class mser_cls:
     #
     # @param flt 几何条件过滤实例，为 0 则不过滤
     # @param direction MSER 提取方向，0 为 MSER+ ，1 为 MSER-
+    # @param channel 指定通道
     #
     # @retval rect_img 在原图中用矩形标出候选区域图像
     # @retval binarized 以背景图像为0，提取的连通域为255 的二值图像
@@ -98,7 +99,31 @@ class mser_cls:
             binarized[ msers[i][:, 1], msers[i][:, 0]] = 255
         return rect_img, binarized
 
-    def extraction_with_labels_verbose(self, flt = None, direction = 0):
+
+    ## 提取所有通道的 MSER，包括R，G，B，Gray
+    #
+    # @param flt 几何条件过滤实例，为 0 则不过滤
+    # @param direction MSER 提取方向，0 为 MSER+ ，1 为 MSER-
+    #
+    def extraction_in_all_channel_with_labels(self, flt = 0, direction = 0):
+        grect, gbinaries = self.extraction_with_labels(flt = flt, channel="gray")
+        b_rect, b_binaries = self.extraction_with_labels(flt = flt, channel="blue")
+        g_rect, g_binaries = self.extraction_with_labels(flt = flt, channel="green")
+        r_rect, r_binaries = self.extraction_with_labels(flt = flt, channel="red")
+        gbinaries[b_binaries > 128] = b_binaries[b_binaries > 128]
+        gbinaries[g_binaries > 128] = g_binaries[g_binaries > 128]
+        gbinaries[r_binaries > 128] = r_binaries[r_binaries > 128]
+        return gbinaries
+
+    ## 选区着色
+    def verbose_colorRegion(self, img, region):
+        img[region[:, 1], region[:, 0], 0] = np.random.randint(low=100, high=256)
+        img[region[:, 1], region[:, 0], 1] = np.random.randint(low=100, high=256)
+        img[region[:, 1], region[:, 0], 2] = np.random.randint(low=100, high=256)
+        return img
+
+    ## 提取 MSER 连通区域（带标记,显示过程）
+    def verbose_extraction_with_labels_(self, flt = None, direction = 0):
         rect_img = self.gray_img.copy()
         binarized = np.zeros_like(self.gray_img)
         colorized = np.uint8(np.ndarray((self.gray_img.shape[0], self.gray_img.shape[1], 3)))
@@ -119,23 +144,6 @@ class mser_cls:
                 plt.show()
                 plt.pause(0.5)
         return rect_img, binarized, colorized, msers, bboxes
-
-    def extraction_in_all_channel_with_labels(self, flt = 0, direction = 0):
-        grect, gbinaries = self.extraction_with_labels(flt = flt, channel="gray")
-        b_rect, b_binaries = self.extraction_with_labels(flt = flt, channel="blue")
-        g_rect, g_binaries = self.extraction_with_labels(flt = flt, channel="green")
-        r_rect, r_binaries = self.extraction_with_labels(flt = flt, channel="red")
-        gbinaries[b_binaries > 128] = b_binaries[b_binaries > 128]
-        gbinaries[g_binaries > 128] = g_binaries[g_binaries > 128]
-        gbinaries[r_binaries > 128] = r_binaries[r_binaries > 128]
-        return gbinaries
-
-
-    def verbose_colorRegion(self, img, region):
-        img[region[:, 1], region[:, 0], 0] = np.random.randint(low=100, high=256)
-        img[region[:, 1], region[:, 0], 1] = np.random.randint(low=100, high=256)
-        img[region[:, 1], region[:, 0], 2] = np.random.randint(low=100, high=256)
-        return img
 
     @property
     def delta(self):

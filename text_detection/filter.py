@@ -52,6 +52,13 @@ class mser_filter:
     # @retval False 不满足
     #
     def verification(self, region, box):
+        # tmp = self.gray_img.copy()
+        # tmp = cv2.drawContours(tmp, [region], 0, 255, thickness=cv2.FILLED)
+        # cv2.namedWindow("Debug",0);
+        # cv2.resizeWindow("Debug", 800, 600);
+        # cv2.imshow("Debug", tmp)
+        # cv2.waitKey(1)
+
         # 周长
         retval = self.getPerimeter(box)
         if retval <  12:
@@ -159,8 +166,22 @@ class mser_filter400k(mser_filter):
         super(mser_filter400k, self).__init__(grayImg)
         self.area_lim = 2.0e-4
         self.perimeter_lim = 1e-4
-        self.aspect_ratio_lim = 5.0
-        self.occupation_lim = (0.23, 0.90)
+        self.aspect_ratio_lim = 15.0
+        self.occupation_lim = (0.15, 0.90)
         self.compactness_lim = (3e-3, 1e-1)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
