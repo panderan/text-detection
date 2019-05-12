@@ -24,25 +24,17 @@ class mser_cls:
     # 
     # @param IMAGE_PATH 输入图像的路径
     def __init__(self, IMAGE_PATH):
-        color_img = cv2.imread(IMAGE_PATH)
-        b_img = color_img[:,:,0]
-        g_img = color_img[:,:,1]
-        r_img = color_img[:,:,2]
-        gimg = cv2.cvtColor(color_img, cv2.COLOR_BGR2GRAY)
-        mul = sqrt(gimg.shape[0]*gimg.shape[1]/400000)
-        self.gray_img = cv2.resize(gimg, (int(gimg.shape[1]/mul), int(gimg.shape[0]/mul)))
-        self.b_img = cv2.resize(b_img, (int(b_img.shape[1]/mul), int(b_img.shape[0]/mul)))
-        self.g_img = cv2.resize(g_img, (int(g_img.shape[1]/mul), int(g_img.shape[0]/mul)))
-        self.r_img = cv2.resize(r_img, (int(r_img.shape[1]/mul), int(r_img.shape[0]/mul)))
         self.delta = 5
         self.min_area = 9 
         self.max_area =500 
         self.variation = 0.25
+        self.color_img = cv2.imread(IMAGE_PATH)
 
     ## 提取 MSER 连通区域
     #
     # @param flt 几何条件过滤实例，为 0 则不过滤
     # @param direction MSER 提取方向，0 为 MSER+ ，1 为 MSER-
+    # @param channel 在指定通道上提取 MSERs
     #
     # @retval retmsrs 候选连通域列表，每一个元素为包含了该连通域的所有点的列表
     # @retval retboxes 候选连通域列表，每一个元素包含了该连通域的外接矩形
@@ -67,7 +59,7 @@ class mser_cls:
         retmsrs = []
         retboxes = []
         if type(flt) != type(0):
-            flt.set_image(img)
+            flt.gray_img = img
             for i in range(len(msers)):
                 points = msers[i]
                 box = bboxes[i]
@@ -85,7 +77,7 @@ class mser_cls:
     #
     # @param flt 几何条件过滤实例，为 0 则不过滤
     # @param direction MSER 提取方向，0 为 MSER+ ，1 为 MSER-
-    # @param channel 指定通道
+    # @param channel 在指定通道上提取 MSERs
     #
     # @retval rect_img 在原图中用矩形标出候选区域图像
     # @retval binarized 以背景图像为0，提取的连通域为255 的二值图像
@@ -104,6 +96,9 @@ class mser_cls:
     #
     # @param flt 几何条件过滤实例，为 0 则不过滤
     # @param direction MSER 提取方向，0 为 MSER+ ，1 为 MSER-
+    # @param channel 在指定通道上提取 MSERs
+    #
+    # @retval binarized 以背景图像为0，提取的连通域为255 的二值图像
     #
     def extraction_in_all_channel_with_labels(self, flt = 0, direction = 0):
         grect, gbinaries = self.extraction_with_labels(flt = flt, channel="gray")
@@ -115,15 +110,93 @@ class mser_cls:
         gbinaries[r_binaries > 128] = r_binaries[r_binaries > 128]
         return gbinaries
 
+    @property
+    def delta(self):
+        return self.__delta
+    @delta.setter
+    def delta(self, val):
+        self.__delta = val
+
+    @property
+    def min_area(self):
+        return self.__min_area
+    @min_area.setter
+    def min_area(self, val):
+        self.__min_area = val
+
+    @property
+    def max_area(self):
+        return self.__max_area
+    @max_area.setter
+    def max_area(self, val):
+        self.__max_area = val
+
+    @property
+    def variation(self):
+        return self.__variation
+    @variation.setter
+    def variation(self, val):
+        self.__variation = val
+    
+    @property
+    def color_img(self):
+        return self.__gray_img
+    @color_img.setter
+    def color_img(self, val):
+        if type(val) == type(np.zeros((3,3))):
+            color_img = val
+            b_img = color_img[:,:,0]
+            g_img = color_img[:,:,1]
+            r_img = color_img[:,:,2]
+            gimg = cv2.cvtColor(color_img, cv2.COLOR_BGR2GRAY)
+            mul = sqrt(gimg.shape[0]*gimg.shape[1]/400000)
+            self.__gray_img = cv2.resize(gimg, (int(gimg.shape[1]/mul), int(gimg.shape[0]/mul)))
+            self.__b_img = cv2.resize(b_img, (int(b_img.shape[1]/mul), int(b_img.shape[0]/mul)))
+            self.__g_img = cv2.resize(g_img, (int(g_img.shape[1]/mul), int(g_img.shape[0]/mul)))
+            self.__r_img = cv2.resize(r_img, (int(r_img.shape[1]/mul), int(r_img.shape[0]/mul)))
+        else:
+            self.__gray_img = None
+            self.__b_img = None
+            self.__g_img = None
+            self.__r_img = None
+    
+    @property
+    def gray_img(self):
+        return self.__gray_img
+    @gray_img.setter
+    def gray_img(self, val):
+        pass
+
+    @property
+    def b_img(self):
+        return self.__b_img
+    @b_img.setter
+    def b_img(self, val):
+        pass
+
+    @property
+    def g_img(self):
+        return self.__g_img
+    @g_img.setter
+    def g_img(self, val):
+        pass
+
+    @property
+    def r_img(self):
+        return self.__r_img
+    @r_img.setter
+    def r_img(self, val):
+        pass
+
     ## 选区着色
-    def verbose_colorRegion(self, img, region):
+    def debug_colorRegion(self, img, region):
         img[region[:, 1], region[:, 0], 0] = np.random.randint(low=100, high=256)
         img[region[:, 1], region[:, 0], 1] = np.random.randint(low=100, high=256)
         img[region[:, 1], region[:, 0], 2] = np.random.randint(low=100, high=256)
         return img
 
     ## 提取 MSER 连通区域（带标记,显示过程）
-    def verbose_extraction_with_labels_(self, flt = None, direction = 0):
+    def debug_extraction_with_labels(self, flt = None, direction = 0):
         rect_img = self.gray_img.copy()
         binarized = np.zeros_like(self.gray_img)
         colorized = np.uint8(np.ndarray((self.gray_img.shape[0], self.gray_img.shape[1], 3)))
@@ -145,35 +218,10 @@ class mser_cls:
                 plt.pause(0.5)
         return rect_img, binarized, colorized, msers, bboxes
 
-    @property
-    def delta(self):
-        return self.__delta
 
-    @delta.setter
-    def delta(self, val):
-        self.__delta = val
 
-    @property
-    def min_area(self):
-        return self.__min_area
 
-    @min_area.setter
-    def min_area(self, val):
-        self.__min_area = val
 
-    @property
-    def max_area(self):
-        return self.__max_area
 
-    @max_area.setter
-    def max_area(self, val):
-        self.__max_area = val
 
-    @property
-    def variation(self):
-        return self.__variation
-
-    @variation.setter
-    def variation(self, val):
-        self.__variation = val
 

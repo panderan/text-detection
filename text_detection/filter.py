@@ -18,30 +18,22 @@ class mser_filter:
     
     ## 构造函数
     #
-    # @param grayImg 待过滤的灰度图像（MSER 选区从该图像中提取）
+    # @param gray_img 待过滤的灰度图像（MSER 选区从该图像中提取）
     #
-    def __init__(self, grayImg=0):
+    def __init__(self, gray_img=0):
         self.area_lim = 0.0
         self.perimeter_lim = 0.0
         self.aspect_ratio_lim = 0.0
         self.occupation_lim = (0.0, 0.0)
         self.compactness_lim = (0.0, 0.0)
         self.gray_img = None
-        self.edgesImg = None 
 
-        if type(grayImg) != type(0):
-            self.gray_img = grayImg
-            v = np.median(grayImg)
+        if type(gray_img) != type(0):
+            self.gray_img = gray_img
+            v = np.median(gray_img)
             lower = int(max(0, (1.0 - 0.33) * v))
             upper = int(min(255, (1.0 + 0.33) * v))
-            self.edgesImg = cv2.Canny(grayImg, lower, upper)
-
-    def set_image(self, grayImg):
-        self.gray_img = grayImg
-        v = np.median(grayImg)
-        lower = int(max(0, (1.0 - 0.33) * v))
-        upper = int(min(255, (1.0 + 0.33) * v))
-        self.edgesImg = cv2.Canny(grayImg, lower, upper)
+            self.edges_img = cv2.Canny(gray_img, lower, upper)
 
     ## 验证单个选区是否满足条件
     #
@@ -61,7 +53,7 @@ class mser_filter:
 
         # 周长
         retval = self.getPerimeter(box)
-        if retval <  12:
+        if retval <  self.perimeter_lim:
             return False
         # 横纵比
         retval = self.getAspectRatio(region)
@@ -85,7 +77,7 @@ class mser_filter:
     ## 获取选区周长
     #
     def getPerimeter(self, box):
-        tmp = self.edgesImg[box[1]:box[1]+box[3], box[0]:box[0]+box[2]]
+        tmp = self.edges_img[box[1]:box[1]+box[3], box[0]:box[0]+box[2]]
         return len(np.where(tmp != 0)[0])
 
     ## 获取选区横纵比 
@@ -108,6 +100,63 @@ class mser_filter:
     def getCompactness(self, region, box):
         return float(self.getArea(region)) / float(self.getPerimeter(box)**2)
 
+    @property
+    def area_lim(self):
+        return self.__AREA_LIM
+    @area_lim.setter
+    def area_lim(self, val):
+        self.__AREA_LIM = val
+    
+    @property
+    def perimeter_lim(self):
+        return self.__PERIMETER_LIM 
+    @perimeter_lim.setter
+    def perimeter_lim(self, val):
+        self.__PERIMETER_LIM = val
+
+    @property
+    def aspect_ratio_lim(self):
+        return self.__ASPECT_RATIO_LIM
+    @aspect_ratio_lim.setter
+    def aspect_ratio_lim(self, val):
+        self.__ASPECT_RATIO_LIM = val
+
+    @property
+    def occupation_lim(self):
+        return self.__OCCUPATION_LIM
+    @occupation_lim.setter
+    def occupation_lim(self, val):
+        self.__OCCUPATION_LIM = val
+
+    @property
+    def compactness_lim(self):
+        return self.__COMPACTNESS_LIM
+    @compactness_lim.setter
+    def compactness_lim(self, val):
+        self.__COMPACTNESS_LIM = val
+
+    @property
+    def gray_img(self):
+        return self.__GRAY_IMG
+    @gray_img.setter
+    def gray_img(self, val):
+        if type(val) == type(np.zeros((3,3))): 
+            self.__GRAY_IMG = val 
+            v = np.median(self.__GRAY_IMG)
+            lower = int(max(0, (1.0 - 0.33) * v))
+            upper = int(min(255, (1.0 + 0.33) * v))
+            self.__EDGES_IMG = cv2.Canny(self.__GRAY_IMG, lower, upper)
+        else:
+            self.__GRAY_IMG = None
+            self.__EDGES_IMG = None
+
+    @property
+    def edges_img(self):
+        return self.__EDGES_IMG
+    @edges_img.setter
+    def edges_img(self, val):
+        pass
+
     def debug1(self, img, regions, bboxes, idx):
         region = regions[idx]
         box = bboxes[idx]
@@ -116,59 +165,20 @@ class mser_filter:
         tmp[region[:, 1], region[:, 0]] = 255
         plt.imshow(tmp, "gray")
 
-    @property
-    def area_lim(self):
-        return self.__AREA_LIM
-
-    @area_lim.setter
-    def area_lim(self, val):
-        self.__AREA_LIM = val
-    
-    @property
-    def perimeter_lim(self):
-        return self.__PERIMETER_LIM 
-
-    @perimeter_lim.setter
-    def perimeter_lim(self, val):
-        self.__PERIMETER_LIM = val
-
-    @property
-    def aspect_ratio_lim(self):
-        return self.__ASPECT_RATIO_LIM
-
-    @aspect_ratio_lim.setter
-    def aspect_ratio_lim(self, val):
-        self.__ASPECT_RATIO_LIM = val
-
-    @property
-    def occupation_lim(self):
-        return self.__OCCUPATION_LIM
-
-    @occupation_lim.setter
-    def occupation_lim(self, val):
-        self.__OCCUPATION_LIM = val
-
-    @property
-    def compactness_lim(self):
-        return self.__COMPACTNESS_LIM
-
-    @compactness_lim.setter
-    def compactness_lim(self, val):
-        self.__COMPACTNESS_LIM = val
-
 
 ## 几何过滤类400k
 # 其中的默认参数适合图像像素总量为400,000 的图像
 #
 class mser_filter400k(mser_filter):
 
-    def __init__(self, grayImg=0):
-        super(mser_filter400k, self).__init__(grayImg)
-        self.area_lim = 2.0e-4
-        self.perimeter_lim = 1e-4
+    def __init__(self, gray_img=0):
+        super(mser_filter400k, self).__init__(gray_img)
+        self.area_lim = 0
+        self.perimeter_lim = 12
         self.aspect_ratio_lim = 15.0
         self.occupation_lim = (0.15, 0.90)
         self.compactness_lim = (3e-3, 1e-1)
+        self.gray_img = None
 
 
 

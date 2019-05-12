@@ -6,7 +6,6 @@
 # @author panderan@163.com 
 #
 
-
 from text_detection import mser, filter, morph, contours, svm, regions 
 import matplotlib.pyplot as plt
 import cv2
@@ -34,12 +33,12 @@ binaries = msr.extraction_in_all_channel_with_labels(flt = flt)
 
 # 对由候选区组成的二值图像进行形态学处理
 mph = morph.morph()
-binaries = mph.morph_operation(binaries)
+binaries = mph.morph_operation(binaries, debug=False)
 
 
 # 创建选区处理实例，并从二值图像中提起候选区域分别保存为图片
 ctr = contours.tdcontours(binaries, IMAGE_PATH.split('/')[-1][0:-4])
-ctr.aggreate_contours_using_boxes()
+ctr.aggreate_contours_using_boxes(debug=False)
 
 
 # SVM 分类
