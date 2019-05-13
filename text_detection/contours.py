@@ -34,6 +34,10 @@ PAR_AREA_SIZE=4
 PAR_DIRECTION=5
 PAR_ASPECT_RATIO=6
 
+DIRECTION_TYPE_NONE=7
+DIRECTION_TYPE_PARALLEL=8
+DIRECTION_TYPE_PARALLEL_CENTER_LINE=9
+
 ## 边界处理类
 #
 # 用于从二值图像中取得连通域边界
@@ -54,6 +58,7 @@ class tdcontours:
         self.t_of_fixed_pos_ratio_for_rect = [0.99, 0.95, 0.90]
         self.t_of_extreme_area_ratio_for_ab = 24
         self.t_of_overlap_ratio = 0.25
+        self.strategy = "Horizon"
 
     ## 将每一个候选区域存为图像文件
     # 将每一个候选区域交互保存为图像文件，并在过程中人为交互标记该候选区是否是文字区域
@@ -193,11 +198,14 @@ class tdcontours:
                 t_of_area_ratio_for_rect = self._get_threshold_of_area_ratio(boxa, boxb)
                 print("  plus/rect:     %.3f(%.3f)" % (size_ratio_of_bounding_rect, t_of_area_ratio_for_rect))
                 if size_ratio_of_bounding_rect > t_of_area_ratio_for_rect:
-                    if self._judge_direction(boxa, boxb) and self._judge_distance(boxa, boxb):
+                    if self._judge_direction(boxa, boxb) and self._judge_distance(boxa, boxb) and self._judge_strategy(boxa, boxb):
                         candidate_agged_boxes.append((boxb[0], i+j+1, area_plus_ab/area_bounding_rect))
                         agged_flag = True
                         print("Pass validation")
                         self._debug_judge_2boxes_show(boxa[0], boxb[0], True, debug)
+                    else:
+                        print("Not pass validation (direction or distance)")
+                        self._debug_judge_2boxes_show(boxa[0], boxb[0], False, debug)
                 else:
                     print("Not pass validation (pos_size_for_rect)")
                     self._debug_judge_2boxes_show(boxa[0], boxb[0], False, debug)
@@ -231,10 +239,10 @@ class tdcontours:
 
         bbox_points = np.int0(np.array(boxes[idxi].tolist()+boxes[idxj].tolist()))
         bbox = cv2.boxPoints(cv2.minAreaRect(bbox_points))
-        retboxes.append(bbox)
+        retboxes.insert(0,bbox)
         return retboxes
     
-    def _pickup_best_agg_box(self, boxa, agg_boxes, strategy="Horizon"):
+    def _pickup_best_agg_box(self, boxa, agg_boxes):
         if len(agg_boxes) == 1:
             return agg_boxes[0][1]
         
@@ -244,12 +252,12 @@ class tdcontours:
         best_val = -1.0
 
         for candidate_box in agg_boxes:
-            if strategy == "Horizon":
+            if self.strategy == "Horizon":
                 center_point_tmp = self._get_box_center_point(candidate_box[0])
                 if best_val < 0.0 or best_val < abs(center_point_a[0]-center_point_tmp[0]):
                     best_box = candidate_box
                     best_val = abs(center_point_a[0]-center_point_tmp[0])
-            elif strategy == "Vertical":
+            elif self.strategy == "Vertical":
                 center_point_tmp = self._get_box_center_point(candidate_box[0])
                 if best_val < 0.0 or best_val < abs(center_point_a[1]-center_point_tmp[1]):
                     best_box = candidate_box
@@ -396,13 +404,13 @@ class tdcontours:
         
         if self._is_gt_one_char(boxa[PAR_BOX]) == False:
             if boxa[PAR_ASPECT_RATIO] > 1.5:
-                return 0.50
+                return 0.55
             else:
                 return 0.60
 
         if self._is_gt_one_char(boxb[PAR_BOX]) == False:
             if boxb[PAR_ASPECT_RATIO] > 1.5:
-                return 0.50
+                return 0.55
             else:
                 return 0.60
         
@@ -429,40 +437,54 @@ class tdcontours:
     #
     # 默认方向夹角小于20度，则认为平行。大于70度认为垂直
     #
-    def _get_threshold_of_angle_precision(self, boxa, boxb):
-        if boxa[PAR_ASPECT_RATIO] < 2.0 or boxb[PAR_ASPECT_RATIO] < 2.0:
+    def _get_threshold_of_angle_precision(self, boxa, boxb=None):
+        if (boxa != None and boxa[PAR_ASPECT_RATIO] < 2.0) \
+             or (boxb != None and boxb[PAR_ASPECT_RATIO] < 2.0):
                 return math.pi/180*35
         return math.pi/180*20
 
     ## 对两个 Box 的方向进行可合并判别
     #
     def _judge_direction(self, boxa, boxb):
-
+        direction_type = DIRECTION_TYPE_PARALLEL
         if self._is_gt_one_char(boxa[PAR_BOX]) == False or self._is_gt_one_char(boxb[PAR_BOX]) == False:
-            return True
+            if self._is_gt_one_char(boxa[PAR_BOX]) == False and self._is_gt_one_char(boxb[PAR_BOX]) == False:
+                return True
+            elif self._is_gt_one_char(boxa[PAR_BOX]) == True and boxb[PAR_ASPECT_RATIO] < 2.5:
+                direction_type = DIRECTION_TYPE_PARALLEL_CENTER_LINE
+            elif self._is_gt_one_char(boxb[PAR_BOX]) == True and boxa[PAR_ASPECT_RATIO] < 2.5:
+                direction_type = DIRECTION_TYPE_PARALLEL_CENTER_LINE
 
-        # 两个 BOX 中心点连线的方向
-        direction_2boxes = self._get_box_centers_direction(boxa[PAR_BOX], boxb[PAR_BOX])
         # 两个 BOX 方向的差
         delta_direction_2boxes = abs(boxa[PAR_DIRECTION]-boxb[PAR_DIRECTION])
         if delta_direction_2boxes > math.pi/2:
             delta_direction_2boxes = math.pi - delta_direction_2boxes
-        # 其中一个 BOX 与中心点连线方向的差
-        delta_direction_box_with_centers = abs(boxa[PAR_DIRECTION] - direction_2boxes)
+
+        # 其中一个面积较大的 BOX 与中心点连线方向的差
+        max_box = boxa
+        if max_box[PAR_AREA_SIZE] < boxb[PAR_AREA_SIZE]:
+            max_box = boxb
+        direction_2boxes = self._get_box_centers_direction(boxa[PAR_BOX], boxb[PAR_BOX])
+        delta_direction_box_with_centers = abs(max_box[PAR_DIRECTION] - direction_2boxes)
         if delta_direction_box_with_centers > math.pi/2:
             delta_direction_box_with_centers = math.pi - delta_direction_box_with_centers
-
-        min_threshold = self._get_threshold_of_angle_precision(boxa, boxb)
+        
+        if direction_type == DIRECTION_TYPE_PARALLEL_CENTER_LINE:
+            min_threshold = self._get_threshold_of_angle_precision(max_box)
+        else:
+            min_threshold = self._get_threshold_of_angle_precision(boxa, boxb)
         max_threshold = math.pi/2 - min_threshold
 
         # Debug output
         print("  direction 2-boxes:       %.3f" % delta_direction_2boxes)
         print("  direction centers:       %.3f" % delta_direction_box_with_centers)
         print("  precision of direction: (%.3f,%.3f)" % (min_threshold, max_threshold))
-
-        if delta_direction_2boxes < min_threshold:
+        print("  direction type:          %.3f" % direction_type)
+        print("  is gt one char:          %s,%s" %  (self._is_gt_one_char(boxa[PAR_BOX]), self._is_gt_one_char(boxb[PAR_BOX])))
+        if (direction_type == DIRECTION_TYPE_PARALLEL and delta_direction_2boxes < min_threshold) \
+            or (direction_type == DIRECTION_TYPE_PARALLEL_CENTER_LINE):
             # 判断BOX与两个BOX中心点连线方向
-            if delta_direction_box_with_centers < max_threshold:
+            if delta_direction_box_with_centers < min_threshold:
                 return True
             else:
                 return False
@@ -494,7 +516,63 @@ class tdcontours:
             return True
         else:
             return False
+
+    def _judge_strategy(self, boxa, boxb):
+
+        if self._is_gt_one_char(boxa[PAR_BOX]) == True and self._is_gt_one_char(boxb[PAR_BOX]) == True:
+            return True
         
+        big_box = boxa
+        small_box = boxb 
+        boxa_bounding_rect = cv2.boundingRect(boxa[PAR_BOX])    
+        boxb_bounding_rect = cv2.boundingRect(boxb[PAR_BOX])
+        big_box_bounding_rect = boxa_bounding_rect
+        if boxa_bounding_rect[2]*boxa_bounding_rect[3] < boxb_bounding_rect[2]*boxb_bounding_rect[3]:
+            big_box = boxb
+            small_box = boxa
+            big_box_bounding_rect = boxb_bounding_rect
+
+        center_small = self._get_box_center_point(small_box[PAR_BOX])
+        center_big = self._get_box_center_point(big_box[PAR_BOX])
+
+        if self.strategy == "Horizon":
+            if abs(center_small[0] - center_big[0]) > big_box_bounding_rect[2]/2.0:
+                return True
+            else:
+                return False
+        elif self.strategy == "Vertical":
+            if abs(center_small[1] - center_big[1]) > big_box_bounding_rect[3]/2.0:
+                return True
+            else:
+                return False
+        else:
+            return True
+
+
+        area_size_a, w_a, h_a = self._get_box_area(boxa[PAR_BOX])
+        area_size_b, w_b, h_b = self._get_box_area(boxb[PAR_BOX])
+        center_point_a = self._get_box_center_point(boxa[PAR_BOX])
+        center_point_b = self._get_box_center_point(boxb[PAR_BOX])
+        max_area_size = area_size_a
+        if max_area_size < area_size_b:
+            max_area_size = area_size_b
+        delta = 0.5*math.sqrt(max_area_size)
+
+        if self.strategy == "Horizon":
+            if abs(center_point_a[0] - center_point_b[0]) > delta:
+                return True
+            else:
+                return False
+        elif self.strategy == "Vertical":
+            if abs(center_point_a[1] - center_point_b[1]) > delta:
+                return True
+            else:
+                return False
+        else:
+            return True
+
+
+       
     def _is_gt_one_char(self, box):
         area_size,w,h = self._get_box_area(box)
         if area_size > 1500:
@@ -566,7 +644,7 @@ class tdcontours:
         else:
             print("False")
 
-        if is_enable == True:
+        if is_enable == False:
             tmp = self.binaries.copy()
             tmp = cv2.drawContours(tmp, [np.int0(boxa)], 0, 85, thickness=cv2.FILLED)
             tmp = cv2.drawContours(tmp, [np.int0(boxb)], 0, 170, thickness=cv2.FILLED)
@@ -576,7 +654,7 @@ class tdcontours:
             cv2.waitKey(0)
 
     def _debug_aggreate_boxes_show(self, candidate_agged_boxes, added_box1, added_box2, is_enable=False):
-        if is_enable == True:
+        if is_enable == False:
             tmp = self.binaries.copy()
             for box in candidate_agged_boxes:
                 tmp = cv2.drawContours(tmp, [np.int0(box[0])], 0, 170, thickness=cv2.FILLED)
