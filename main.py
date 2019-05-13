@@ -38,7 +38,7 @@ binaries = mph.morph_operation(binaries, debug=False)
 
 # 创建选区处理实例，并从二值图像中提起候选区域分别保存为图片
 ctr = contours.tdcontours(binaries, IMAGE_PATH.split('/')[-1][0:-4])
-ctr.aggreate_contours_using_boxes(debug=False)
+ctr.aggreate_contours_using_boxes(debug=True)
 
 
 # SVM 分类

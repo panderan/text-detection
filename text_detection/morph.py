@@ -37,7 +37,7 @@ class morph:
     # @param bins 输入的二值图像
     # @retval reimg 处理后的图像
     #
-    def closing(bins):
+    def closing(self, bins):
         reimg = cv2.erode(cv2.dilate(bins, self.k_closing), self.k_closing)
         return reimg
 
@@ -73,34 +73,34 @@ class morph:
             bins = binaries
 
         bins = cv2.dilate(bins, self.k_dilate)
-        bins = morph.closing(bins)
-        bins = morph.opening(bins)
+        bins = self.closing(bins)
+        bins = self.opening(bins)
         return bins
 
     @property
     def k_dilate(self):
-        return k_dilate
+        return self.__k_dilate
     @k_dilate.setter
     def k_dilate(self, val):
         self.__k_dilate = val
 
     @property
     def k_erode(self):
-        return k_erode
+        return self.__k_erode
     @k_erode.setter
     def k_erode(self, val):
         self.__k_erode = val
 
     @property
     def k_opening(self):
-        return k_opening
+        return self.__k_opening
     @k_opening.setter
     def k_opening(self, val):
         self.__k_opening = val
 
     @property
     def k_closing(self):
-        return k_closing
+        return self.__k_closing
     @k_closing.setter
     def k_closing(self, val):
         self.__k_closing = val
