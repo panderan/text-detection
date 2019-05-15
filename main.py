@@ -24,12 +24,12 @@ enable_debug_mser=False
 enable_debug_morph=False
 enable_debug_contours=False
 enable_debug_contours_verbose=False
-
+is_show_result = True
 def usage():
     print("Help message")
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "i:", ["svm","save-regions=","eval=","save-mask=","debug=","help"])
+    opts, args = getopt.getopt(sys.argv[1:], "i:", ["svm","save-regions=","eval=","save-mask=","debug=","disable-show","help"])
 except getopt.GetoptError:
     print("argv error")
 
@@ -57,6 +57,8 @@ for cmd,arg in opts:
             enable_debug_contours = True
         if "contours-verbose" in ss:
             enable_debug_contours_verbose = True
+    elif cmd in ("--disable-show"):
+        is_show_result = False
     else:
         usage()
         sys.exit()
@@ -102,11 +104,13 @@ if enable_eval:
 
 # 保存 mask
 if save_mask:
-    cv2.imwrite(save_mask_path+"/"+image_path.split('/')[-1], ctr.binaries)
+    cv2.imwrite(save_mask_path+"/mask-"+image_path.split('/')[-1], ctr.binaries)
+    cv2.imwrite(save_mask_path+"/orig-"+image_path.split('/')[-1], msr.gray_img)
 
 # 标记最终选区
-ret_img = regions.regions.label_image_with_box(msr.gray_img, ctr.boxes)
-plt.figure(figsize=(10,8))
-plt.imshow(ret_img, "gray")
-plt.show()
+if is_show_result:
+    ret_img = regions.regions.label_image_with_box(msr.gray_img, ctr.boxes)
+    plt.figure(figsize=(10,8))
+    plt.imshow(ret_img, "gray")
+    plt.show()
 
