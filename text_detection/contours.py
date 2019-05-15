@@ -65,52 +65,38 @@ class tdcontours:
     #
     # @param orig_img 原图
     #
-    # @retval retimg 在灰度图像中标记所有选区的图像
-    #
-    def save_each_contours(self, orig_img, save=True):
-        image, contours, hierarchies = cv2.findContours(self.binaries, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE)
-        retimg = orig_img.copy()
-        tmp = np.zeros_like(self.binaries)
-        for i, (ctr, hiry) in enumerate(zip(contours, hierarchies[0])):
-            if hiry[3] == -1:
-                # 区域掩码图
-                mask = np.zeros_like(self.binaries)
-                mask = cv2.drawContours(mask, [ctr], 0, 255, thickness=cv2.FILLED)
-                x,y,w,h = cv2.boundingRect(ctr)
-                mask_seg = mask[y:y+h, x:x+w]
+    def save_each_contours_using_boxes(self, orig_img, save=True):
+        for i, box in enumerate(self.boxes):
+            # 区域掩码图
+            box = np.int0(box)
+            mask = np.zeros_like(self.binaries)
+            mask = cv2.drawContours(mask, [box], 0, 255, thickness=cv2.FILLED)
+            x,y,w,h = cv2.boundingRect(box)
+            mask_seg = mask[y:y+h, x:x+w]
                  
-                # 区域灰度图
-                gray_img = np.zeros_like(self.binaries)
-                gray_img[mask > 0] = orig_img[mask > 0]
-                gray_img_seg = gray_img[ y:y+h, x:x+w]
+            # 区域灰度图
+            gray_img = np.zeros_like(self.binaries)
+            gray_img[mask > 0] = orig_img[mask > 0]
+            gray_img_seg = gray_img[ y:y+h, x:x+w]
                 
-                # 绘制图像
-                ro_rect = cv2.minAreaRect(ctr)
-                box = cv2.boxPoints(ro_rect)
-                box = np.int0(box)
-                bx,by,bw,bh = cv2.boundingRect(box)
-                gray_img_copy = cv2.drawContours(gray_img.copy(), [box], 0, 255)
-                retimg = cv2.drawContours(retimg, [box], 0, 255)
-                
-                # 标记并保存图像
-                if save==True:
-                    plt.ion()
-                    plt.imshow(gray_img_copy[by:by+bh, bx:bx+bw], "gray")
-                    plt.pause(0.2)
-                    judge = input("is text region? : ")
-                    if (judge == 'Y'):
-                        cv2.imwrite(self.save_path + self.name+"-"+str(i)+"-Y.jpg", gray_img_seg)
-                        cv2.imwrite(self.save_path + "mask/"+self.name+"-"+str(i)+"-Y-mask.jpg", mask_seg)
-                    else:
-                        cv2.imwrite(self.save_path + self.name+"-"+str(i)+"-N.jpg", gray_img_seg)
-                        cv2.imwrite(self.save_path + "mask/"+self.name+"-"+str(i)+"-N-mask.jpg", mask_seg)
-        return retimg
+            # 标记并保存图像
+            if save==True:
+                plt.ion()
+                plt.imshow(gray_img_seg, "gray")
+                plt.pause(0.2)
+                judge = input("is text region? : ")
+                if (judge == 'Y'):
+                    cv2.imwrite(self.save_path + self.name+"-"+str(i)+"-Y.jpg", gray_img_seg)
+                    cv2.imwrite(self.save_path + "mask/"+self.name+"-"+str(i)+"-Y-mask.jpg", mask_seg)
+                else:
+                    cv2.imwrite(self.save_path + self.name+"-"+str(i)+"-N.jpg", gray_img_seg)
+                    cv2.imwrite(self.save_path + "mask/"+self.name+"-"+str(i)+"-N-mask.jpg", mask_seg)
 
     ## 文本块提取
     #
     # 将分散的连通域进行合并
     #
-    def aggreate_contours_using_boxes(self, debug=False):
+    def aggreate_contours_using_boxes(self, debug=False, debug_verbose=False):
         # 提取掩码图中每个连通区域的最小外接矩形 Boxes
         image, contours, hierarchies = cv2.findContours(self.binaries, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
         for i, ctr in enumerate(contours):
@@ -120,13 +106,13 @@ class tdcontours:
         self._generate_binaries_using_boxes()
         
         # 进行 Boxes 的迭代合并
-        num1 = self._aggreate_contours_using_boxes_once(debug=debug)
+        num1 = self._aggreate_contours_using_boxes_once(debug=debug, debug_verbose=debug_verbose)
         self._generate_binaries_using_boxes()
-        numx = self._aggreate_contours_using_boxes_once(debug=debug)
+        numx = self._aggreate_contours_using_boxes_once(debug=debug, debug_verbose=debug_verbose)
         self._generate_binaries_using_boxes()
         while (numx != num1):
             num1 = numx
-            numx = self._aggreate_contours_using_boxes_once(debug=debug)
+            numx = self._aggreate_contours_using_boxes_once(debug=debug, debug_verbose=debug_verbose)
             self._generate_binaries_using_boxes()
         self._delsmallregions_using_boxes()
 
@@ -137,7 +123,7 @@ class tdcontours:
     #
     # 合并两个连通域
     #
-    def _aggreate_contours_using_boxes_once(self, debug=False):
+    def _aggreate_contours_using_boxes_once(self, debug=False, debug_verbose=False):
         # 初始化每一个 Box，并计算每一个 Box 的相关参数
         boxes = []
         for i, box  in enumerate(self.boxes):
@@ -173,50 +159,57 @@ class tdcontours:
                 area_size_b_tmp,w_b_tmp,h_b_tmp = self._get_box_area(boxb[0])
 
                 # Debug print
-                print("======================================================")
-                print("Box a:")
-                print("  area size:     %.3f(%.3f,%.3f,%.3f)" % (area_size_a, area_size_a_tmp, w_a_tmp, h_a_tmp))
-                print("  aspect ratio:  %.3f" % aspect_ratio_a)
-                print("  direction:     %.3f" % direction_a)
-                print("Box b:")
-                print("  area size:     %.3f(%.3f,%.3f,%.3f)" % (area_size_b, area_size_b_tmp, w_b_tmp, h_b_tmp))
-                print("  aspect ratio:  %.3f" % aspect_ratio_b)
-                print("  direction:     %.3f" % direction_b)
-                print("Compare")
-                print("  overlap ratio: %.3f" % overlap_ratio)
-                print("  size_a/size_b: %.3f" % size_ratio_of_ab)
+                if debug:
+                    print("======================================================")
+                    print("Box a:")
+                    print("  area size:     %.3f(%.3f,%.3f,%.3f)" % (area_size_a, area_size_a_tmp, w_a_tmp, h_a_tmp))
+                    print("  aspect ratio:  %.3f" % aspect_ratio_a)
+                    print("  direction:     %.3f" % direction_a)
+                    print("Box b:")
+                    print("  area size:     %.3f(%.3f,%.3f,%.3f)" % (area_size_b, area_size_b_tmp, w_b_tmp, h_b_tmp))
+                    print("  aspect ratio:  %.3f" % aspect_ratio_b)
+                    print("  direction:     %.3f" % direction_b)
+                    print("Compare")
+                    print("  overlap ratio: %.3f" % overlap_ratio)
+                    print("  size_a/size_b: %.3f" % size_ratio_of_ab)
 
                 # 重叠嵌套判别
                 if overlap_ratio > self.t_of_overlap_ratio:
                     retboxes = self._aggreate_contours_2boxes(self.boxes, i, i+j+1)
                     self.boxes = retboxes
-                    print("Overlap.")
-                    self._debug_judge_2boxes_show(boxa[0], boxb[0], True, debug)
+                    if debug:
+                        print("Overlap. \n%s" % True)
+                        self._debug_judge_2boxes_show(boxa[0], boxb[0], debug_verbose)
                     return len(self.boxes)
 
                 # 按两个 Box 的相关数据动态判断是否合并
                 t_of_area_ratio_for_rect = self._get_threshold_of_area_ratio(boxa, boxb)
-                print("  plus/rect:     %.3f(%.3f)" % (size_ratio_of_bounding_rect, t_of_area_ratio_for_rect))
+                if debug:
+                    print("  plus/rect:     %.3f(%.3f)" % (size_ratio_of_bounding_rect, t_of_area_ratio_for_rect))
                 if size_ratio_of_bounding_rect > t_of_area_ratio_for_rect:
-                    if self._judge_direction(boxa, boxb) and self._judge_distance(boxa, boxb) and self._judge_strategy(boxa, boxb):
+                    if self._judge_direction(boxa, boxb, debug) and self._judge_distance(boxa, boxb, debug) and self._judge_strategy(boxa, boxb, debug):
                         candidate_agged_boxes.append((boxb[0], i+j+1, area_plus_ab/area_bounding_rect))
                         agged_flag = True
-                        print("Pass validation")
-                        self._debug_judge_2boxes_show(boxa[0], boxb[0], True, debug)
+                        if debug:
+                            print("Pass validation \n%s" % True)
+                            self._debug_judge_2boxes_show(boxa[0], boxb[0], debug_verbose)
                     else:
-                        print("Not pass validation (direction or distance)")
-                        self._debug_judge_2boxes_show(boxa[0], boxb[0], False, debug)
+                        if debug:
+                            print("Not pass validation (direction or distance) \n%s" % False)
+                            self._debug_judge_2boxes_show(boxa[0], boxb[0], debug_verbose)
                 else:
-                    print("Not pass validation (pos_size_for_rect)")
-                    self._debug_judge_2boxes_show(boxa[0], boxb[0], False, debug)
+                    if debug:
+                        print("Not pass validation (pos_size_for_rect) \n%s" % False)
+                        self._debug_judge_2boxes_show(boxa[0], boxb[0], debug_verbose)
 
 
             # 从符号合并的候选区域中找出最符合的一个进行合并
             if agged_flag == True:
                 agg_idx = self._pickup_best_agg_box(boxa, candidate_agged_boxes)
                 retboxes = self._aggreate_contours_2boxes(self.boxes, i, agg_idx)
-                print("---------------- Aggregating ----------------")
-                self._debug_aggreate_boxes_show(candidate_agged_boxes, boxa[0], self.boxes[agg_idx], debug)
+                if debug:
+                    print("---------------- Aggregating ----------------")
+                    self._debug_aggreate_boxes_show(candidate_agged_boxes, boxa[0], self.boxes[agg_idx], debug)
                 self.boxes = retboxes
                 return len(self.boxes)
             agged_flag = False
@@ -403,13 +396,13 @@ class tdcontours:
     def _get_threshold_of_area_ratio(self, boxa, boxb):
         
         if self._is_gt_one_char(boxa[PAR_BOX]) == False:
-            if boxa[PAR_ASPECT_RATIO] > 1.5:
+            if boxa[PAR_ASPECT_RATIO] > 2.0:
                 return 0.55
             else:
                 return 0.60
 
         if self._is_gt_one_char(boxb[PAR_BOX]) == False:
-            if boxb[PAR_ASPECT_RATIO] > 1.5:
+            if boxb[PAR_ASPECT_RATIO] > 2.0:
                 return 0.55
             else:
                 return 0.60
@@ -445,7 +438,7 @@ class tdcontours:
 
     ## 对两个 Box 的方向进行可合并判别
     #
-    def _judge_direction(self, boxa, boxb):
+    def _judge_direction(self, boxa, boxb, debug=False):
         direction_type = DIRECTION_TYPE_PARALLEL
         if self._is_gt_one_char(boxa[PAR_BOX]) == False or self._is_gt_one_char(boxb[PAR_BOX]) == False:
             if self._is_gt_one_char(boxa[PAR_BOX]) == False and self._is_gt_one_char(boxb[PAR_BOX]) == False:
@@ -476,11 +469,12 @@ class tdcontours:
         max_threshold = math.pi/2 - min_threshold
 
         # Debug output
-        print("  direction 2-boxes:       %.3f" % delta_direction_2boxes)
-        print("  direction centers:       %.3f" % delta_direction_box_with_centers)
-        print("  precision of direction: (%.3f,%.3f)" % (min_threshold, max_threshold))
-        print("  direction type:          %.3f" % direction_type)
-        print("  is gt one char:          %s,%s" %  (self._is_gt_one_char(boxa[PAR_BOX]), self._is_gt_one_char(boxb[PAR_BOX])))
+        if debug:
+            print("  direction 2-boxes:       %.3f" % delta_direction_2boxes)
+            print("  direction centers:       %.3f" % delta_direction_box_with_centers)
+            print("  precision of direction: (%.3f,%.3f)" % (min_threshold, max_threshold))
+            print("  direction type:          %.3f" % direction_type)
+            print("  is gt one char:          %s,%s" %  (self._is_gt_one_char(boxa[PAR_BOX]), self._is_gt_one_char(boxb[PAR_BOX])))
         if (direction_type == DIRECTION_TYPE_PARALLEL and delta_direction_2boxes < min_threshold) \
             or (direction_type == DIRECTION_TYPE_PARALLEL_CENTER_LINE):
             # 判断BOX与两个BOX中心点连线方向
@@ -491,7 +485,7 @@ class tdcontours:
         else:
             return False
 
-    def _judge_distance(self, boxa, boxb):
+    def _judge_distance(self, boxa, boxb, debug=False):
         center_point_a = self._get_box_center_point(boxa[PAR_BOX])
         center_point_b = self._get_box_center_point(boxb[PAR_BOX])
         binaries_a = np.zeros_like(self.binaries)
@@ -509,15 +503,16 @@ class tdcontours:
         min_area_size = area_size_a
         if min_area_size > area_size_b:
             min_area_size = area_size_b
+        
+        if debug:
+            print("  distance 2-boxes:  %.3f(%.3f)" % (distance, 2.6 * math.sqrt(min_area_size)))
 
-        print("  distance 2-boxes:  %.3f(%.3f)" % (distance, 2.5*math.sqrt(min_area_size)))
-
-        if distance < 2.5*math.sqrt(min_area_size):
+        if distance < 2.6 * math.sqrt(min_area_size):
             return True
         else:
             return False
 
-    def _judge_strategy(self, boxa, boxb):
+    def _judge_strategy(self, boxa, boxb, debug):
 
         if self._is_gt_one_char(boxa[PAR_BOX]) == True and self._is_gt_one_char(boxb[PAR_BOX]) == True:
             return True
@@ -638,13 +633,8 @@ class tdcontours:
     def t_of_overlap_ratio(self, val):
         self.__t_of_overlap_ratio = val
 
-    def _debug_judge_2boxes_show(self, boxa, boxb, flag, is_enable=False):
-        if flag:
-            print("True")
-        else:
-            print("False")
-
-        if is_enable == False:
+    def _debug_judge_2boxes_show(self, boxa, boxb, is_enable=False):
+        if is_enable == True:
             tmp = self.binaries.copy()
             tmp = cv2.drawContours(tmp, [np.int0(boxa)], 0, 85, thickness=cv2.FILLED)
             tmp = cv2.drawContours(tmp, [np.int0(boxb)], 0, 170, thickness=cv2.FILLED)
@@ -654,7 +644,7 @@ class tdcontours:
             cv2.waitKey(0)
 
     def _debug_aggreate_boxes_show(self, candidate_agged_boxes, added_box1, added_box2, is_enable=False):
-        if is_enable == False:
+        if is_enable == True:
             tmp = self.binaries.copy()
             for box in candidate_agged_boxes:
                 tmp = cv2.drawContours(tmp, [np.int0(box[0])], 0, 170, thickness=cv2.FILLED)
