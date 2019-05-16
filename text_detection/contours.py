@@ -286,7 +286,7 @@ class tdcontours:
             area_size,_,_ = self._get_box_area(box)
             if area_size > 140:
                 binaries = cv2.drawContours(binaries, [np.int0(box)], 0, 255, thickness=cv2.FILLED)
-                new_boxes.append(box)
+                new_boxes.append(np.int0(box))
 
         self.binaries = binaries
         self.boxes = new_boxes

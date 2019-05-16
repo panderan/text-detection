@@ -21,7 +21,7 @@ class evaluate:
     def precision(self, boxes, ground_truth_img):
         # 提取真实文本区域的每个外接矩形
         gt_boxes = []
-        image, contours, hierarchies = cv2.findContours(ground_truth_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+        image, contours, hierarchies = cv2.findContours(ground_truth_img, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         for i, ctr in enumerate(contours):
             ro_rect = cv2.minAreaRect(ctr)
             box = np.int0(cv2.boxPoints(ro_rect))
@@ -48,16 +48,14 @@ class evaluate:
                     continue
                 
                 # 计算准确度
-                total_points = np.array(box.tolist()+gt_box.tolist())
-                ro_rect = cv2.minAreaRect(np.int0(total_points))
-                area_box = np.int0(cv2.boxPoints(ro_rect))
-                area_img = np.zeros_like(ground_truth_img)
-                area_img = cv2.drawContours(area_img, [np.int0(area_box)], 0, 255, cv2.FILLED)
-                total_area = np.sum(area_img)/255.0
+                bins_gt_box_img[:,:] = 0
+                bins_gt_box_img = cv2.drawContours(bins_gt_box_img, [gt_box], 0, 255, cv2.FILLED)
+                bins_gt_box_img = bins_gt_box_img | bins_box_img
+                union_area_size = np.sum(bins_gt_box_img)/255.0
                 
                 # 更新最大精确值
-                if prec < intersection_area_size/total_area:
-                    prec = intersection_area_size/total_area
+                if prec < intersection_area_size/union_area_size:
+                    prec = intersection_area_size/union_area_size
 
             total_prec += prec
             prec = 0.0
@@ -90,15 +88,13 @@ class evaluate:
                     continue
 
                 # 计算准确度
-                total_points = np.array(box.tolist()+gt_box.tolist())
-                ro_rect = cv2.minAreaRect(np.int0(total_points))
-                area_box = np.int0(cv2.boxPoints(ro_rect))
-                area_img = np.zeros_like(ground_truth_img)
-                area_img = cv2.drawContours(area_img, [np.int0(area_box)], 0, 255, cv2.FILLED)
-                total_area = np.sum(area_img)/255.0
+                bins_box_img[:,:] = 0
+                bins_box_img = cv2.drawContours(bins_box_img, [np.int0(box)], 0, 255, cv2.FILLED)
+                bins_box_img = bins_box_img | bins_gt_box_img
+                union_area_size = np.sum(bins_box_img)/255.0
 
-                if recall < intersection_area_size/total_area:
-                    recall = intersection_area_size/total_area
+                if recall < intersection_area_size/union_area_size:
+                    recall = intersection_area_size/union_area_size
             total_recall += recall
             recall = 0.0
         return total_recall/len(gt_boxes)
