@@ -283,6 +283,10 @@ class tdcontours:
         binaries = np.zeros_like(self.binaries)
         new_boxes = []
         for i,box in enumerate(self.boxes):
+            points = [x for y in box for x in y]
+            points.sort()
+            if points[0] < 0:
+                continue
             area_size,_,_ = self._get_box_area(box)
             if area_size > 140:
                 binaries = cv2.drawContours(binaries, [np.int0(box)], 0, 255, thickness=cv2.FILLED)
@@ -290,6 +294,9 @@ class tdcontours:
 
         self.binaries = binaries
         self.boxes = new_boxes
+    
+    def flesh_binaries_using_boxes(self):
+        self._generate_binaries_using_boxes()
 
     ## 计算 Box 的面积
     #

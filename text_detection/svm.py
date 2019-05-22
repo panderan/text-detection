@@ -1,5 +1,6 @@
 from text_detection import dlbp
 from sklearn import svm
+import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 
@@ -18,35 +19,43 @@ class svc:
         training_data = np.array(vtr)[:, 0:self.dlbp_ft.k]
         
         # 构建 SVC 分类实例
-        self.svc = svm.SVC(gamma='scale', kernel='poly')
+        self.svc = svm.SVC(gamma='scale', kernel='poly', degree=50)
         self.svc.fit(training_data, labels)
 
         self.trained = True
     
 
-    def filter_regions(self, gimg, binaries):
+    def filter_regions(self, gimg, boxes, debug = False):
+        ret_boxes = []
         if self.trained == False:
-            return binaries 
+            return boxes 
 
-        image, contours, hierarchies = cv2.findContours(binaries, cv2.RETR_CCOMP, cv2.CHAIN_APPROX_NONE)
-        ret_bins = np.zeros_like(binaries)
-        for i, (ctr, hiry) in enumerate(zip(contours, hierarchies[0])):
-            if hiry[3] == -1:
-                # Mask seg image
-                mask = np.zeros_like(binaries)
-                mask = cv2.drawContours(mask, [ctr], 0, 255, thickness=cv2.FILLED)
-                x,y,w,h = cv2.boundingRect(ctr)
-                mask_seg = mask[y:y+h, x:x+w]
+        for i, box in enumerate(boxes):
+            # Mask seg image
+            mask = np.zeros_like(gimg)
+            mask = cv2.drawContours(mask, [box], 0, 255, thickness=cv2.FILLED)
+            x,y,w,h = cv2.boundingRect(box)
+            mask_seg = mask[y:y+h, x:x+w]
                  
-                # seg image
-                gray_img = np.zeros_like(binaries)
-                gray_img[mask > 0] = gimg[mask > 0]
-                gray_img_seg = gray_img[ y:y+h, x:x+w]
+            # seg image
+            gray_img = np.zeros_like(gimg)
+            gray_img[mask > 0] = gimg[mask > 0]
+            gray_img_seg = gray_img[ y:y+h, x:x+w]
                 
-                # SVM 分类
-                vet = self.dlbp_ft.get_dlbp_feature(gray_img_seg, mask_seg)
-                pre = self.svc.predict(np.array(vet).reshape(1,-1))
+            # SVM 分类
+            vet = self.dlbp_ft.get_dlbp_feature(gray_img_seg, mask_seg)
+            pre = self.svc.predict(np.array(vet).reshape(1,-1))
 
-                if str(pre[0]) == "Y":
-                    ret_bins = cv2.drawContours(ret_bins, [ctr], 0, 255, thickness=cv2.FILLED)
-        return ret_bins
+            if str(pre[0]) == "Y":
+                ret_boxes.append(box)
+
+            if debug:
+                print("Ret: " + pre[0])
+                plt.subplot(121)
+                plt.imshow(gray_img_seg, "gray")
+                plt.subplot(122)
+                plt.imshow(mask_seg, "gray")
+                plt.show()
+
+        return ret_boxes
+

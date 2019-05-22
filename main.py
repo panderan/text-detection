@@ -17,6 +17,7 @@ save_regions_path = ""
 save_mask=False
 save_mask_path = ""
 enable_svm = False
+training_path = ""
 enable_eval = False
 ground_truth_img_path = ""
 
@@ -24,12 +25,13 @@ enable_debug_mser=False
 enable_debug_morph=False
 enable_debug_contours=False
 enable_debug_contours_verbose=False
+enable_debug_svm=False
 is_show_result = True
 def usage():
     print("Help message")
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "i:", ["svm","save-regions=","eval=","save-mask=","debug=","disable-show","help"])
+    opts, args = getopt.getopt(sys.argv[1:], "i:", ["svm=","save-regions=","eval=","save-mask=","debug=","disable-show","help"])
 except getopt.GetoptError:
     print("argv error")
 
@@ -44,6 +46,7 @@ for cmd,arg in opts:
         save_mask = True
     elif cmd in ("--svm"):
         enable_svm = True
+        training_path = arg
     elif cmd in ("--eval"):
         enable_eval = True
         ground_truth_img_path = arg
@@ -57,6 +60,8 @@ for cmd,arg in opts:
             enable_debug_contours = True
         if "contours-verbose" in ss:
             enable_debug_contours_verbose = True
+        if "svm" in ss:
+            enable_debug_svm = True
     elif cmd in ("--disable-show"):
         is_show_result = False
     else:
@@ -88,8 +93,9 @@ if save_region:
 text_regions_binaries = ctr.binaries.copy()
 if enable_svm:
     classification = svm.svc()
-    classification.train("IDCards/Rear/Training")
-    text_regions_binaries = classification.filter_regions(msr.gray_img, ctr.binaries)
+    classification.train(training_path)
+    ctr.boxes = classification.filter_regions(msr.gray_img, ctr.boxes, enable_debug_svm)
+    ctr.flesh_binaries_using_boxes()
 
 # 评估结果
 if enable_eval:

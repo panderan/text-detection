@@ -8,7 +8,6 @@
 # @author panderan@163.com 
 #
 
-
 import matplotlib.pyplot as plt
 from skimage import feature
 import numpy as np
@@ -16,7 +15,6 @@ import os
 import cv2
 import math
 import re
-
 
 ## 返回二元组的第一个元素
 #
@@ -35,7 +33,7 @@ class dlbp_training:
     # @param radius 采样范围半径
     # @param occupied 主要特征占有率
     #
-    def __init__(self, points=8, radius=1, occupied=0.8):
+    def __init__(self, points=8, radius=1, occupied=0.9):
         self.number_points = points
         self.radius = radius
         self.occupied = occupied
@@ -90,7 +88,8 @@ class dlbp_training:
             acc += item
             total = sum(x)
             if acc/total > self.occupied:
-                return (i,list(map(lambda x: x/total, x)))
+                # return (i,list(map(lambda x: x/total, x)))
+                return (i, x)
 
 
 ## DLBP 特征提取类
@@ -101,7 +100,7 @@ class dlbp_feature(dlbp_training):
     ## 构造函数
     # 参数同父类
     #
-    def __init__(self, points=8, radius=1, occupied=0.8):
+    def __init__(self, points=8, radius=1, occupied=0.85):
         super(dlbp_feature, self).__init__(points, radius, occupied)
 
     ## 获取 DLBP 图像
@@ -121,6 +120,7 @@ class dlbp_feature(dlbp_training):
         if self.k == 0:
             print("DLBP need training first\n")
             return None
+        
         lbp = feature.local_binary_pattern(gimg, self.number_points, self.radius, method="ror")
         lbp[gimg_msk <127] = 256
         data = lbp.ravel()
@@ -129,7 +129,7 @@ class dlbp_feature(dlbp_training):
         x = x.tolist()
         total = sum(x)
         x.sort(reverse=True)
-        x = list(map(lambda x: x/total, x))
+        # x = list(map(lambda x: x/total, x))
         return np.array(x[:self.k])
 
 
