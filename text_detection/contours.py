@@ -55,10 +55,12 @@ class tdcontours:
         self.name = name
         self.boxes = []
         self.save_path = save_path
-        self.t_of_fixed_pos_ratio_for_rect = [0.99, 0.95, 0.90]
         self.t_of_extreme_area_ratio_for_ab = 24
         self.t_of_overlap_ratio = 0.25
         self.strategy = "Horizon"
+        self.t_of_area_size = 140
+        self.t_of_ar_of_direction_type = 2.5
+        self.t_of_distance = 2.6
 
     ## 将每一个候选区域存为图像文件
     # 将每一个候选区域交互保存为图像文件，并在过程中人为交互标记该候选区是否是文字区域
@@ -288,7 +290,7 @@ class tdcontours:
             if points[0] < 0:
                 continue
             area_size,_,_ = self._get_box_area(box)
-            if area_size > 140:
+            if area_size > self.t_of_area_size:
                 binaries = cv2.drawContours(binaries, [np.int0(box)], 0, 255, thickness=cv2.FILLED)
                 new_boxes.append(np.int0(box))
 
@@ -450,9 +452,9 @@ class tdcontours:
         if self._is_gt_one_char(boxa[PAR_BOX]) == False or self._is_gt_one_char(boxb[PAR_BOX]) == False:
             if self._is_gt_one_char(boxa[PAR_BOX]) == False and self._is_gt_one_char(boxb[PAR_BOX]) == False:
                 return True
-            elif self._is_gt_one_char(boxa[PAR_BOX]) == True and boxb[PAR_ASPECT_RATIO] < 2.5:
+            elif self._is_gt_one_char(boxa[PAR_BOX]) == True and boxb[PAR_ASPECT_RATIO] < self.t_of_ar_of_direction_type:
                 direction_type = DIRECTION_TYPE_PARALLEL_CENTER_LINE
-            elif self._is_gt_one_char(boxb[PAR_BOX]) == True and boxa[PAR_ASPECT_RATIO] < 2.5:
+            elif self._is_gt_one_char(boxb[PAR_BOX]) == True and boxa[PAR_ASPECT_RATIO] < self.t_of_ar_of_direction_type:
                 direction_type = DIRECTION_TYPE_PARALLEL_CENTER_LINE
 
         # 两个 BOX 方向的差
@@ -512,9 +514,9 @@ class tdcontours:
             min_area_size = area_size_b
         
         if debug:
-            print("  distance 2-boxes:  %.3f(%.3f)" % (distance, 2.6 * math.sqrt(min_area_size)))
+            print("  distance 2-boxes:  %.3f(%.3f)" % (distance, self.t_of_distance * math.sqrt(min_area_size)))
 
-        if distance < 2.6 * math.sqrt(min_area_size):
+        if distance < self.t_of_distance * math.sqrt(min_area_size):
             return True
         else:
             return False
@@ -620,13 +622,6 @@ class tdcontours:
                 self.__save_path += '/'
 
     @property
-    def t_of_fixed_pos_ratio_for_rect(self):
-        return self.__t_of_fixed_pos_ratio_for_rect
-    @t_of_fixed_pos_ratio_for_rect.setter
-    def t_of_fixed_pos_ratio_for_rect(self, val):
-        self.__t_of_fixed_pos_ratio_for_rect = val
-
-    @property
     def t_of_extreme_area_ratio_for_ab(self):
         return self.__t_of_extreme_area_ratio_for_ab
     @t_of_extreme_area_ratio_for_ab.setter
@@ -639,6 +634,27 @@ class tdcontours:
     @t_of_overlap_ratio.setter
     def t_of_overlap_ratio(self, val):
         self.__t_of_overlap_ratio = val
+
+    @property
+    def t_of_area_size(self):
+        return self.__t_of_area_size
+    @t_of_area_size.setter
+    def t_of_area_size(self, val):
+        self.__t_of_area_size = val
+
+    @property
+    def t_of_ar_of_direction_type(self):
+        return self.__t_of_ar_of_direction_type
+    @t_of_ar_of_direction_type.setter
+    def t_of_ar_of_direction_type(self, val):
+        self.__t_of_ar_of_direction_type = val
+
+    @property
+    def t_of_distance(self):
+        return self.__t_of_distance
+    @t_of_distance.setter
+    def t_of_distance(self, val):
+        self.__t_of_distance = val
 
     def _debug_judge_2boxes_show(self, boxa, boxb, is_enable=False):
         if is_enable == True:

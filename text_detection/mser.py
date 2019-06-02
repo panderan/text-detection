@@ -23,12 +23,13 @@ class mser_cls:
     # 以灰度图像的形式读入图像，并保持其长宽比将其总像素数量缩放到400,000 左右
     # 
     # @param IMAGE_PATH 输入图像的路径
-    def __init__(self, IMAGE_PATH):
+    def __init__(self):
         self.delta = 5
         self.min_area = 9 
         self.max_area =500 
         self.variation = 0.25
-        self.color_img = cv2.imread(IMAGE_PATH)
+        self.total_pixels = 400000
+        self.color_img = None
 
     ## 提取 MSER 连通区域
     #
@@ -82,7 +83,9 @@ class mser_cls:
     # @retval rect_img 在原图中用矩形标出候选区域图像
     # @retval binarized 以背景图像为0，提取的连通域为255 的二值图像
     #
-    def extraction_with_labels(self, flt = 0, direction = 0, channel="gray"):
+    def extraction_with_labels(self, color_img=None, flt = 0, direction = 0, channel="gray"):
+        if color_img != None:
+            self.color_img = color_img
         rect_img = self.gray_img.copy()
         binarized = np.zeros_like(self.gray_img)
         msers, bboxes = self.extraction(flt, direction, channel)
@@ -100,7 +103,8 @@ class mser_cls:
     #
     # @retval binarized 以背景图像为0，提取的连通域为255 的二值图像
     #
-    def extraction_in_all_channel_with_labels(self, flt = 0, direction = 0):
+    def extraction_in_all_channel_with_labels(self, color_img, flt = 0, direction = 0):
+        self.color_img = color_img
         grect, gbinaries = self.extraction_with_labels(flt = flt, channel="gray")
         b_rect, b_binaries = self.extraction_with_labels(flt = flt, channel="blue")
         g_rect, g_binaries = self.extraction_with_labels(flt = flt, channel="green")
@@ -137,6 +141,13 @@ class mser_cls:
     @variation.setter
     def variation(self, val):
         self.__variation = val
+
+    @property
+    def total_pixels(self):
+        return self.__total_pixels
+    @total_pixels.setter
+    def total_pixels(self, val):
+        self.__total_pixels = val
     
     @property
     def color_img(self):
@@ -149,7 +160,7 @@ class mser_cls:
             g_img = color_img[:,:,1]
             r_img = color_img[:,:,2]
             gimg = cv2.cvtColor(color_img, cv2.COLOR_BGR2GRAY)
-            mul = sqrt(gimg.shape[0]*gimg.shape[1]/400000)
+            mul = sqrt(gimg.shape[0]*gimg.shape[1]/self.total_pixels)
             self.__gray_img = cv2.resize(gimg, (int(gimg.shape[1]/mul), int(gimg.shape[0]/mul)))
             self.__b_img = cv2.resize(b_img, (int(b_img.shape[1]/mul), int(b_img.shape[0]/mul)))
             self.__g_img = cv2.resize(g_img, (int(g_img.shape[1]/mul), int(g_img.shape[0]/mul)))

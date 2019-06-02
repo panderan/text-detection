@@ -1,0 +1,18 @@
+-
+    mser:
+        delta: 0
+        min_area: 0
+        max_area: 0
+        variation: 0
+        total_pixels: 0
+    filter:
+        perimeter_lim: 0
+        aspect_ratio_lim: 0
+        occupation_lim: 0
+        compactness_lim: 0
+    morph:
+        k_dilate: 0
+        k_erode: 0
+        k_opening: 0
+        k_closing: 0
+
