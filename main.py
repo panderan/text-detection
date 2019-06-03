@@ -98,13 +98,13 @@ msr.max_area     = config['mser']['max_area']
 msr.variation    = config['mser']['variation']
 msr.total_pixels = config['mser']['total_pixels']
 
-flt = filter.mser_filter()
-flt.perimeter_lim    = config['filter']['perimeter_lim']
-flt.aspect_ratio_lim = config['filter']['aspect_ratio_lim']
-flt.occupation_lim   = config['filter']['occupation_lim']
-flt.compactness_lim  = config['filter']['compactness_lim']
+msr_flt = filter.mser_filter()
+msr_flt.perimeter_lim    = config['mser_filter']['perimeter_lim']
+msr_flt.aspect_ratio_lim = config['mser_filter']['aspect_ratio_lim']
+msr_flt.occupation_lim   = config['mser_filter']['occupation_lim']
+msr_flt.compactness_lim  = config['mser_filter']['compactness_lim']
 
-binaries = msr.extraction_in_all_channel_with_labels(imput_image, flt = flt)
+binaries = msr.extraction_in_all_channel_with_labels(imput_image, flt = msr_flt)
 
 
 # 对由候选区组成的二值图像进行形态学处理
@@ -114,7 +114,12 @@ mph.k_dilate  = cv2.getStructuringElement(cv2.MORPH_RECT, (config['morph']['k_di
 mph.k_opening = cv2.getStructuringElement(cv2.MORPH_RECT, (config['morph']['k_opening'],config['morph']['k_opening']))
 mph.k_closing = cv2.getStructuringElement(cv2.MORPH_RECT, (config['morph']['k_closing'],config['morph']['k_closing']))
 
-binaries = mph.morph_operation(binaries, debug=enable_debug_morph)
+mph_flt = None
+if config['morph_filter']['enable'] == True:
+    mph_flt = filter.filter()
+    mph_flt.area_lim = config['morph_filter']['area_lim']
+    mph_flt.aspect_lim = config['morph_filter']['aspect_lim']
+binaries = mph.morph_operation(binaries, flt=mph_flt, debug=enable_debug_morph)
 
 
 # 创建选区处理实例，并从二值图像中提起候选区域分别保存为图片
@@ -126,7 +131,11 @@ ctr.t_of_ar_of_direction_type = config['contours']['ar_of_direction_type']
 ctr.t_of_distance = config['contours']['distance']
 
 ctr.aggreate_contours_using_boxes(debug=enable_debug_contours, debug_verbose=enable_debug_contours_verbose)
-
+if config['contours_filter']['enable'] == True:
+    ctr_flt = filter.filter()
+    ctr_flt.area_lim = config['contours_filter']['area_lim']
+    ctr_flt.aspect_lim = config['contours_filter']['aspect_lim']
+    ctr.flesh_binaries_using_filtered_boxes(ctr_flt)
 
 # 生成训练数据
 if save_region:

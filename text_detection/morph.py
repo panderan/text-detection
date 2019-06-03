@@ -46,7 +46,7 @@ class morph:
     # 对二值图像中的每一个连通域进行先腐蚀后膨胀，如果腐蚀后连通域消失则略过
     # 腐蚀操作。然后进行闭运算和开运算
     #
-    def morph_operation(self, binaries, debug = False):
+    def morph_operation(self, binaries, flt=None, debug = False):
         image, contours, hierarchies = cv2.findContours(binaries, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
         ret_bins = np.zeros_like(binaries)
 
@@ -60,7 +60,13 @@ class morph:
                 cv2.namedWindow("Debug",0);
                 cv2.resizeWindow("Debug", 800, 600);
                 cv2.imshow("Debug", tmp)
-                cv2.waitKey(0)
+                cv2.waitKey(1)
+
+            _,temp_contours,_ = cv2.findContours(temp_binaries, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+            ro_rect = cv2.minAreaRect(temp_contours[0])
+            box = np.int0(cv2.boxPoints(ro_rect))
+            if type(flt) != type(None) and flt.verification(box) == False:
+                continue
             ret_bins[temp_binaries > 128] = temp_binaries[temp_binaries > 128] 
 
         return ret_bins

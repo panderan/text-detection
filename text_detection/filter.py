@@ -11,6 +11,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import cv2
+import math
 
 ## 几何过滤类
 #
@@ -21,11 +22,11 @@ class mser_filter:
     # @param gray_img 待过滤的灰度图像（MSER 选区从该图像中提取）
     #
     def __init__(self, gray_img=0):
-        self.area_lim = 0.0
-        self.perimeter_lim = 0.0
-        self.aspect_ratio_lim = 0.0
-        self.occupation_lim = (0.0, 0.0)
-        self.compactness_lim = (0.0, 0.0)
+        self.area_lim = 0
+        self.perimeter_lim = 12
+        self.aspect_ratio_lim = (1.0, 15.0)
+        self.occupation_lim = (0.15, 0.90)
+        self.compactness_lim = (3e-3, 1e-1)
         self.gray_img = None
 
         if type(gray_img) != type(0):
@@ -44,20 +45,14 @@ class mser_filter:
     # @retval False 不满足
     #
     def verification(self, region, box):
-        # tmp = self.gray_img.copy()
-        # tmp = cv2.drawContours(tmp, [region], 0, 255, thickness=cv2.FILLED)
-        # cv2.namedWindow("Debug",0);
-        # cv2.resizeWindow("Debug", 800, 600);
-        # cv2.imshow("Debug", tmp)
-        # cv2.waitKey(1)
-
+        
         # 周长
         retval = self.getPerimeter(box)
         if retval <  self.perimeter_lim:
             return False
         # 横纵比
         retval = self.getAspectRatio(region)
-        if retval > self.aspect_ratio_lim:
+        if retval < self.aspect_ratio_lim[0] or retval > self.aspect_ratio_lim[1]:
             return False
         # 占用率
         retval = self.getOccurpiedRatio(region, box)
@@ -166,23 +161,38 @@ class mser_filter:
         plt.imshow(tmp, "gray")
 
 
-## 几何过滤类400k
-# 其中的默认参数适合图像像素总量为400,000 的图像
-#
-class mser_filter400k(mser_filter):
+class filter:
+    def __init__(self):
+        self.area_lim = (0, 500)
+        self.aspect_lim = (1.0, 15.0)
+        pass
 
-    def __init__(self, gray_img=0):
-        super(mser_filter400k, self).__init__(gray_img)
-        self.area_lim = 0
-        self.perimeter_lim = 12
-        self.aspect_ratio_lim = 15.0
-        self.occupation_lim = (0.15, 0.90)
-        self.compactness_lim = (3e-3, 1e-1)
-        self.gray_img = None
+    def verification(self, box):
+        retval = self._get_box_area(box)
+        if retval[0] < self.area_lim[0] or retval[0] > self.area_lim[1]:
+            return False
+        
+        if retval[1]/retval[2] < self.aspect_lim[0] or retval[1]/retval[2] > self.aspect_lim[1]:
+            return False
+        
+        return True
 
+    def _get_box_area(self, box):
+        p0=np.array(box[-1])
+        p1=np.array(box[0])
+        p2=np.array(box[1])
+        l1=p1-p0
+        l2=p1-p2
+        h=l1
+        w=l2
+        angle = math.asin(l1[1]/math.hypot(l1[0],l1[1]))
+        if angle > -math.pi/4 and angle < math.pi/4:
+            w=l1
+            h=l2    
 
-
-
+        dw=math.hypot(w[0],w[1])
+        dh=math.hypot(h[0],h[1])
+        return (dw*dh, dw, dh)
 
 
 

@@ -301,6 +301,15 @@ class tdcontours:
     def flesh_binaries_using_boxes(self):
         self._generate_binaries_using_boxes()
 
+    def flesh_binaries_using_filtered_boxes(self, flt):
+        new_boxes = []
+        for box in self.boxes:
+            if type(flt) != type(None) and flt.verification(box) == False:
+                continue
+            new_boxes.append(np.int0(box))
+        self.boxes = new_boxes
+        self._generate_binaries_using_boxes()
+
     ## 计算 Box 的面积
     #
     # @return Box 的面积

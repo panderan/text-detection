@@ -1,13 +1,13 @@
 mser:
     delta: 5
-    min_area: 9
+    min_area: 10
     max_area: 500
     variation: 0.25
     total_pixels: 400000
 
-filter:
+mser_filter:
     perimeter_lim: 12.0
-    aspect_ratio_lim: 15.0
+    aspect_ratio_lim: [0.125, 8.0]
     occupation_lim: [0.15, 0.90]
     compactness_lim: [0.003, 0.1]
 
@@ -17,9 +17,19 @@ morph:
     k_opening: 3
     k_closing: 3
 
+morph_filter:
+    enable: True 
+    area_lim: [0, 5000]
+    aspect_lim: [0.125, 1.5]
+
 contours:
     extreme_area_ratio_for_ab: 24
     overlap_ratio: 0.25
-    area_size: 140
+    area_size: 100
     ar_of_direction_type: 2.5
     distance: 1.0
+
+contours_filter:
+    enable: True 
+    area_lim: [0, 20000]
+    aspect_lim: [2.0, 100]
