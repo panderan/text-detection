@@ -34,9 +34,10 @@ PAR_AREA_SIZE=4
 PAR_DIRECTION=5
 PAR_ASPECT_RATIO=6
 
-DIRECTION_TYPE_NONE=7
-DIRECTION_TYPE_PARALLEL=8
-DIRECTION_TYPE_PARALLEL_CENTER_LINE=9
+DIRECTION_TYPE_NONE=1
+DIRECTION_TYPE_PARALLEL=2
+DIRECTION_TYPE_PARALLEL_CENTER_LINE=4
+DIRECTION_TYPE_VERTICAL_ALLOWED=5
 
 ## 边界处理类
 #
@@ -437,7 +438,7 @@ class tdcontours:
     
     ## 获取判断方向的精度
     #
-    # 默认方向夹角小于20度，则认为平行。大于70度认为垂直
+    # 默认方向夹角小于20度，则认为平行。大于70度认为垂直t_of_ar_of_direction_type
     #
     def _get_threshold_of_angle_precision(self, boxa, boxb=None):
         if (boxa != None and boxa[PAR_ASPECT_RATIO] < 2.0) \
@@ -448,28 +449,25 @@ class tdcontours:
     ## 对两个 Box 的方向进行可合并判别
     #
     def _judge_direction(self, boxa, boxb, debug=False):
+        if self._is_gt_one_char(boxa[PAR_BOX]) == False \
+            and self._is_gt_one_char(boxb[PAR_BOX]) == False:
+            return True
+        
+        # 获取方向判断类别 
         direction_type = DIRECTION_TYPE_PARALLEL
-        if self._is_gt_one_char(boxa[PAR_BOX]) == False or self._is_gt_one_char(boxb[PAR_BOX]) == False:
-            if self._is_gt_one_char(boxa[PAR_BOX]) == False and self._is_gt_one_char(boxb[PAR_BOX]) == False:
-                return True
-            elif self._is_gt_one_char(boxa[PAR_BOX]) == True and boxb[PAR_ASPECT_RATIO] < self.t_of_ar_of_direction_type:
-                direction_type = DIRECTION_TYPE_PARALLEL_CENTER_LINE
-            elif self._is_gt_one_char(boxb[PAR_BOX]) == True and boxa[PAR_ASPECT_RATIO] < self.t_of_ar_of_direction_type:
+        if self._is_gt_one_char(boxa[PAR_BOX]) == False \
+            or self._is_gt_one_char(boxb[PAR_BOX]) == False:
                 direction_type = DIRECTION_TYPE_PARALLEL_CENTER_LINE
 
-        # 两个 BOX 方向的差
-        delta_direction_2boxes = abs(boxa[PAR_DIRECTION]-boxb[PAR_DIRECTION])
-        if delta_direction_2boxes > math.pi/2:
-            delta_direction_2boxes = math.pi - delta_direction_2boxes
+        if boxa[PAR_ASPECT_RATIO] < 1.5 or boxb[PAR_ASPECT_RATIO] < 1.5:
+            direction_type |= DIRECTION_TYPE_VERTICAL_ALLOWED
 
+        # 两个 BOX 方向的差 和
         # 其中一个面积较大的 BOX 与中心点连线方向的差
-        max_box = boxa
-        if max_box[PAR_AREA_SIZE] < boxb[PAR_AREA_SIZE]:
-            max_box = boxb
+        delta_direction_2boxes = abs(boxa[PAR_DIRECTION]-boxb[PAR_DIRECTION]) % (math.pi/2)
+        max_box = boxa[PAR_AREA_SIZE] > boxb[PAR_AREA_SIZE] and boxa or boxb
         direction_2boxes = self._get_box_centers_direction(boxa[PAR_BOX], boxb[PAR_BOX])
-        delta_direction_box_with_centers = abs(max_box[PAR_DIRECTION] - direction_2boxes)
-        if delta_direction_box_with_centers > math.pi/2:
-            delta_direction_box_with_centers = math.pi - delta_direction_box_with_centers
+        delta_direction_box_with_centers = abs(max_box[PAR_DIRECTION] - direction_2boxes) % (math.pi/2)
         
         if direction_type == DIRECTION_TYPE_PARALLEL_CENTER_LINE:
             min_threshold = self._get_threshold_of_angle_precision(max_box)
@@ -484,15 +482,26 @@ class tdcontours:
             print("  precision of direction: (%.3f,%.3f)" % (min_threshold, max_threshold))
             print("  direction type:          %.3f" % direction_type)
             print("  is gt one char:          %s,%s" %  (self._is_gt_one_char(boxa[PAR_BOX]), self._is_gt_one_char(boxb[PAR_BOX])))
-        if (direction_type == DIRECTION_TYPE_PARALLEL and delta_direction_2boxes < min_threshold) \
-            or (direction_type == DIRECTION_TYPE_PARALLEL_CENTER_LINE):
-            # 判断BOX与两个BOX中心点连线方向
-            if delta_direction_box_with_centers < min_threshold:
-                return True
+
+        if direction_type & DIRECTION_TYPE_PARALLEL:
+            if delta_direction_2boxes < min_threshold \
+                or (direction_type & DIRECTION_TYPE_VERTICAL_ALLOWED \
+                    and delta_direction_2boxes > max_threshold):
+                pass
             else:
                 return False
-        else:
-            return False
+
+        if direction_type & DIRECTION_TYPE_PARALLEL \
+            or direction_type & DIRECTION_TYPE_PARALLEL_CENTER_LINE:
+            if delta_direction_box_with_centers < min_threshold \
+                or (direction_type & DIRECTION_TYPE_VERTICAL_ALLOWED \
+                    and delta_direction_box_with_centers > max_threshold):
+                pass
+            else:
+                return False
+
+        return True
+
 
     def _judge_distance(self, boxa, boxb, debug=False):
         center_point_a = self._get_box_center_point(boxa[PAR_BOX])
