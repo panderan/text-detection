@@ -101,11 +101,12 @@ msr.total_pixels = config['mser']['total_pixels']
 msr_flt = filter.mser_filter()
 msr_flt.perimeter_lim    = config['mser_filter']['perimeter_lim']
 msr_flt.aspect_ratio_lim = config['mser_filter']['aspect_ratio_lim']
+msr_flt.aspect_ratio_gt1 = config['mser_filter']['aspect_ratio_gt1']
 msr_flt.occupation_lim   = config['mser_filter']['occupation_lim']
 msr_flt.compactness_lim  = config['mser_filter']['compactness_lim']
 
-binaries = msr.extraction_in_all_channel_with_labels(imput_image, flt = msr_flt)
-
+binaries = msr.extraction_in_all_channel_with_labels(imput_image, flt = msr_flt, debug=enable_debug_mser)
+sys.exit(0)
 
 # 对由候选区组成的二值图像进行形态学处理
 mph = morph.morph()
@@ -123,7 +124,12 @@ binaries = mph.morph_operation(binaries, flt=mph_flt, debug=enable_debug_morph)
 
 
 # 创建选区处理实例，并从二值图像中提起候选区域分别保存为图片
-ctr = contours.tdcontours(binaries, image_path.split('/')[-1][0:-4], save_regions_path)
+ctr = None
+if config['contours']['name'] == "car_license":
+    ctr = contours.contours_car_license(binaries, image_path.split('/')[-1][0:-4], save_regions_path)
+else:
+    ctr = contours.tdcontours(binaries, image_path.split('/')[-1][0:-4], save_regions_path)
+
 ctr.t_of_extreme_area_ratio_for_ab = config['contours']['extreme_area_ratio_for_ab']
 ctr.t_of_overlap_ratio = config['contours']['overlap_ratio']
 ctr.t_of_area_size = config['contours']['area_size']
@@ -172,7 +178,8 @@ if save_mask:
 
 # 标记最终选区
 if is_show_result:
-    ret_img = regions.regions.label_image_with_box(msr.gray_img, ctr.boxes)
+    ret_img = cv2.cvtColor(msr.gray_img, cv2.COLOR_GRAY2BGR)
+    ret_img = regions.regions.label_image_with_box(ret_img, ctr.boxes, (255,0,0))
     plt.figure(figsize=(10,8))
     plt.imshow(ret_img, "gray")
     plt.show()

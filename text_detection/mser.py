@@ -40,7 +40,7 @@ class mser_cls:
     # @retval retmsrs 候选连通域列表，每一个元素为包含了该连通域的所有点的列表
     # @retval retboxes 候选连通域列表，每一个元素包含了该连通域的外接矩形
     #
-    def extraction(self, flt = 0, direction = 0, channel="gray"):
+    def extraction(self, flt = 0, direction = 0, channel="gray", debug=False):
         img = None
         if channel == "blue":
             img = self.b_img
@@ -59,16 +59,33 @@ class mser_cls:
 
         retmsrs = []
         retboxes = []
+        debug_img = debug and np.zeros_like(img)
+
         if type(flt) != type(0):
             flt.gray_img = img
             for i in range(len(msers)):
                 points = msers[i]
                 box = bboxes[i]
-                if flt.verification(points,box) == False:
-                    continue
-                else:
+
+                ret = flt.verification(points,box,debug)
+                if debug:
+                    print("%s" % ret)
+                    debug_img_temp = debug_img.copy()
+                    debug_img_temp = cv2.drawContours(debug_img_temp, [points], 0, 255, thickness=cv2.FILLED)
+                    debug_img_show = np.zeros_like(img)
+                    debug_img_show[debug_img_temp > 128] = img[debug_img_temp > 128]
+                    debug_img_show = cv2.rectangle(debug_img_show, (box[0],box[1]), (box[0]+box[2],box[1]+box[3]),  255, 1)
+                    cv2.imshow("debug", debug_img_show)
+                    cv2.waitKey(0)
+
+                if ret:
                     retmsrs.append(points)
                     retboxes.append(box)
+                else:
+                    continue
+
+                if debug:
+                    debug_img = cv2.drawContours(debug_img, [points], 0, 255, thickness=cv2.FILLED)
         else:
             retmsrs = msers
             retboxes = bboxes
@@ -83,12 +100,12 @@ class mser_cls:
     # @retval rect_img 在原图中用矩形标出候选区域图像
     # @retval binarized 以背景图像为0，提取的连通域为255 的二值图像
     #
-    def extraction_with_labels(self, color_img=None, flt = 0, direction = 0, channel="gray"):
+    def extraction_with_labels(self, color_img=None, flt = 0, direction = 0, channel="gray", debug=False):
         if color_img != None:
             self.color_img = color_img
         rect_img = self.gray_img.copy()
         binarized = np.zeros_like(self.gray_img)
-        msers, bboxes = self.extraction(flt, direction, channel)
+        msers, bboxes = self.extraction(flt, direction, channel, debug=debug)
         for i,box in enumerate(bboxes):
             rect_img = cv2.rectangle(rect_img, (box[0], box[1]), (box[0]+box[2], box[1]+box[3]), (255, 0, 0))
             binarized[ msers[i][:, 1], msers[i][:, 0]] = 255
@@ -103,12 +120,12 @@ class mser_cls:
     #
     # @retval binarized 以背景图像为0，提取的连通域为255 的二值图像
     #
-    def extraction_in_all_channel_with_labels(self, color_img, flt = 0, direction = 0):
+    def extraction_in_all_channel_with_labels(self, color_img, flt = 0, direction = 0, debug=False):
         self.color_img = color_img
-        grect, gbinaries = self.extraction_with_labels(flt = flt, channel="gray")
-        b_rect, b_binaries = self.extraction_with_labels(flt = flt, channel="blue")
-        g_rect, g_binaries = self.extraction_with_labels(flt = flt, channel="green")
-        r_rect, r_binaries = self.extraction_with_labels(flt = flt, channel="red")
+        grect, gbinaries = self.extraction_with_labels(flt = flt, channel="gray", debug=debug)
+        b_rect, b_binaries = self.extraction_with_labels(flt = flt, channel="blue", debug=debug)
+        g_rect, g_binaries = self.extraction_with_labels(flt = flt, channel="green", debug=debug)
+        r_rect, r_binaries = self.extraction_with_labels(flt = flt, channel="red", debug=debug)
         gbinaries[b_binaries > 128] = b_binaries[b_binaries > 128]
         gbinaries[g_binaries > 128] = g_binaries[g_binaries > 128]
         gbinaries[r_binaries > 128] = r_binaries[r_binaries > 128]

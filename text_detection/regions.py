@@ -17,9 +17,9 @@ class regions:
         return ret_img
 
     @staticmethod
-    def label_image_with_box(img, boxes):
+    def label_image_with_box(img, boxes, color):
         ret_img = img.copy()
         for i,box in enumerate(boxes):
-            ret_img = cv2.drawContours(ret_img, [np.int0(box)], 0, 255, thickness=1)
+            ret_img = cv2.drawContours(ret_img, [np.int0(box)], 0, color, thickness=1)
         return ret_img
 

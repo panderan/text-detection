@@ -698,9 +698,11 @@ class tdcontours:
 
 
 
+class contours_car_license(tdcontours):
+    def __init__(self, binaries=None, name="", save_path=""):
+        super(contours_car_license, self).__init__(binaries, name, save_path)
 
-
-
-
+    def _get_threshold_of_area_ratio(self, boxa, boxb):
+        return 0.72
 
 

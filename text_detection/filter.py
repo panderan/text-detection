@@ -25,6 +25,7 @@ class mser_filter:
         self.area_lim = 0
         self.perimeter_lim = 12
         self.aspect_ratio_lim = (1.0, 15.0)
+        self.aspect_ratio_gt1 = True
         self.occupation_lim = (0.15, 0.90)
         self.compactness_lim = (3e-3, 1e-1)
         self.gray_img = None
@@ -44,22 +45,30 @@ class mser_filter:
     # @retval True 满足
     # @retval False 不满足
     #
-    def verification(self, region, box):
+    def verification(self, region, box, debug=False):
         
         # 周长
         retval = self.getPerimeter(box)
+        debug and print("---------------------\nPerimeter:%.3f [>%.3f]" \
+                        % (retval, self.perimeter_lim))
         if retval <  self.perimeter_lim:
             return False
         # 横纵比
         retval = self.getAspectRatio(region)
+        debug and print("AspectRatio:%.3f [%.3f,%.3f]" \
+                        % (retval, self.aspect_ratio_lim[0], self.aspect_ratio_lim[1]))
         if retval < self.aspect_ratio_lim[0] or retval > self.aspect_ratio_lim[1]:
             return False
         # 占用率
         retval = self.getOccurpiedRatio(region, box)
+        debug and print("OccurpiedRatio:%.3f [%.3f,%.3f]" \
+                        % (retval, self.occupation_lim[0], self.occupation_lim[1]))
         if retval < self.occupation_lim[0] or retval > self.occupation_lim[1]:
             return False
         # 紧密度
         retval = self.getCompactness(region, box)
+        debug and print("Compactness:%.3f [%.3f,%.3f]" \
+                        % (retval, self.compactness_lim[0], self.compactness_lim[1]))
         if retval < self.compactness_lim[0] or retval > self.compactness_lim[1]:
             return False
         return True
@@ -78,11 +87,26 @@ class mser_filter:
     ## 获取选区横纵比 
     #
     def getAspectRatio(self, region):
-        h = max(region[:, 1]) - min(region[:, 1])
-        w = max(region[:, 0]) - min(region[:, 0])
-        ratio = float(w) /float(h)
-        if ratio < 1.0:
+        box = np.int0(cv2.boxPoints(cv2.minAreaRect(region)))
+        p0=np.array(box[-1])
+        p1=np.array(box[0])
+        p2=np.array(box[1])
+        l1=p1-p0
+        l2=p1-p2
+        h=l1
+        w=l2
+        angle = math.asin(l1[1]/math.hypot(l1[0],l1[1]))
+        if angle > -math.pi/4 and angle < math.pi/4:
+            w=l1
+            h=l2    
+
+        dw=math.hypot(w[0],w[1])+1
+        dh=math.hypot(h[0],h[1])+1
+
+        ratio = dw/dh
+        if self.aspect_ratio_gt1 and ratio < 1.0:
             ratio = 1.0 / ratio
+
         return ratio
 
     ## 获取选区占有率
@@ -190,8 +214,8 @@ class filter:
             w=l1
             h=l2    
 
-        dw=math.hypot(w[0],w[1])
-        dh=math.hypot(h[0],h[1])
+        dw=math.hypot(w[0],w[1])+1
+        dh=math.hypot(h[0],h[1])+1
         return (dw*dh, dw, dh)
 
 
