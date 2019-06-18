@@ -7,10 +7,12 @@ mser:
 
 mser_filter:
     perimeter_lim: 12.0
-    aspect_ratio_lim: [0.125, 1.5]
+    aspect_ratio_lim: [0.05, 1.5]
     aspect_ratio_gt1: False 
     occupation_lim: [0.15, 0.90]
     compactness_lim: [0.003, 0.1]
+    width_lim: [0,80]
+    height_lim: [0,80]
 
 morph:
     k_dilate: 6
@@ -26,8 +28,8 @@ morph_filter:
 contours:
     name: "car_license"
     extreme_area_ratio_for_ab: 24
-    overlap_ratio: 0.25
-    area_size: 100
+    overlap_ratio: 0.75
+    area_size: 50
     ar_of_direction_type: 2.5
     distance: 1.0
 

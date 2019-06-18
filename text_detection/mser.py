@@ -12,7 +12,7 @@ from math import sqrt
 import cv2
 import matplotlib.pyplot as plt
 import numpy as np
-
+from text_detection import common
 ## MSER 连通域提取类
 #
 # 从一幅灰度图像中提取 MSER 连通域
@@ -75,6 +75,8 @@ class mser_cls:
                     debug_img_show = np.zeros_like(img)
                     debug_img_show[debug_img_temp > 128] = img[debug_img_temp > 128]
                     debug_img_show = cv2.rectangle(debug_img_show, (box[0],box[1]), (box[0]+box[2],box[1]+box[3]),  255, 1)
+                    cv2.namedWindow("debug", 0)
+                    cv2.resizeWindow("debug", 800, 600)
                     cv2.imshow("debug", debug_img_show)
                     cv2.waitKey(0)
 
@@ -177,6 +179,7 @@ class mser_cls:
             g_img = color_img[:,:,1]
             r_img = color_img[:,:,2]
             gimg = cv2.cvtColor(color_img, cv2.COLOR_BGR2GRAY)
+            # gimg = common.common.unevenLightCompensate(gimg)
             mul = sqrt(gimg.shape[0]*gimg.shape[1]/self.total_pixels)
             self.__gray_img = cv2.resize(gimg, (int(gimg.shape[1]/mul), int(gimg.shape[0]/mul)))
             self.__b_img = cv2.resize(b_img, (int(b_img.shape[1]/mul), int(b_img.shape[0]/mul)))

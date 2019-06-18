@@ -15,7 +15,7 @@ import math
 
 ## 几何过滤类
 #
-class mser_filter:
+class basicFilter:
     
     ## 构造函数
     #
@@ -28,6 +28,9 @@ class mser_filter:
         self.aspect_ratio_gt1 = True
         self.occupation_lim = (0.15, 0.90)
         self.compactness_lim = (3e-3, 1e-1)
+        self.width_lim = (0, 800)
+        self.height_lim = (0, 800)
+
         self.gray_img = None
 
         if type(gray_img) != type(0):
@@ -47,16 +50,28 @@ class mser_filter:
     #
     def verification(self, region, box, debug=False):
         
+        # 长款度过滤
+        debug and print("---------------------\n")
+        debug and print("Width:%.3f[%.3f, %.3f]" % \
+                        (box[2],self.width_lim[0], self.width_lim[1]))
+        if box[2] < self.width_lim[0] or box[2] > self.width_lim[1]:
+            return False
+        debug and print("Height:%.3f[%.3f, %.3f]" % \
+                        (box[3],self.height_lim[0], self.height_lim[1]))
+        if box[3] < self.height_lim[0] or box[3] > self.height_lim[1]:
+            return False
+
         # 周长
         retval = self.getPerimeter(box)
-        debug and print("---------------------\nPerimeter:%.3f [>%.3f]" \
+        debug and print("Perimeter:%.3f [>%.3f]" \
                         % (retval, self.perimeter_lim))
         if retval <  self.perimeter_lim:
             return False
         # 横纵比
         retval = self.getAspectRatio(region)
-        debug and print("AspectRatio:%.3f [%.3f,%.3f]" \
-                        % (retval, self.aspect_ratio_lim[0], self.aspect_ratio_lim[1]))
+        rg_area = self.getArea(region)
+        debug and print("AspectRatio:%.3f [%.3f,%.3f](%.3f)" \
+                        % (retval, self.aspect_ratio_lim[0], self.aspect_ratio_lim[1], rg_area))
         if retval < self.aspect_ratio_lim[0] or retval > self.aspect_ratio_lim[1]:
             return False
         # 占用率
@@ -95,6 +110,11 @@ class mser_filter:
         l2=p1-p2
         h=l1
         w=l2
+        
+        if (l1[0] == 0 and l1[1] == 0)\
+            or (l2[0] == 0 and l2[1] == 0):
+            return 9999
+
         angle = math.asin(l1[1]/math.hypot(l1[0],l1[1]))
         if angle > -math.pi/4 and angle < math.pi/4:
             w=l1
@@ -185,7 +205,7 @@ class mser_filter:
         plt.imshow(tmp, "gray")
 
 
-class filter:
+class areaAspectFilter:
     def __init__(self):
         self.area_lim = (0, 500)
         self.aspect_lim = (1.0, 15.0)
@@ -219,6 +239,9 @@ class filter:
         return (dw*dh, dw, dh)
 
 
+class sobelFilter:
+    def __init__(self):
+        pass    
 
 
 
