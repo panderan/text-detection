@@ -4,6 +4,7 @@ mser:
     max_area: 500
     variation: 0.25
     total_pixels: 400000
+    channels: ["Gray"]
 
 mser_filter:
     perimeter_lim: 12.0

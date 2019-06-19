@@ -13,6 +13,13 @@ import cv2
 import matplotlib.pyplot as plt
 import numpy as np
 from text_detection import common
+
+EXTRACT_NONE=0x0
+EXTRACT_RED=0x1
+EXTRACT_GREEN=0x2
+EXTRACT_BLUE=0x4
+EXTRACT_GRAY=0x8
+EXTRACT_ALL = EXTRACT_RED + EXTRACT_GREEN + EXTRACT_BLUE + EXTRACT_GRAY
 ## MSER 连通域提取类
 #
 # 从一幅灰度图像中提取 MSER 连通域
@@ -40,16 +47,18 @@ class mser_cls:
     # @retval retmsrs 候选连通域列表，每一个元素为包含了该连通域的所有点的列表
     # @retval retboxes 候选连通域列表，每一个元素包含了该连通域的外接矩形
     #
-    def extraction(self, flt = 0, direction = 0, channel="gray", debug=False):
+    def extraction(self, flt = 0, direction = 0, channel=EXTRACT_GRAY, debug=False):
         img = None
-        if channel == "blue":
+        if channel == EXTRACT_BLUE:
             img = self.b_img
-        elif channel == "green":
+        elif channel == EXTRACT_GREEN:
             img = self.g_img
-        elif channel == "red":
+        elif channel == EXTRACT_RED:
             img = self.r_img
-        else:
+        elif channel == EXTRACT_GRAY:
             img = self.gray_img
+        else:
+            return None,None
 
         mser = cv2.MSER_create(_delta = self.delta, _min_area = self.min_area, _max_area = self.max_area)
         if direction == 0:
@@ -102,7 +111,7 @@ class mser_cls:
     # @retval rect_img 在原图中用矩形标出候选区域图像
     # @retval binarized 以背景图像为0，提取的连通域为255 的二值图像
     #
-    def extraction_with_labels(self, color_img=None, flt = 0, direction = 0, channel="gray", debug=False):
+    def extraction_with_labels(self, color_img=None, flt = 0, direction = 0, channel=EXTRACT_GRAY, debug=False):
         if color_img != None:
             self.color_img = color_img
         rect_img = self.gray_img.copy()
@@ -122,16 +131,39 @@ class mser_cls:
     #
     # @retval binarized 以背景图像为0，提取的连通域为255 的二值图像
     #
-    def extraction_in_all_channel_with_labels(self, color_img, flt = 0, direction = 0, debug=False):
+    def extraction_in_channels_with_labels(self, color_img, channel, flt = 0, direction = 0, debug=False):
         self.color_img = color_img
-        grect, gbinaries = self.extraction_with_labels(flt = flt, channel="gray", debug=debug)
-        b_rect, b_binaries = self.extraction_with_labels(flt = flt, channel="blue", debug=debug)
-        g_rect, g_binaries = self.extraction_with_labels(flt = flt, channel="green", debug=debug)
-        r_rect, r_binaries = self.extraction_with_labels(flt = flt, channel="red", debug=debug)
-        gbinaries[b_binaries > 128] = b_binaries[b_binaries > 128]
-        gbinaries[g_binaries > 128] = g_binaries[g_binaries > 128]
-        gbinaries[r_binaries > 128] = r_binaries[r_binaries > 128]
-        return gbinaries
+        ret_binaries = np.zeros_like(self.gray_img)
+
+        if (channel & EXTRACT_GRAY):
+            grect, gbinaries = self.extraction_with_labels(flt = flt, channel=EXTRACT_GRAY, debug=debug)
+            ret_binaries[gbinaries > 128] = gbinaries[gbinaries > 128]
+        if (channel & EXTRACT_BLUE):
+            b_rect, b_binaries = self.extraction_with_labels(flt = flt, channel=EXTRACT_BLUE, debug=debug)
+            ret_binaries[b_binaries > 128] = b_binaries[b_binaries > 128]
+        if (channel & EXTRACT_GREEN):
+            g_rect, g_binaries = self.extraction_with_labels(flt = flt, channel=EXTRACT_GREEN, debug=debug)
+            ret_binaries[g_binaries > 128] = g_binaries[g_binaries > 128]
+        if (channel & EXTRACT_RED):
+            r_rect, r_binaries = self.extraction_with_labels(flt = flt, channel=EXTRACT_RED, debug=debug)
+            ret_binaries[r_binaries > 128] = r_binaries[r_binaries > 128]
+
+        return ret_binaries 
+
+    def _preprocessing(self, gimg):
+        kel5 = cv2.getStructuringElement(cv2.MORPH_RECT, (5,5))
+        tophat = cv2.morphologyEx(gimg, cv2.MORPH_TOPHAT, kel5)
+        cy = cv2.Canny(tophat, 0, 100)
+        sobely = cv2.Sobel(cy, -1, 1, 0)
+        blur = cv2.GaussianBlur(sobely, (51,51), 0)
+        blurf = blur/blur.max()
+        a = np.uint8(gimg * blurf)
+        equ = cv2.equalizeHist(a)
+        tp = equ/255.0
+        gamma = 10.0
+        o = np.power(tp, gamma)
+        a = np.uint8(o*255.0)
+        return a
 
     @property
     def delta(self):
@@ -175,11 +207,11 @@ class mser_cls:
     def color_img(self, val):
         if type(val) == type(np.zeros((3,3))):
             color_img = val
-            b_img = color_img[:,:,0]
-            g_img = color_img[:,:,1]
-            r_img = color_img[:,:,2]
+            b_img = self._preprocessing(color_img[:,:,0])
+            g_img = self._preprocessing(color_img[:,:,1])
+            r_img = self._preprocessing(color_img[:,:,2])
             gimg = cv2.cvtColor(color_img, cv2.COLOR_BGR2GRAY)
-            # gimg = common.common.unevenLightCompensate(gimg)
+            gimg = self._preprocessing(gimg)
             mul = sqrt(gimg.shape[0]*gimg.shape[1]/self.total_pixels)
             self.__gray_img = cv2.resize(gimg, (int(gimg.shape[1]/mul), int(gimg.shape[0]/mul)))
             self.__b_img = cv2.resize(b_img, (int(b_img.shape[1]/mul), int(b_img.shape[0]/mul)))

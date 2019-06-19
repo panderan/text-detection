@@ -50,7 +50,7 @@ class basicFilter:
     #
     def verification(self, region, box, debug=False):
         
-        # 长款度过滤
+        # 长宽度过滤
         debug and print("---------------------\n")
         debug and print("Width:%.3f[%.3f, %.3f]" % \
                         (box[2],self.width_lim[0], self.width_lim[1]))
@@ -211,11 +211,17 @@ class areaAspectFilter:
         self.aspect_lim = (1.0, 15.0)
         pass
 
-    def verification(self, box):
+    def verification(self, box, debug=False):
+        debug and print("---------------------")
+
         retval = self._get_box_area(box)
+        debug and print("Area:%.3f [%d,%d]"\
+                         % (retval[0], self.area_lim[0], self.area_lim[1]))
         if retval[0] < self.area_lim[0] or retval[0] > self.area_lim[1]:
             return False
-        
+
+        debug and print("AspectRatio:%.3f [%.3f,%.3f]" \
+                        % (retval[1]/retval[2], self.aspect_lim[0], self.aspect_lim[1]))
         if retval[1]/retval[2] < self.aspect_lim[0] or retval[1]/retval[2] > self.aspect_lim[1]:
             return False
         

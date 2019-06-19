@@ -9,6 +9,8 @@
 from text_detection import mser, filter, morph, contours, svm, regions, evaluate
 import matplotlib.pyplot as plt
 import cv2, sys, getopt, yaml
+import cProfile 
+
 
 # 命令行参数变量
 arg_save_region = False
@@ -20,14 +22,20 @@ arg_training_path = ""
 arg_enable_eval = False
 arg_ground_truth_img_path = ""
 arg_config_file_path = "config/default.yaml"
+arg_is_show_result = True
 
 arg_enable_debug_mser=False
 arg_enable_debug_morph=False
 arg_enable_debug_contours=False
 arg_enable_debug_contours_verbose=False
 arg_enable_debug_svm=False
-arg_is_show_result = True
 
+arg_profile_mser=False
+arg_profile_morph=False
+arg_profile_contours=False
+arg_profile_svm=False
+
+cfg_mser_target_channels=mser.EXTRACT_NONE
 
 # 帮助信息
 def usage():
@@ -38,7 +46,7 @@ def usage():
 try:
     opts, args = getopt.getopt(sys.argv[1:], "i:", \
                     ["svm=","save-regions=","eval=","save-mask=", \
-                    "debug=","disable-show","config=","help"])
+                    "debug=","disable-show","config=","cProfile=","help"])
 except getopt.GetoptError:
     print("argv error")
 
@@ -69,6 +77,16 @@ for cmd,arg in opts:
             arg_enable_debug_contours_verbose = True
         if "svm" in ss:
             arg_enable_debug_svm = True
+    elif cmd in ("--cProfile"):
+        ss = arg.split(',')
+        if "mser" in ss:
+            arg_profile_mser=True
+        if "morph" in ss:
+            arg_profile_morph = True
+        if "contours" in ss:
+            arg_profile_contours = True
+        if "svm" in ss:
+            arg_profile_svm = True
     elif cmd in ("--disable-show"):
         arg_is_show_result = False
     elif cmd in ("--config"):
@@ -100,6 +118,15 @@ msr.min_area     = config['mser']['min_area']
 msr.max_area     = config['mser']['max_area']
 msr.variation    = config['mser']['variation']
 msr.total_pixels = config['mser']['total_pixels']
+for item in config['mser']['channels']:
+    if item == "Green":
+        cfg_mser_target_channels += mser.EXTRACT_GREEN
+    if item == "Red":
+        cfg_mser_target_channels += mser.EXTRACT_RED
+    if item == "Blue":
+        cfg_mser_target_channels += mser.EXTRACT_BLUE
+    if item == "Gray":
+        cfg_mser_target_channels += mser.EXTRACT_GRAY
 
 msr_flt = filter.basicFilter()
 msr_flt.perimeter_lim    = config['mser_filter']['perimeter_lim']
@@ -110,7 +137,11 @@ msr_flt.compactness_lim  = config['mser_filter']['compactness_lim']
 msr_flt.width_lim  = config['mser_filter']['width_lim']
 msr_flt.height_lim  = config['mser_filter']['height_lim']
 
-binaries = msr.extraction_in_all_channel_with_labels(imput_image, \
+if arg_profile_mser:
+    cProfile.run('binaries = msr.extraction_in_all_channel_with_labels(imput_image, \
+                                    flt = msr_flt, debug=arg_enable_debug_mser)')
+else:
+    binaries = msr.extraction_in_channels_with_labels(imput_image, channel=cfg_mser_target_channels, \
                                     flt = msr_flt, debug=arg_enable_debug_mser)
 
 
@@ -130,7 +161,12 @@ if config['morph_filter']['enable'] == True:
     mph_flt = filter.areaAspectFilter()
     mph_flt.area_lim = config['morph_filter']['area_lim']
     mph_flt.aspect_lim = config['morph_filter']['aspect_lim']
-binaries = mph.morph_operation(binaries, flt=mph_flt, \
+
+if arg_profile_morph:
+    cProfile.run('binaries = mph.morph_operation(binaries, flt=mph_flt, \
+                               debug=arg_enable_debug_morph)')
+else:
+    binaries = mph.morph_operation(binaries, flt=mph_flt, \
                                debug=arg_enable_debug_morph)
 
 
@@ -150,8 +186,13 @@ ctr.t_of_area_size = config['contours']['area_size']
 ctr.t_of_ar_of_direction_type = config['contours']['ar_of_direction_type']
 ctr.t_of_distance = config['contours']['distance']
 
-ctr.aggreate_contours_using_boxes(debug=arg_enable_debug_contours, \
+if arg_profile_contours:
+    cProfile.run('ctr.aggreate_contours_using_boxes(debug=arg_enable_debug_contours, \
+                                debug_verbose=arg_enable_debug_contours_verbose)')
+else:
+    ctr.aggreate_contours_using_boxes(debug=arg_enable_debug_contours, \
                                 debug_verbose=arg_enable_debug_contours_verbose)
+
 if config['contours_filter']['enable'] == True:
     ctr_flt = filter.areaAspectFilter()
     ctr_flt.area_lim = config['contours_filter']['area_lim']

@@ -47,26 +47,28 @@ class morph:
     # 腐蚀操作。然后进行闭运算和开运算
     #
     def morph_operation(self, binaries, flt=None, debug = False):
-        image, contours, hierarchies = cv2.findContours(binaries, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+        image, contours, hierarchies = cv2.findContours(binaries, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
         ret_bins = np.zeros_like(binaries)
 
         for i, ctr in enumerate(contours):
             temp_binaries = np.zeros_like(binaries)
             temp_binaries = cv2.drawContours(temp_binaries, [ctr], 0, 255, thickness=cv2.FILLED)
-            temp_binaries = self._morph_operation_once(temp_binaries)
-            if debug:
-                tmp = ret_bins.copy()
-                tmp[temp_binaries > 128] = 128
-                cv2.namedWindow("Debug",0);
-                cv2.resizeWindow("Debug", 800, 600);
-                cv2.imshow("Debug", tmp)
-                cv2.waitKey(1)
-
+            temp_binaries = self._morph_operation_once(temp_binaries, debug)
             _,temp_contours,_ = cv2.findContours(temp_binaries, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
             ro_rect = cv2.minAreaRect(temp_contours[0])
             box = np.int0(cv2.boxPoints(ro_rect))
-            if type(flt) != type(None) and flt.verification(box) == False:
-                continue
+            if type(flt) != type(None):
+                ret = flt.verification(box, debug)
+                debug and print("%s" % ret)
+                if debug:
+                    tmp = ret_bins.copy()
+                    tmp[temp_binaries > 128] = 128
+                    cv2.namedWindow("Debug",0);
+                    cv2.resizeWindow("Debug", 800, 600);
+                    cv2.imshow("Debug", tmp)
+                    cv2.waitKey(0)
+                if ret == False:
+                    continue
             ret_bins[temp_binaries > 128] = temp_binaries[temp_binaries > 128] 
 
         return ret_bins
@@ -82,8 +84,7 @@ class morph:
             cv2.waitKey(1)
         
         bins = cv2.erode(binaries, self.k_erode)
-
-        image, contours, hierarchies = cv2.findContours(bins, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+        _,contours,_ = cv2.findContours(bins, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
         if len(contours) > 1:
             bins = binaries
 
@@ -97,7 +98,11 @@ class morph:
         if before_size < 500:
             bins = cv2.dilate(bins, self.k_dilate)
         bins = self.closing(bins)
-        bins = self.opening(bins)
+
+        tmp = self.opening(bins)
+        _,contours,_ = cv2.findContours(tmp, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
+        if len(contours) == 1:
+            bins = tmp 
         return bins
 
     @property
