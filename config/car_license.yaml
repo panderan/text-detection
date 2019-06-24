@@ -4,7 +4,7 @@ mser:
     max_area: 500
     variation: 0.25
     total_pixels: 400000
-    channels: ["Gray"]
+    channels: ["Gray", "Red"]
 
 mser_filter:
     perimeter_lim: 12.0
@@ -23,8 +23,8 @@ morph:
 
 morph_filter:
     enable: True 
-    area_lim: [0, 5000]
-    aspect_lim: [0.125, 1.5]
+    area_lim: [20, 8000]
+    aspect_lim: [0.125, 4.0]
 
 contours:
     name: "car_license"
@@ -36,5 +36,5 @@ contours:
 
 contours_filter:
     enable: True 
-    area_lim: [0, 20000]
-    aspect_lim: [1.5, 100]
+    area_lim: [400, 20000]
+    aspect_lim: [2.0, 100]

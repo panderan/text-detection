@@ -26,18 +26,21 @@ def get_box_area(box):
     d2=math.hypot(l2[0],l2[1])
     return d1*d2
 
-PAR_BOX=0
-PAR_UP_LEFT=1
-PAR_UP_RIGHT=2
-PAR_DOWN_LEFT=3
-PAR_AREA_SIZE=4
-PAR_DIRECTION=5
-PAR_ASPECT_RATIO=6
+DB_BOX=0
+DB_WIDTH=1
+DB_HEIGHT=2
+DB_AREA_SIZE=3
+DB_DIRECTION=4
+DB_ASPECT_RATIO=5
+
+JDG_UNKONWN = 0
+JDG_DISALLOW = 1
+JDG_ALLOWED = 2
 
 DIRECTION_TYPE_NONE=1
 DIRECTION_TYPE_PARALLEL=2
 DIRECTION_TYPE_PARALLEL_CENTER_LINE=4
-DIRECTION_TYPE_VERTICAL_ALLOWED=5
+DIRECTION_TYPE_VERTICAL_ALLOWED=8
 
 ## 边界处理类
 #
@@ -55,6 +58,8 @@ class tdcontours:
         self.binaries = binaries
         self.name = name
         self.boxes = []
+        self._idx = 0
+        self._boxes_db = {}
         self.save_path = save_path
         self.t_of_extreme_area_ratio_for_ab = 24
         self.t_of_overlap_ratio = 0.25
@@ -63,12 +68,15 @@ class tdcontours:
         self.t_of_ar_of_direction_type = 2.5
         self.t_of_distance = 2.6
 
+    def get_boxes(self):
+        return [box for _,box in self.boxes]
+
     ## 将每一个候选区域存为图像文件
     # 将每一个候选区域交互保存为图像文件，并在过程中人为交互标记该候选区是否是文字区域
     #
     # @param orig_img 原图
     #
-    def save_each_contours_using_boxes(self, orig_img, save=True):
+    def save_each_contours(self, orig_img, save=True):
         for i, box in enumerate(self.boxes):
             # 区域掩码图
             box = np.int0(box)
@@ -99,77 +107,95 @@ class tdcontours:
     #
     # 将分散的连通域进行合并
     #
-    def aggreate_contours_using_boxes(self, debug=False, debug_verbose=False):
+    def aggreate_contours(self, debug=False, debug_verbose=False):
+
         # 提取掩码图中每个连通区域的最小外接矩形 Boxes
+        self._idx = 0
+        self._boxes_db = {}
         image, contours, hierarchies = cv2.findContours(self.binaries, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
         for i, ctr in enumerate(contours):
-            ro_rect = cv2.minAreaRect(ctr)
-            box = np.int0(cv2.boxPoints(ro_rect))
-            self.boxes.append(np.int0(box))
-        self._generate_binaries_using_boxes()
-        
+            # box = self._get_upright_rect(ctr)
+            box = self._get_min_rect(ctr)
+            self.boxes.append((self._idx, np.int0(box)))
+            self._idx +=1
+        self._delsmallregions()
+
         # 进行 Boxes 的迭代合并
-        num1 = self._aggreate_contours_using_boxes_once(debug=debug, debug_verbose=debug_verbose)
-        self._generate_binaries_using_boxes()
-        numx = self._aggreate_contours_using_boxes_once(debug=debug, debug_verbose=debug_verbose)
-        self._generate_binaries_using_boxes()
+        numx = 0
+        num1,rdsheet = self._aggreate_contours_once(None, debug, debug_verbose)
+        debug and self._generate_binaries()
         while (numx != num1):
             num1 = numx
-            numx = self._aggreate_contours_using_boxes_once(debug=debug, debug_verbose=debug_verbose)
-            self._generate_binaries_using_boxes()
-        self._delsmallregions_using_boxes()
+            debug and self._generate_binaries()
+            numx,rdsheet = self._aggreate_contours_once(rdsheet, debug, debug_verbose)
 
         # 生成最终掩码图
-        self._generate_binaries_using_boxes()
+        self._generate_binaries()
 
     ## 连通域合并
     #
     # 合并两个连通域
     #
-    def _aggreate_contours_using_boxes_once(self, debug=False, debug_verbose=False):
-        # 初始化每一个 Box，并计算每一个 Box 的相关参数
-        boxes = []
-        for i, box  in enumerate(self.boxes):
-            downleft = box[0]
-            upleft = box[1] 
-            upright = box[2] 
-            areasize,_,_ = self._get_box_area(box)
-            direction = self._get_box_direction(np.array(upleft), np.array(upright), np.array(downleft))
-            aspectratio = self._get_box_aspect_ratio(np.array(upleft), np.array(upright), np.array(downleft))
-            boxes.append((box, upleft, upright, downleft, areasize, direction, aspectratio))
+    def _aggreate_contours_once(self, record_sheet=None, debug=False, debug_verbose=False):
 
-        # 两两循环判断
-        for i,boxa in enumerate(boxes):
+        # 初始化每一个 Box，并计算每一个 Box 的相关参数
+        for idx,box in self.boxes:
+            if idx in self._boxes_db:
+                continue
+
+            pnt0 = np.array(box[0])
+            pnt1 = np.array(box[1])
+            pnt2 = np.array(box[2])
+            areasize,width,height = self._get_box_area(box)
+            direction = self._get_box_direction(pnt1, pnt2, pnt0)
+            aspectratio = self._get_box_aspect_ratio(pnt1, pnt2, pnt0)
+            self._boxes_db[idx] = [box, width, height, areasize, direction, aspectratio]
+
+        if record_sheet is None:
+            record_sheet = np.uint8(np.zeros((self._idx,self._idx)))
+
+        for i,(idxa,boxa) in enumerate(self.boxes):
             agged_flag = False              # 记录是否有 Box 可以合并
             candidate_agged_boxes = []      # 记录可以合并的 Box
-            for j,boxb in enumerate(boxes[i+1:]):
-                bbox_points = np.int0(np.array(boxa[0].tolist()+boxb[0].tolist()))
+
+            for j,(idxb,boxb) in enumerate(self.boxes[i+1:]):
+                if record_sheet[idxa,idxb] == JDG_DISALLOW:
+                    continue
+
+                # boxa 和 boxb 的共同外接矩形 bbox
+                bbox_points = np.int0(np.array(boxa.tolist()+boxb.tolist()))
                 bbox = cv2.boxPoints(cv2.minAreaRect(bbox_points))
-                
+
                 # 相关数据获取
-                area_size_a = boxa[4]                                           # boxa 的面积
-                area_size_b = boxb[4]                                           # boxb 的面积
+                boxa_db = self._boxes_db[idxa]
+                boxb_db = self._boxes_db[idxb]
+                area_size_a = boxa_db[DB_AREA_SIZE]                             # boxa 的面积
+                area_size_b = boxb_db[DB_AREA_SIZE]                             # boxb 的面积
                 area_plus_ab = area_size_a + area_size_b                        # boxa 加 boxb 的面积
                 area_bounding_rect,_,_ = self._get_box_area(bbox)               # boxa 和 boxb 共同外接矩形的面积
-                size_ratio_of_ab = self._let_num_gt_1(area_size_a/area_size_b)  # boxa 和 boxb 的面积比
-                size_ratio_of_bounding_rect = self._get_pos_ratio(boxa, boxb)   # boxa 和 boxb 的面积和与外接矩形的面积比
-                aspect_ratio_a = boxa[6]                                        # boxa 的长宽比
-                aspect_ratio_b = boxb[6]                                        # boxb 的长宽比
-                direction_a = boxa[5]                                           # boxa 的方向
-                direction_b = boxb[5]                                           # boxb 的方向 
-                overlap_ratio = self._get_overlap_ratio(boxa, boxb)
-                area_size_a_tmp,w_a_tmp,h_a_tmp = self._get_box_area(boxa[0])
-                area_size_b_tmp,w_b_tmp,h_b_tmp = self._get_box_area(boxb[0])
 
-                # Debug print
+                if record_sheet[idxa,idxb] == JDG_ALLOWED:
+                    candidate_agged_boxes.append((boxb, i+j+1, area_plus_ab/area_bounding_rect))
+                    agged_flag = True
+                    continue
+
+                size_ratio_of_ab = self._let_num_gt_1(area_size_a/area_size_b)  # boxa 和 boxb 的面积比
+                pos_ratio = area_plus_ab/area_bounding_rect                     # boxa 和 boxb 的面积和与外接矩形的面积比
+                aspect_ratio_a = boxa_db[DB_ASPECT_RATIO]                       # boxa 的长宽比
+                aspect_ratio_b = boxb_db[DB_ASPECT_RATIO]                       # boxb 的长宽比
+                direction_a = boxa_db[DB_DIRECTION]                             # boxa 的方向
+                direction_b = boxb_db[DB_DIRECTION]                             # boxb 的方向 
+                overlap_ratio = self._get_overlap_ratio(boxa_db, boxb_db)
+
+                # debug print
                 if debug:
                     print("======================================================")
                     print("Box a:")
-                    print("  area size:     %.3f(%.3f,%.3f,%.3f)" % (area_size_a, area_size_a_tmp, w_a_tmp, h_a_tmp))
+                    print("  area size:     %.3f(%.3f,%.3f)" % (area_size_a, boxa_db[DB_WIDTH], boxa_db[DB_HEIGHT]))
                     print("  aspect ratio:  %.3f" % aspect_ratio_a)
                     print("  direction:     %.3f" % direction_a)
                     print("Box b:")
-                    print("  area size:     %.3f(%.3f,%.3f,%.3f)" % (area_size_b, area_size_b_tmp, w_b_tmp, h_b_tmp))
+                    print("  area size:     %.3f(%.3f,%.3f)" % (area_size_b, boxb_db[DB_WIDTH], boxb_db[DB_HEIGHT]))
                     print("  aspect ratio:  %.3f" % aspect_ratio_b)
                     print("  direction:     %.3f" % direction_b)
                     print("Compare")
@@ -178,46 +204,47 @@ class tdcontours:
 
                 # 重叠嵌套判别
                 if overlap_ratio > self.t_of_overlap_ratio:
-                    retboxes = self._aggreate_contours_2boxes(self.boxes, i, i+j+1)
-                    self.boxes = retboxes
+                    self._aggreate_contours_2boxes(i, i+j+1)
+                    record_sheet = self._increase_record_sheet(record_sheet)
+
                     if debug:
-                        print("Overlap. \n%s" % True)
-                        self._debug_judge_2boxes_show(boxa[0], boxb[0], debug_verbose)
-                    return len(self.boxes)
+                        print("Overlaped. \n%s" % True)
+                        self._debug_judge_2boxes_show(boxa_db[DB_BOX], boxb_db[DB_BOX], debug_verbose)
+
+                    return len(self.boxes),record_sheet
 
                 # 按两个 Box 的相关数据动态判断是否合并
                 t_of_area_ratio_for_rect = self._get_threshold_of_area_ratio(boxa, boxb)
-                if debug:
-                    print("  plus/rect:     %.3f(%.3f)" % (size_ratio_of_bounding_rect, t_of_area_ratio_for_rect))
-                if size_ratio_of_bounding_rect > t_of_area_ratio_for_rect:
-                    if self._judge_direction(boxa, boxb, debug) and self._judge_distance(boxa, boxb, debug) and self._judge_strategy(boxa, boxb, debug):
-                        candidate_agged_boxes.append((boxb[0], i+j+1, area_plus_ab/area_bounding_rect))
+                debug and print("  plus/rect:     %.3f(%.3f)" % (pos_ratio, t_of_area_ratio_for_rect))
+                if pos_ratio > t_of_area_ratio_for_rect:
+                    if self._judge_direction(boxa_db, boxb_db, debug) \
+                    and self._judge_distance(boxa_db, boxb_db, debug) \
+                    and self._judge_strategy(boxa_db, boxb_db, debug):
+                        record_sheet[idxa,idxb] = JDG_ALLOWED
+                        candidate_agged_boxes.append((boxb, i+j+1, area_plus_ab/area_bounding_rect))
                         agged_flag = True
-                        if debug:
-                            print("Pass validation \n%s" % True)
-                            self._debug_judge_2boxes_show(boxa[0], boxb[0], debug_verbose)
+                        debug and not print("Pass validation \n%s" % True) \
+                              and self._debug_judge_2boxes_show(boxa, boxb, debug_verbose)
                     else:
-                        if debug:
-                            print("Not pass validation (direction or distance) \n%s" % False)
-                            self._debug_judge_2boxes_show(boxa[0], boxb[0], debug_verbose)
+                        record_sheet[idxa,idxb] = JDG_DISALLOW
+                        debug and not print("Not pass validation (direction or distance) \n%s" % False) \
+                              and self._debug_judge_2boxes_show(boxa, boxb, debug_verbose)
                 else:
-                    if debug:
-                        print("Not pass validation (pos_size_for_rect) \n%s" % False)
-                        self._debug_judge_2boxes_show(boxa[0], boxb[0], debug_verbose)
+                    record_sheet[idxa,idxb] = JDG_DISALLOW
+                    debug and not print("Not pass validation (pos_size_for_rect) \n%s" % False) \
+                          and self._debug_judge_2boxes_show(boxa, boxb, debug_verbose)
 
 
-            # 从符号合并的候选区域中找出最符合的一个进行合并
+            # 从符合合并的候选区域中找出最符合的一个进行合并
             if agged_flag == True:
                 agg_idx = self._pickup_best_agg_box(boxa, candidate_agged_boxes)
-                retboxes = self._aggreate_contours_2boxes(self.boxes, i, agg_idx)
-                if debug:
-                    print("---------------- Aggregating ----------------")
-                    self._debug_aggreate_boxes_show(candidate_agged_boxes, boxa[0], self.boxes[agg_idx], debug)
-                self.boxes = retboxes
-                return len(self.boxes)
-            agged_flag = False
+                debug and not print("---------------- Aggregating ----------------") \
+                      and self._debug_aggreate_boxes_show(candidate_agged_boxes, boxa, self.boxes[agg_idx][1], debug)
+                self._aggreate_contours_2boxes(i, agg_idx)
+                record_sheet = self._increase_record_sheet(record_sheet)
+                return len(self.boxes),record_sheet
                 
-        return len(self.boxes)
+        return len(self.boxes),record_sheet
     
     ## 对两个 Box 进行合并
     #
@@ -227,23 +254,30 @@ class tdcontours:
     #
     # @retval retboxes 合并好的所有 Box 列表
     #
-    def _aggreate_contours_2boxes(self, boxes, idxi, idxj):
-        retboxes = []
-        for i,box in enumerate(boxes):
-            if i != idxi and i !=idxj:
-                retboxes.append(box)
+    def _aggreate_contours_2boxes(self, idxi, idxj):
 
-        bbox_points = np.int0(np.array(boxes[idxi].tolist()+boxes[idxj].tolist()))
+        boxi = self.boxes[idxi][1]
+        boxj = self.boxes[idxj][1]
+        bbox_points = np.int0(np.array(boxi.tolist()+boxj.tolist()))
         bbox = cv2.boxPoints(cv2.minAreaRect(bbox_points))
-        retboxes.insert(0,bbox)
-        return retboxes
-    
+        self.boxes = [box for i,box in enumerate(self.boxes) if i not in [idxi, idxj]] 
+        self.boxes.insert(0, (self._idx, bbox))
+        self._idx += 1 
+
+    def _increase_record_sheet(self, record_sheet):
+        zrow = np.uint8(np.zeros((1, record_sheet.shape[1])))
+        zcol = np.uint8(np.zeros((record_sheet.shape[0]+1, 1)))
+        record_sheet = np.row_stack((record_sheet, zrow))
+        record_sheet = np.column_stack((record_sheet, zcol))
+        return record_sheet
+
+
     def _pickup_best_agg_box(self, boxa, agg_boxes):
         if len(agg_boxes) == 1:
             return agg_boxes[0][1]
         
         best_box = agg_boxes[0]
-        center_point_a = self._get_box_center_point(boxa[PAR_BOX])
+        center_point_a = self._get_box_center_point(boxa)
         center_point_tmp = self._get_box_center_point(best_box[0])
         best_val = -1.0
 
@@ -270,45 +304,86 @@ class tdcontours:
     #
     # @retval retboxes 筛选后的所有 Box 列表
     #
-    def _delsmallregions_using_boxes(self):
-        retboxes = []
-        for i,box in enumerate(self.boxes):
-            area_size,_,_ = self._get_box_area(box)
-            if area_size > 140:
-                retboxes.append(box)
-        self.boxes = retboxes
+    def _delsmallregions(self):
+
+        for i,(idx,box) in enumerate(self.boxes):
+            if  box.min() > 0:
+                area_size = idx in self._boxes_db and self._boxes_db[idx][DB_AREA_SIZE] or self._get_box_area(box)[0]
+                if area_size > self.t_of_area_size:
+                    continue
+
+            del(self.boxes[i])
 
     ## 使用 Boxes 重新生成掩码图
     # 
-    # 这个过程会过滤掉较小的 Box，如 delsmallregions_using_boxes。
+    # 这个过程会过滤掉较小的 Box，如 delsmallregions。
     #
-    def _generate_binaries_using_boxes(self):
-        binaries = np.zeros_like(self.binaries)
-        new_boxes = []
-        for i,box in enumerate(self.boxes):
-            points = [x for y in box for x in y]
-            points.sort()
-            if points[0] < 0:
-                continue
-            area_size,_,_ = self._get_box_area(box)
-            if area_size > self.t_of_area_size:
-                binaries = cv2.drawContours(binaries, [np.int0(box)], 0, 255, thickness=cv2.FILLED)
-                new_boxes.append(np.int0(box))
+    def _generate_binaries(self):
 
-        self.binaries = binaries
-        self.boxes = new_boxes
+        self.binaries[:,:] = 0
+        for i,(idx,box) in enumerate(self.boxes):
+            self.binaries = cv2.drawContours(self.binaries, [np.int0(box)], 0, 255, thickness=cv2.FILLED)
+
     
-    def flesh_binaries_using_boxes(self):
-        self._generate_binaries_using_boxes()
+    def flesh_binaries(self):
+        self._generate_binaries()
 
-    def flesh_binaries_using_filtered_boxes(self, flt):
-        new_boxes = []
-        for box in self.boxes:
-            if type(flt) != type(None) and flt.verification(box) == False:
-                continue
-            new_boxes.append(np.int0(box))
-        self.boxes = new_boxes
-        self._generate_binaries_using_boxes()
+    def flesh_binaries_using_filtered_boxes(self, flt, debug=False):
+        
+        del_idx = []
+        for i,(idx,box) in enumerate(self.boxes):
+            if flt is not None:
+                ret = flt.verification(box, debug)
+                if debug:
+                    print(ret)
+                    self._debug_show_box(box)
+                ret == False and del_idx.append(i)
+
+        self.boxes = [box for i,box in enumerate(self.boxes) if i not in del_idx]
+        self._generate_binaries()
+
+    def _get_upright_rect(self, ctr):
+        up_rect = cv2.boundingRect(ctr)
+        ro_rect = ((up_rect[0]+up_rect[2]/2, up_rect[1]+up_rect[3]/2),(up_rect[2],up_rect[3]),0)
+        box = np.int0(cv2.boxPoints(ro_rect))
+        return box
+    
+    def _get_min_rect(self, ctr):
+        ro_rect = cv2.minAreaRect(ctr)
+        box = np.int0(cv2.boxPoints(ro_rect))
+        return box
+
+    # def _locate_upright_point(self, box):
+    #     p0=np.array(box[-1])
+    #     p1=np.array(box[0])
+    #     p2=np.array(box[1])
+    #     horizon=p2-p1
+    #     vertical=p0-p1
+    #
+    #     if (horizon[0] == 0 and horizon[1] == 0)\
+    #         and (vertical[0] == 0 and vertical[1] == 0):
+    #         return p0,p0,p0
+    #
+    #     if (vertical[0] == 0 and vertical[1] == 0):
+    #         angle = math.asin(horizon[1]/math.hypot(horizon[0],horizon[1]))
+    #         if angle < -math.pi/4 or angle > math.pi/4:
+    #             if p2[1] > p1[1]:
+    #                 return p2,p1,p2
+    #             else:
+    #                 return p1,p2,p1
+    #         else:
+    #             if p2[0] > p1[0]:
+    #                 return p1,p2,p1
+    #             else:
+    #                 return p2,p1,p2
+    #
+    #     angle = math.asin(vertical[1]/math.hypot(vertical[0],vertical[1]))
+    #     if angle > -math.pi/4 and angle < math.pi/4:
+    #         pass
+    #     else:
+    #         jdg = box[2] - p1
+
+        
 
     ## 计算 Box 的面积
     #
@@ -332,23 +407,20 @@ class tdcontours:
         bbox_points = np.int0(np.array(boxa[0].tolist()+boxb[0].tolist()))
         bbox = cv2.boxPoints(cv2.minAreaRect(bbox_points))
         area_bounding_rect,_,_ = self._get_box_area(bbox)
-        size_ratio_of_bounding_rect = area_plus_ab/area_bounding_rect
+        pos_ratio = area_plus_ab/area_bounding_rect
 
-        return size_ratio_of_bounding_rect
+        return pos_ratio
 
     ## 计算重叠部分占较小 Box 的比率
     #
-    def _get_overlap_ratio(self, boxa, boxb):
+    def _get_overlap_ratio(self, boxa_db, boxb_db):
+
         mask_a = np.zeros_like(self.binaries)
         mask_b = np.zeros_like(self.binaries)
-
-        min_size = boxa[PAR_AREA_SIZE]
-        if boxa[PAR_AREA_SIZE] > boxb[PAR_AREA_SIZE]:
-            min_size = boxb[PAR_AREA_SIZE]
-
-        mask_a = cv2.drawContours(mask_a, [np.int0(boxa[PAR_BOX])], 0, 255, cv2.FILLED)
-        mask_b = cv2.drawContours(mask_b, [np.int0(boxb[PAR_BOX])], 0, 255, cv2.FILLED)
-        
+        min_size = boxa_db[DB_AREA_SIZE] > boxb_db[DB_AREA_SIZE] \
+                    and boxb_db[DB_AREA_SIZE] or  boxa_db[DB_AREA_SIZE]
+        mask_a = cv2.drawContours(mask_a, [np.int0(boxa_db[DB_BOX])], 0, 255, cv2.FILLED)
+        mask_b = cv2.drawContours(mask_b, [np.int0(boxb_db[DB_BOX])], 0, 255, cv2.FILLED)
         return (np.sum(mask_a & mask_b)/255.0)/min_size
 
     ## 计算 Box 的方向
@@ -414,23 +486,23 @@ class tdcontours:
     #
     def _get_threshold_of_area_ratio(self, boxa, boxb):
         
-        if self._is_gt_one_char(boxa[PAR_BOX]) == False:
-            if boxa[PAR_ASPECT_RATIO] > 2.0:
+        if self._is_gt_one_char(boxa[DB_BOX]) == False:
+            if boxa[DB_ASPECT_RATIO] > 2.0:
                 return 0.55
             else:
                 return 0.60
 
-        if self._is_gt_one_char(boxb[PAR_BOX]) == False:
-            if boxb[PAR_ASPECT_RATIO] > 2.0:
+        if self._is_gt_one_char(boxb[DB_BOX]) == False:
+            if boxb[DB_ASPECT_RATIO] > 2.0:
                 return 0.55
             else:
                 return 0.60
         
-        if boxa[PAR_ASPECT_RATIO] > 3.0 or boxb[PAR_ASPECT_RATIO] > 3.0:
+        if boxa[DB_ASPECT_RATIO] > 3.0 or boxb[DB_ASPECT_RATIO] > 3.0:
             return 0.72
-        elif boxa[PAR_ASPECT_RATIO] > 5.0 or boxb[PAR_ASPECT_RATIO] > 5.0:
+        elif boxa[DB_ASPECT_RATIO] > 5.0 or boxb[DB_ASPECT_RATIO] > 5.0:
             return 0.76
-        elif boxa[PAR_ASPECT_RATIO] > 8.0 or boxb[PAR_ASPECT_RATIO] > 8.0:
+        elif boxa[DB_ASPECT_RATIO] > 8.0 or boxb[DB_ASPECT_RATIO] > 8.0:
             return 0.80
         else:
             return 0.70
@@ -440,7 +512,7 @@ class tdcontours:
     # 低于阈值允许大致平行或垂直；高于阈值只允许平行
     #
     def _get_threshold_of_direction_type(self, boxa, boxb):
-        if self._is_gt_one_char(boxa[PAR_BOX]) or self._is_gt_one_char(boxb[PAR_BOX]):
+        if self._is_gt_one_char(boxa[DB_BOX]) or self._is_gt_one_char(boxb[DB_BOX]):
             return False
         else:
             return True
@@ -450,33 +522,33 @@ class tdcontours:
     # 默认方向夹角小于20度，则认为平行。大于70度认为垂直t_of_ar_of_direction_type
     #
     def _get_threshold_of_angle_precision(self, boxa, boxb=None):
-        if (boxa != None and boxa[PAR_ASPECT_RATIO] < 2.0) \
-             or (boxb != None and boxb[PAR_ASPECT_RATIO] < 2.0):
+        if (boxa != None and boxa[DB_ASPECT_RATIO] < 2.0) \
+             or (boxb != None and boxb[DB_ASPECT_RATIO] < 2.0):
                 return math.pi/180*35
         return math.pi/180*20
 
     ## 对两个 Box 的方向进行可合并判别
     #
     def _judge_direction(self, boxa, boxb, debug=False):
-        if self._is_gt_one_char(boxa[PAR_BOX]) == False \
-            and self._is_gt_one_char(boxb[PAR_BOX]) == False:
+        if self._is_gt_one_char(boxa[DB_BOX]) == False \
+            and self._is_gt_one_char(boxb[DB_BOX]) == False:
             return True
         
         # 获取方向判断类别 
         direction_type = DIRECTION_TYPE_PARALLEL
-        if self._is_gt_one_char(boxa[PAR_BOX]) == False \
-            or self._is_gt_one_char(boxb[PAR_BOX]) == False:
+        if self._is_gt_one_char(boxa[DB_BOX]) == False \
+            or self._is_gt_one_char(boxb[DB_BOX]) == False:
                 direction_type = DIRECTION_TYPE_PARALLEL_CENTER_LINE
 
-        if boxa[PAR_ASPECT_RATIO] < 1.5 or boxb[PAR_ASPECT_RATIO] < 1.5:
+        if boxa[DB_ASPECT_RATIO] < 1.5 or boxb[DB_ASPECT_RATIO] < 1.5:
             direction_type |= DIRECTION_TYPE_VERTICAL_ALLOWED
 
         # 两个 BOX 方向的差 和
         # 其中一个面积较大的 BOX 与中心点连线方向的差
-        delta_direction_2boxes = abs(boxa[PAR_DIRECTION]-boxb[PAR_DIRECTION]) % (math.pi/2)
-        max_box = boxa[PAR_AREA_SIZE] > boxb[PAR_AREA_SIZE] and boxa or boxb
-        direction_2boxes = self._get_box_centers_direction(boxa[PAR_BOX], boxb[PAR_BOX])
-        delta_direction_box_with_centers = abs(max_box[PAR_DIRECTION] - direction_2boxes) % (math.pi/2)
+        delta_direction_2boxes = abs(boxa[DB_DIRECTION]-boxb[DB_DIRECTION]) % (math.pi/2)
+        max_box = boxa[DB_AREA_SIZE] > boxb[DB_AREA_SIZE] and boxa or boxb
+        direction_2boxes = self._get_box_centers_direction(boxa[DB_BOX], boxb[DB_BOX])
+        delta_direction_box_with_centers = abs(max_box[DB_DIRECTION] - direction_2boxes) % (math.pi/2)
         
         if direction_type == DIRECTION_TYPE_PARALLEL_CENTER_LINE:
             min_threshold = self._get_threshold_of_angle_precision(max_box)
@@ -490,7 +562,7 @@ class tdcontours:
             print("  direction centers:       %.3f" % delta_direction_box_with_centers)
             print("  precision of direction: (%.3f,%.3f)" % (min_threshold, max_threshold))
             print("  direction type:          %.3f" % direction_type)
-            print("  is gt one char:          %s,%s" %  (self._is_gt_one_char(boxa[PAR_BOX]), self._is_gt_one_char(boxb[PAR_BOX])))
+            print("  is gt one char:          %s,%s" %  (self._is_gt_one_char(boxa[DB_BOX]), self._is_gt_one_char(boxb[DB_BOX])))
 
         if direction_type & DIRECTION_TYPE_PARALLEL:
             if delta_direction_2boxes < min_threshold \
@@ -513,8 +585,8 @@ class tdcontours:
 
 
     def _judge_distance(self, boxa, boxb, debug=False):
-        center_point_a = self._get_box_center_point(boxa[PAR_BOX])
-        center_point_b = self._get_box_center_point(boxb[PAR_BOX])
+        center_point_a = self._get_box_center_point(boxa[DB_BOX])
+        center_point_b = self._get_box_center_point(boxb[DB_BOX])
         binaries_a = np.zeros_like(self.binaries)
         binaries_b = np.zeros_like(self.binaries)
         binaries_a = cv2.drawContours(binaries_a, [np.int0(boxa[0])], 0, 255, cv2.FILLED)
@@ -525,8 +597,8 @@ class tdcontours:
         binaries_ret = np.bitwise_xor(np.int0(binaries_boxes), np.int0(binaries_line))
         distance = np.sum(binaries_ret)/255.0
 
-        area_size_a, w_a, h_a = self._get_box_area(boxa[PAR_BOX])
-        area_size_b, w_b, h_b = self._get_box_area(boxb[PAR_BOX])
+        area_size_a, w_a, h_a = self._get_box_area(boxa[DB_BOX])
+        area_size_b, w_b, h_b = self._get_box_area(boxb[DB_BOX])
         min_area_size = area_size_a
         if min_area_size > area_size_b:
             min_area_size = area_size_b
@@ -541,21 +613,21 @@ class tdcontours:
 
     def _judge_strategy(self, boxa, boxb, debug):
 
-        if self._is_gt_one_char(boxa[PAR_BOX]) == True and self._is_gt_one_char(boxb[PAR_BOX]) == True:
+        if self._is_gt_one_char(boxa[DB_BOX]) == True and self._is_gt_one_char(boxb[DB_BOX]) == True:
             return True
         
         big_box = boxa
         small_box = boxb 
-        boxa_bounding_rect = cv2.boundingRect(boxa[PAR_BOX])    
-        boxb_bounding_rect = cv2.boundingRect(boxb[PAR_BOX])
+        boxa_bounding_rect = cv2.boundingRect(boxa[DB_BOX])    
+        boxb_bounding_rect = cv2.boundingRect(boxb[DB_BOX])
         big_box_bounding_rect = boxa_bounding_rect
         if boxa_bounding_rect[2]*boxa_bounding_rect[3] < boxb_bounding_rect[2]*boxb_bounding_rect[3]:
             big_box = boxb
             small_box = boxa
             big_box_bounding_rect = boxb_bounding_rect
 
-        center_small = self._get_box_center_point(small_box[PAR_BOX])
-        center_big = self._get_box_center_point(big_box[PAR_BOX])
+        center_small = self._get_box_center_point(small_box[DB_BOX])
+        center_big = self._get_box_center_point(big_box[DB_BOX])
 
         if self.strategy == "Horizon":
             if abs(center_small[0] - center_big[0]) > big_box_bounding_rect[2]/2.0:
@@ -571,10 +643,10 @@ class tdcontours:
             return True
 
 
-        area_size_a, w_a, h_a = self._get_box_area(boxa[PAR_BOX])
-        area_size_b, w_b, h_b = self._get_box_area(boxb[PAR_BOX])
-        center_point_a = self._get_box_center_point(boxa[PAR_BOX])
-        center_point_b = self._get_box_center_point(boxb[PAR_BOX])
+        area_size_a, w_a, h_a = self._get_box_area(boxa[DB_BOX])
+        area_size_b, w_b, h_b = self._get_box_area(boxb[DB_BOX])
+        center_point_a = self._get_box_center_point(boxa[DB_BOX])
+        center_point_b = self._get_box_center_point(boxb[DB_BOX])
         max_area_size = area_size_a
         if max_area_size < area_size_b:
             max_area_size = area_size_b
@@ -597,7 +669,7 @@ class tdcontours:
        
     def _is_gt_one_char(self, box):
         area_size,w,h = self._get_box_area(box)
-        if area_size > 1500:
+        if area_size > 2000:
             return True 
         if w > 60 or h > 60:
             return True 
@@ -696,13 +768,19 @@ class tdcontours:
             cv2.imshow("Debug", tmp)
             cv2.waitKey(0)
 
-
+    def _debug_show_box(self, box):
+        tmp = self.binaries.copy()
+        tmp = cv2.drawContours(tmp, [np.int0(box)], 0, 85, thickness=cv2.FILLED)
+        cv2.namedWindow("Debug",0);
+        cv2.resizeWindow("Debug", 800, 600);
+        cv2.imshow("Debug", tmp)
+        cv2.waitKey(0)
 
 class contours_car_license(tdcontours):
     def __init__(self, binaries=None, name="", save_path=""):
         super(contours_car_license, self).__init__(binaries, name, save_path)
 
     def _get_threshold_of_area_ratio(self, boxa, boxb):
-        return 0.72
+        return 0.7
 
 

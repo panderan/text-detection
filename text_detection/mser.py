@@ -160,7 +160,7 @@ class mser_cls:
         a = np.uint8(gimg * blurf)
         equ = cv2.equalizeHist(a)
         tp = equ/255.0
-        gamma = 10.0
+        gamma = 3.0
         o = np.power(tp, gamma)
         a = np.uint8(o*255.0)
         return a
@@ -207,16 +207,16 @@ class mser_cls:
     def color_img(self, val):
         if type(val) == type(np.zeros((3,3))):
             color_img = val
-            b_img = self._preprocessing(color_img[:,:,0])
-            g_img = self._preprocessing(color_img[:,:,1])
-            r_img = self._preprocessing(color_img[:,:,2])
             gimg = cv2.cvtColor(color_img, cv2.COLOR_BGR2GRAY)
-            gimg = self._preprocessing(gimg)
             mul = sqrt(gimg.shape[0]*gimg.shape[1]/self.total_pixels)
-            self.__gray_img = cv2.resize(gimg, (int(gimg.shape[1]/mul), int(gimg.shape[0]/mul)))
-            self.__b_img = cv2.resize(b_img, (int(b_img.shape[1]/mul), int(b_img.shape[0]/mul)))
-            self.__g_img = cv2.resize(g_img, (int(g_img.shape[1]/mul), int(g_img.shape[0]/mul)))
-            self.__r_img = cv2.resize(r_img, (int(r_img.shape[1]/mul), int(r_img.shape[0]/mul)))
+            b_img = cv2.resize(color_img[:,:,0], (int(gimg.shape[1]/mul), int(gimg.shape[0]/mul)))
+            self.__b_img = self._preprocessing(b_img)
+            g_img = cv2.resize(color_img[:,:,1], (int(gimg.shape[1]/mul), int(gimg.shape[0]/mul)))
+            self.__g_img = self._preprocessing(g_img)
+            r_img = cv2.resize(color_img[:,:,2], (int(gimg.shape[1]/mul), int(gimg.shape[0]/mul)))
+            self.__r_img = self._preprocessing(r_img)
+            gimg = cv2.resize(gimg, (int(gimg.shape[1]/mul), int(gimg.shape[0]/mul)))
+            self.__gray_img = self._preprocessing(gimg)
         else:
             self.__gray_img = None
             self.__b_img = None

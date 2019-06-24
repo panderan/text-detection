@@ -27,6 +27,7 @@ arg_is_show_result = True
 arg_enable_debug_mser=False
 arg_enable_debug_morph=False
 arg_enable_debug_contours=False
+arg_enable_debug_contours_filter=False
 arg_enable_debug_contours_verbose=False
 arg_enable_debug_svm=False
 
@@ -73,6 +74,8 @@ for cmd,arg in opts:
             arg_enable_debug_morph = True
         if "contours" in ss:
             arg_enable_debug_contours = True
+        if "contours-filter" in ss:
+            arg_enable_debug_contours_filter = True
         if "contours-verbose" in ss:
             arg_enable_debug_contours_verbose = True
         if "svm" in ss:
@@ -187,22 +190,22 @@ ctr.t_of_ar_of_direction_type = config['contours']['ar_of_direction_type']
 ctr.t_of_distance = config['contours']['distance']
 
 if arg_profile_contours:
-    cProfile.run('ctr.aggreate_contours_using_boxes(debug=arg_enable_debug_contours, \
+    cProfile.run('ctr.aggreate_contours(debug=arg_enable_debug_contours, \
                                 debug_verbose=arg_enable_debug_contours_verbose)')
 else:
-    ctr.aggreate_contours_using_boxes(debug=arg_enable_debug_contours, \
+    ctr.aggreate_contours(debug=arg_enable_debug_contours, \
                                 debug_verbose=arg_enable_debug_contours_verbose)
 
 if config['contours_filter']['enable'] == True:
     ctr_flt = filter.areaAspectFilter()
     ctr_flt.area_lim = config['contours_filter']['area_lim']
     ctr_flt.aspect_lim = config['contours_filter']['aspect_lim']
-    ctr.flesh_binaries_using_filtered_boxes(ctr_flt)
+    ctr.flesh_binaries_using_filtered_boxes(ctr_flt, arg_enable_debug_contours_filter)
 
 
 # 生成训练数据
 if arg_save_region:
-    ctr.save_each_contours_using_boxes(msr.gray_img, True)
+    ctr.save_each_contours(msr.gray_img, True)
     sys.exit()
 
 
@@ -212,7 +215,7 @@ if arg_enable_svm:
     classification = svm.svc()
     classification.train(arg_training_path)
     ctr.boxes = classification.filter_regions(msr.gray_img, ctr.boxes, arg_enable_debug_svm)
-    ctr.flesh_binaries_using_boxes()
+    ctr.flesh_binaries()
 
 
 # 计算 f-measure 评估结果
@@ -236,7 +239,7 @@ if arg_save_mask:
 # 标记最终选区
 if arg_is_show_result:
     ret_img = cv2.cvtColor(msr.gray_img, cv2.COLOR_GRAY2BGR)
-    ret_img = regions.regions.label_image_with_box(ret_img, ctr.boxes, (255,0,0))
+    ret_img = regions.regions.label_image_with_box(ret_img, ctr.get_boxes(), (255,0,0))
     plt.figure(figsize=(10,8))
     plt.imshow(ret_img, "gray")
     plt.show()
