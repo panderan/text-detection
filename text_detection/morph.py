@@ -53,11 +53,6 @@ class morph:
         for i, ctr in enumerate(contours):
             temp_binaries = np.zeros_like(binaries)
             temp_binaries = cv2.drawContours(temp_binaries, [ctr], 0, 255, thickness=cv2.FILLED)
-            # if debug:
-            #     cv2.namedWindow("Debug",0);
-            #     cv2.resizeWindow("Debug", 800, 600);
-            #     cv2.imshow("Debug", temp_binaries)
-            #     cv2.waitKey(0)
 
             temp_binaries = self._morph_operation_once(temp_binaries, debug)
             _,temp_contours,_ = cv2.findContours(temp_binaries, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)

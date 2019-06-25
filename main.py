@@ -120,6 +120,7 @@ msr = mser.mser_cls()
 msr.min_area     = config['mser']['min_area']
 msr.max_area     = config['mser']['max_area']
 msr.variation    = config['mser']['variation']
+msr.gamma        = config['mser']['gamma']
 msr.total_pixels = config['mser']['total_pixels']
 for item in config['mser']['channels']:
     if item == "Green":
@@ -188,6 +189,7 @@ ctr.t_of_overlap_ratio = config['contours']['overlap_ratio']
 ctr.t_of_area_size = config['contours']['area_size']
 ctr.t_of_ar_of_direction_type = config['contours']['ar_of_direction_type']
 ctr.t_of_distance = config['contours']['distance']
+ctr.t_of_merged_aspect_lim = config['contours']['merged_aspect_lim']
 
 if arg_profile_contours:
     cProfile.run('ctr.aggreate_contours(debug=arg_enable_debug_contours, \

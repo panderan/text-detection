@@ -1,9 +1,10 @@
 mser:
-    delta: 5
+    delta: 1
     min_area: 10
     max_area: 500
     variation: 0.25
     total_pixels: 400000
+    gamma: 3.0
     channels: ["Gray", "Red"]
 
 mser_filter:
@@ -33,6 +34,9 @@ contours:
     area_size: 50
     ar_of_direction_type: 2.5
     distance: 1.0
+    merged_aspect_lim: 3.8
+    merged_areasize_lim: 20000
+
 
 contours_filter:
     enable: True 

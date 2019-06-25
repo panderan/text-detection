@@ -36,6 +36,7 @@ class mser_cls:
         self.max_area =500 
         self.variation = 0.25
         self.total_pixels = 400000
+        self.gamma = 3.0
         self.color_img = None
 
     ## 提取 MSER 连通区域
@@ -160,8 +161,7 @@ class mser_cls:
         a = np.uint8(gimg * blurf)
         equ = cv2.equalizeHist(a)
         tp = equ/255.0
-        gamma = 3.0
-        o = np.power(tp, gamma)
+        o = np.power(tp, self.gamma)
         a = np.uint8(o*255.0)
         return a
 

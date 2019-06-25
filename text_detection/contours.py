@@ -12,7 +12,7 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 import math
-
+from text_detection.common import common as comn
 
 ## 计算 BOX 的面积大小
 # 
@@ -67,6 +67,8 @@ class tdcontours:
         self.t_of_area_size = 140
         self.t_of_ar_of_direction_type = 2.5
         self.t_of_distance = 2.6
+        self.t_of_merged_aspect_lim = 3.0
+        self.t_of_merged_areasize_lim = 20000
 
     def get_boxes(self):
         return [box for _,box in self.boxes]
@@ -142,13 +144,9 @@ class tdcontours:
         for idx,box in self.boxes:
             if idx in self._boxes_db:
                 continue
-
-            pnt0 = np.array(box[0])
-            pnt1 = np.array(box[1])
-            pnt2 = np.array(box[2])
-            areasize,width,height = self._get_box_area(box)
-            direction = self._get_box_direction(pnt1, pnt2, pnt0)
-            aspectratio = self._get_box_aspect_ratio(pnt1, pnt2, pnt0)
+            areasize,_,_ = comn.get_box_area(box)
+            direction = comn.get_box_direction(box)
+            aspectratio,width,height = comn.get_box_aspect_ratio(box)
             self._boxes_db[idx] = [box, width, height, areasize, direction, aspectratio]
 
         if record_sheet is None:
@@ -165,6 +163,26 @@ class tdcontours:
                 # boxa 和 boxb 的共同外接矩形 bbox
                 bbox_points = np.int0(np.array(boxa.tolist()+boxb.tolist()))
                 bbox = cv2.boxPoints(cv2.minAreaRect(bbox_points))
+                bbox_aspect,bbox_width,bbox_height = comn.get_box_aspect_ratio(bbox)
+
+                # debug print
+                if debug:
+                    print("======================================================")
+                    print("BBox:")
+                    print("  bbox size: Width:%d Height:%d (%d)" % (bbox_width, bbox_height, bbox_width*bbox_height))
+                    print("  bbox aspect: %.3f (<%.3f)" % (bbox_aspect, self.t_of_merged_aspect_lim))
+
+                if (bbox_width*bbox_height) > self.t_of_merged_areasize_lim:
+                    record_sheet[idxa,idxb] = JDG_DISALLOW
+                    debug and not print("The aspect of merged box exceeded \n%s" % False) \
+                          and self._debug_judge_2boxes_show(boxa, boxb, debug_verbose)
+                    continue
+
+                if bbox_aspect > self.t_of_merged_aspect_lim:
+                    record_sheet[idxa,idxb] = JDG_DISALLOW
+                    debug and not print("The aspect of merged box exceeded \n%s" % False) \
+                          and self._debug_judge_2boxes_show(boxa, boxb, debug_verbose)
+                    continue
 
                 # 相关数据获取
                 boxa_db = self._boxes_db[idxa]
@@ -172,7 +190,7 @@ class tdcontours:
                 area_size_a = boxa_db[DB_AREA_SIZE]                             # boxa 的面积
                 area_size_b = boxb_db[DB_AREA_SIZE]                             # boxb 的面积
                 area_plus_ab = area_size_a + area_size_b                        # boxa 加 boxb 的面积
-                area_bounding_rect,_,_ = self._get_box_area(bbox)               # boxa 和 boxb 共同外接矩形的面积
+                area_bounding_rect,_,_ = comn.get_box_area(bbox)               # boxa 和 boxb 共同外接矩形的面积
 
                 if record_sheet[idxa,idxb] == JDG_ALLOWED:
                     candidate_agged_boxes.append((boxb, i+j+1, area_plus_ab/area_bounding_rect))
@@ -189,7 +207,6 @@ class tdcontours:
 
                 # debug print
                 if debug:
-                    print("======================================================")
                     print("Box a:")
                     print("  area size:     %.3f(%.3f,%.3f)" % (area_size_a, boxa_db[DB_WIDTH], boxa_db[DB_HEIGHT]))
                     print("  aspect ratio:  %.3f" % aspect_ratio_a)
@@ -308,7 +325,7 @@ class tdcontours:
 
         for i,(idx,box) in enumerate(self.boxes):
             if  box.min() > 0:
-                area_size = idx in self._boxes_db and self._boxes_db[idx][DB_AREA_SIZE] or self._get_box_area(box)[0]
+                area_size = idx in self._boxes_db and self._boxes_db[idx][DB_AREA_SIZE] or comn.get_box_area(box)[0]
                 if area_size > self.t_of_area_size:
                     continue
 
@@ -352,52 +369,6 @@ class tdcontours:
         ro_rect = cv2.minAreaRect(ctr)
         box = np.int0(cv2.boxPoints(ro_rect))
         return box
-
-    # def _locate_upright_point(self, box):
-    #     p0=np.array(box[-1])
-    #     p1=np.array(box[0])
-    #     p2=np.array(box[1])
-    #     horizon=p2-p1
-    #     vertical=p0-p1
-    #
-    #     if (horizon[0] == 0 and horizon[1] == 0)\
-    #         and (vertical[0] == 0 and vertical[1] == 0):
-    #         return p0,p0,p0
-    #
-    #     if (vertical[0] == 0 and vertical[1] == 0):
-    #         angle = math.asin(horizon[1]/math.hypot(horizon[0],horizon[1]))
-    #         if angle < -math.pi/4 or angle > math.pi/4:
-    #             if p2[1] > p1[1]:
-    #                 return p2,p1,p2
-    #             else:
-    #                 return p1,p2,p1
-    #         else:
-    #             if p2[0] > p1[0]:
-    #                 return p1,p2,p1
-    #             else:
-    #                 return p2,p1,p2
-    #
-    #     angle = math.asin(vertical[1]/math.hypot(vertical[0],vertical[1]))
-    #     if angle > -math.pi/4 and angle < math.pi/4:
-    #         pass
-    #     else:
-    #         jdg = box[2] - p1
-
-        
-
-    ## 计算 Box 的面积
-    #
-    # @return Box 的面积
-    #
-    def _get_box_area(self, box):
-        p0=np.array(box[0])
-        p1=np.array(box[1])
-        p2=np.array(box[2])
-        l1=p1-p0
-        l2=p1-p2
-        d1=math.hypot(l1[0],l1[1])
-        d2=math.hypot(l2[0],l2[1])
-        return (d1*d2, d1, d2)
  
     def _get_pos_ratio(self, boxa, boxb):
         area_size_a = boxa[4]
@@ -423,36 +394,6 @@ class tdcontours:
         mask_b = cv2.drawContours(mask_b, [np.int0(boxb_db[DB_BOX])], 0, 255, cv2.FILLED)
         return (np.sum(mask_a & mask_b)/255.0)/min_size
 
-    ## 计算 Box 的方向
-    #
-    # @return Box 的方向
-    #
-    def _get_box_direction(self, upleft, upright, downleft):
-        h = upright - upleft
-        v = downleft - upleft
-        dh=math.hypot(h[0],h[1])
-        dv=math.hypot(v[0],v[1])
-
-        if dh > dv:
-            d = h*[1,-1]
-        else: 
-            d = v*[1,-1]
-        return math.asin(d[1]/math.hypot(d[0],d[1]))
-    
-    ## 获取 Box 的长宽比
-    #
-    # @return Box 的长宽比
-    #
-    def _get_box_aspect_ratio(self, upleft, upright, downleft):
-        h = upright - upleft
-        v = downleft - upleft
-        dh=math.hypot(h[0],h[1])
-        dv=math.hypot(v[0],v[1])
-
-        ratio = dh/dv
-        if (ratio < 1.0):
-            ratio = 1.0/ratio
-        return ratio
     
     ## 计算两个 Box 中心连线的方向
     #
@@ -486,13 +427,13 @@ class tdcontours:
     #
     def _get_threshold_of_area_ratio(self, boxa, boxb):
         
-        if self._is_gt_one_char(boxa[DB_BOX]) == False:
+        if self._is_gt_one_char(boxa) == False:
             if boxa[DB_ASPECT_RATIO] > 2.0:
                 return 0.55
             else:
                 return 0.60
 
-        if self._is_gt_one_char(boxb[DB_BOX]) == False:
+        if self._is_gt_one_char(boxb) == False:
             if boxb[DB_ASPECT_RATIO] > 2.0:
                 return 0.55
             else:
@@ -512,7 +453,7 @@ class tdcontours:
     # 低于阈值允许大致平行或垂直；高于阈值只允许平行
     #
     def _get_threshold_of_direction_type(self, boxa, boxb):
-        if self._is_gt_one_char(boxa[DB_BOX]) or self._is_gt_one_char(boxb[DB_BOX]):
+        if self._is_gt_one_char(boxa) or self._is_gt_one_char(boxb):
             return False
         else:
             return True
@@ -530,14 +471,14 @@ class tdcontours:
     ## 对两个 Box 的方向进行可合并判别
     #
     def _judge_direction(self, boxa, boxb, debug=False):
-        if self._is_gt_one_char(boxa[DB_BOX]) == False \
-            and self._is_gt_one_char(boxb[DB_BOX]) == False:
+        if self._is_gt_one_char(boxa) == False \
+            and self._is_gt_one_char(boxb) == False:
             return True
         
         # 获取方向判断类别 
         direction_type = DIRECTION_TYPE_PARALLEL
-        if self._is_gt_one_char(boxa[DB_BOX]) == False \
-            or self._is_gt_one_char(boxb[DB_BOX]) == False:
+        if self._is_gt_one_char(boxa) == False \
+            or self._is_gt_one_char(boxb) == False:
                 direction_type = DIRECTION_TYPE_PARALLEL_CENTER_LINE
 
         if boxa[DB_ASPECT_RATIO] < 1.5 or boxb[DB_ASPECT_RATIO] < 1.5:
@@ -562,7 +503,7 @@ class tdcontours:
             print("  direction centers:       %.3f" % delta_direction_box_with_centers)
             print("  precision of direction: (%.3f,%.3f)" % (min_threshold, max_threshold))
             print("  direction type:          %.3f" % direction_type)
-            print("  is gt one char:          %s,%s" %  (self._is_gt_one_char(boxa[DB_BOX]), self._is_gt_one_char(boxb[DB_BOX])))
+            print("  is gt one char:          %s,%s" %  (self._is_gt_one_char(boxa), self._is_gt_one_char(boxb)))
 
         if direction_type & DIRECTION_TYPE_PARALLEL:
             if delta_direction_2boxes < min_threshold \
@@ -596,9 +537,13 @@ class tdcontours:
         binaries_line = cv2.line(binaries_line, tuple(np.int0(center_point_a)), tuple(np.int0(center_point_b)), 255, thickness=1)
         binaries_ret = np.bitwise_xor(np.int0(binaries_boxes), np.int0(binaries_line))
         distance = np.sum(binaries_ret)/255.0
-
-        area_size_a, w_a, h_a = self._get_box_area(boxa[DB_BOX])
-        area_size_b, w_b, h_b = self._get_box_area(boxb[DB_BOX])
+        
+        area_size_a = boxa[DB_AREA_SIZE]
+        w_a = boxa[DB_WIDTH]
+        h_a = boxa[DB_HEIGHT]
+        area_size_b = boxb[DB_AREA_SIZE]
+        w_b = boxb[DB_WIDTH]
+        h_b = boxb[DB_HEIGHT]
         min_area_size = area_size_a
         if min_area_size > area_size_b:
             min_area_size = area_size_b
@@ -613,7 +558,7 @@ class tdcontours:
 
     def _judge_strategy(self, boxa, boxb, debug):
 
-        if self._is_gt_one_char(boxa[DB_BOX]) == True and self._is_gt_one_char(boxb[DB_BOX]) == True:
+        if self._is_gt_one_char(boxa) == True and self._is_gt_one_char(boxb) == True:
             return True
         
         big_box = boxa
@@ -668,10 +613,9 @@ class tdcontours:
 
        
     def _is_gt_one_char(self, box):
-        area_size,w,h = self._get_box_area(box)
-        if area_size > 2000:
+        if  box[DB_AREA_SIZE]> 2000:
             return True 
-        if w > 60 or h > 60:
+        if box[DB_WIDTH] > 60 or box[DB_HEIGHT] > 60:
             return True 
         return False
 

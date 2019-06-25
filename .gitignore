@@ -110,3 +110,8 @@ maskFilenames.txt
 tmp
 .gitignore
 results
+a.py
+*.png
+*.jpg
+*.sh
+*.out
