@@ -109,9 +109,36 @@ class common:
         return d1*d2,d1,d2
 
 
+    @staticmethod
+    def zoom_img(orig_img, osize):
+        return cv2.resize(orig_img, osize)
+    
 
+    @staticmethod
+    def upright_box(seg_img, box):
 
+        center,size,angle = cv2.minAreaRect(box)
 
+        if size[0] < size[1]:
+            size = (size[1],size[0])
+            angle = (90 - abs(angle)) * ( angle > 0 and -1 or 1)
+
+        if abs(angle) < 0.001:
+            return seg_img
+
+        angle_mat = cv2.getRotationMatrix2D((seg_img.shape[1]/2, seg_img.shape[0]/2), angle, 1)
+
+        nbox = np.zeros_like(box)
+        nbox[0] = np.dot(angle_mat, [box[0][0], box[0][1], 1])
+        nbox[1] = np.dot(angle_mat, [box[1][0], box[1][1], 1])
+        nbox[2] = np.dot(angle_mat, [box[2][0], box[2][1], 1])
+        nbox[3] = np.dot(angle_mat, [box[3][0], box[3][1], 1])
+        nbox = np.int0(nbox)
+
+        rtimg = cv2.warpAffine(seg_img, angle_mat, (nbox[:,0].max(), nbox[:,1].max()), borderValue=(0,0,0)) 
+        upright_img = rtimg[nbox[:,1].min():nbox[:,1].max(), nbox[:,0].min():nbox[:,0].max()]
+    
+        return upright_img
 
 
 

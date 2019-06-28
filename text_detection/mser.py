@@ -202,7 +202,7 @@ class mser_cls:
     
     @property
     def color_img(self):
-        return self.__gray_img
+        return self.__orig_gray_img
     @color_img.setter
     def color_img(self, val):
         if type(val) == type(np.zeros((3,3))):
@@ -216,6 +216,7 @@ class mser_cls:
             r_img = cv2.resize(color_img[:,:,2], (int(gimg.shape[1]/mul), int(gimg.shape[0]/mul)))
             self.__r_img = self._preprocessing(r_img)
             gimg = cv2.resize(gimg, (int(gimg.shape[1]/mul), int(gimg.shape[0]/mul)))
+            self.__orig_gray_img = gimg
             self.__gray_img = self._preprocessing(gimg)
         else:
             self.__gray_img = None

@@ -9,6 +9,7 @@
 from text_detection import mser, filter, morph, contours, svm, regions, evaluate
 import matplotlib.pyplot as plt
 import cv2, sys, getopt, yaml
+import numpy as np
 import cProfile 
 
 
@@ -54,9 +55,11 @@ except getopt.GetoptError:
 for cmd,arg in opts:
     if cmd in ("-i"):
         image_path = arg
+        image_name = image_path.split('/')[-1][0:-4]
     elif cmd in ("--save-regions"):
-        arg_save_regions_path = arg
         arg_save_region = True 
+        arg_save_regions_path = arg
+        arg_save_regions_path[-1] == '/' or "".join([arg_save_mask_path,"/"])
     elif cmd in ("--save-mask"):
         arg_save_mask_path = arg
         arg_save_mask = True
@@ -138,7 +141,7 @@ msr_flt.aspect_ratio_lim = config['mser_filter']['aspect_ratio_lim']
 msr_flt.aspect_ratio_gt1 = config['mser_filter']['aspect_ratio_gt1']
 msr_flt.occupation_lim   = config['mser_filter']['occupation_lim']
 msr_flt.compactness_lim  = config['mser_filter']['compactness_lim']
-msr_flt.width_lim  = config['mser_filter']['width_lim']
+msr_flt.width_lim   = config['mser_filter']['width_lim']
 msr_flt.height_lim  = config['mser_filter']['height_lim']
 
 if arg_profile_mser:
@@ -177,12 +180,9 @@ else:
 # 创建选区处理实例，并从二值图像中提起候选区域分别保存为图片
 ctr = None
 if config['contours']['name'] == "car_license":
-    ctr = contours.contours_car_license(binaries, \
-                                        image_path.split('/')[-1][0:-4], \
-                                        arg_save_regions_path)
+    ctr = contours.contours_car_license(binaries)
 else:
-    ctr = contours.tdcontours(binaries, image_path.split('/')[-1][0:-4], \
-                              arg_save_regions_path)
+    ctr = contours.tdcontours(binaries)
 
 ctr.t_of_extreme_area_ratio_for_ab = config['contours']['extreme_area_ratio_for_ab']
 ctr.t_of_overlap_ratio = config['contours']['overlap_ratio']
@@ -207,17 +207,34 @@ if config['contours_filter']['enable'] == True:
 
 # 生成训练数据
 if arg_save_region:
-    ctr.save_each_contours(msr.gray_img, True)
+    segimgs = ctr.get_detected_segimgs(msr.color_img)
+    # 标记并保存图像
+    plt.ion()
+    for i,(box,simg) in enumerate(segimgs):
+        if arg_save_region==True:
+            plt.imshow(simg, "gray")
+            plt.pause(0.2)
+            judge = input("is text region? : ")
+            if judge == 'Y' or judge == 'y':
+                cv2.imwrite(arg_save_regions_path+image_name+"-"+str(i)+"-Y.jpg", simg)
+            else:
+                cv2.imwrite(arg_save_regions_path+image_name+"-"+str(i)+"-N.jpg", simg)
     sys.exit()
 
 
 # SVM 检测分类
 text_regions_binaries = ctr.binaries.copy()
+final_result = []
 if arg_enable_svm:
     classification = svm.svc()
     classification.train(arg_training_path)
-    ctr.boxes = classification.filter_regions(msr.gray_img, ctr.boxes, arg_enable_debug_svm)
-    ctr.flesh_binaries()
+    segimgs = ctr.get_detected_segimgs(msr.color_img)
+    for si in segimgs:
+        ret = classification.predict(si[1])
+        if ret =="Y":
+            final_result.append(si)
+else:
+    final_result = ctr.get_detected_segimgs(msr.color_img)
 
 
 # 计算 f-measure 评估结果
@@ -232,16 +249,13 @@ if arg_enable_eval:
     print("Precision: %.3f\nRecall:%.3f" %(precision, recall))
 
 
-# 保存 mask
-if arg_save_mask:
-    cv2.imwrite(arg_save_mask_path+"/mask-"+image_path.split('/')[-1], ctr.binaries)
-    cv2.imwrite(arg_save_mask_path+"/orig-"+image_path.split('/')[-1], msr.gray_img)
-
-
 # 标记最终选区
 if arg_is_show_result:
     ret_img = cv2.cvtColor(msr.gray_img, cv2.COLOR_GRAY2BGR)
     ret_img = regions.regions.label_image_with_box(ret_img, ctr.get_boxes(), (255,0,0))
+    for si in final_result:
+        ret_img = cv2.drawContours(ret_img, [np.int0(si[0])], 0, (0,255,0), thickness=1)
+
     plt.figure(figsize=(10,8))
     plt.imshow(ret_img, "gray")
     plt.show()

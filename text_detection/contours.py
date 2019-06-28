@@ -54,13 +54,11 @@ class tdcontours:
     # @param name 文件名
     # @param save_path 保存每个区域到文件的路径
     #
-    def __init__(self, binaries=None, name="", save_path=""):
+    def __init__(self, binaries):
         self.binaries = binaries
-        self.name = name
         self.boxes = []
         self._idx = 0
         self._boxes_db = {}
-        self.save_path = save_path
         self.t_of_extreme_area_ratio_for_ab = 24
         self.t_of_overlap_ratio = 0.25
         self.strategy = "Horizon"
@@ -78,8 +76,10 @@ class tdcontours:
     #
     # @param orig_img 原图
     #
-    def save_each_contours(self, orig_img, save=True):
-        for i, box in enumerate(self.boxes):
+    def get_detected_segimgs(self, orig_img):
+        self._delsmallregions()
+        ret_regions = []
+        for i, (idx,box) in enumerate(self.boxes):
             # 区域掩码图
             box = np.int0(box)
             mask = np.zeros_like(self.binaries)
@@ -91,19 +91,42 @@ class tdcontours:
             gray_img = np.zeros_like(self.binaries)
             gray_img[mask > 0] = orig_img[mask > 0]
             gray_img_seg = gray_img[ y:y+h, x:x+w]
-                
-            # 标记并保存图像
-            if save==True:
-                plt.ion()
-                plt.imshow(gray_img_seg, "gray")
-                plt.pause(0.2)
-                judge = input("is text region? : ")
-                if (judge == 'Y'):
-                    cv2.imwrite(self.save_path + self.name+"-"+str(i)+"-Y.jpg", gray_img_seg)
-                    cv2.imwrite(self.save_path + "mask/"+self.name+"-"+str(i)+"-Y-mask.jpg", mask_seg)
-                else:
-                    cv2.imwrite(self.save_path + self.name+"-"+str(i)+"-N.jpg", gray_img_seg)
-                    cv2.imwrite(self.save_path + "mask/"+self.name+"-"+str(i)+"-N-mask.jpg", mask_seg)
+            
+            segbox = box.copy()
+            segbox[:,0] = box[:,0] - x
+            segbox[:,1] = box[:,1] - y
+            seg_img = self.upright_box(gray_img_seg, segbox)
+            seg_img = cv2.resize(seg_img, (100,35))
+            
+            ret_regions.append((box,seg_img))
+        return ret_regions
+             
+
+
+    def upright_box(self, seg_img, box):
+
+        center,size,angle = cv2.minAreaRect(box)
+
+        if size[0] < size[1]:
+            size = (size[1],size[0])
+            angle = (90 - abs(angle)) * ( angle > 0 and -1 or 1)
+
+        if abs(angle) < 0.001:
+            return seg_img
+
+        angle_mat = cv2.getRotationMatrix2D((seg_img.shape[1]/2, seg_img.shape[0]/2), angle, 1)
+
+        nbox = np.zeros_like(box)
+        nbox[0] = np.dot(angle_mat, [box[0][0], box[0][1], 1])
+        nbox[1] = np.dot(angle_mat, [box[1][0], box[1][1], 1])
+        nbox[2] = np.dot(angle_mat, [box[2][0], box[2][1], 1])
+        nbox[3] = np.dot(angle_mat, [box[3][0], box[3][1], 1])
+        nbox = np.int0(nbox)
+
+        rtimg = cv2.warpAffine(seg_img, angle_mat, (nbox[:,0].max(), nbox[:,1].max()), borderValue=(0,0,0)) 
+        upright_img = rtimg[nbox[:,1].min():nbox[:,1].max(), nbox[:,0].min():nbox[:,0].max()]
+    
+        return upright_img
 
     ## 文本块提取
     #
@@ -132,6 +155,7 @@ class tdcontours:
             numx,rdsheet = self._aggreate_contours_once(rdsheet, debug, debug_verbose)
 
         # 生成最终掩码图
+        self._delsmallregions()
         self._generate_binaries()
 
     ## 连通域合并
@@ -721,8 +745,8 @@ class tdcontours:
         cv2.waitKey(0)
 
 class contours_car_license(tdcontours):
-    def __init__(self, binaries=None, name="", save_path=""):
-        super(contours_car_license, self).__init__(binaries, name, save_path)
+    def __init__(self, binaries):
+        super(contours_car_license, self).__init__(binaries)
 
     def _get_threshold_of_area_ratio(self, boxa, boxb):
         return 0.7

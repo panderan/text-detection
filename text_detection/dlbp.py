@@ -64,21 +64,11 @@ class dlbp_training:
     ## 见 DLBP Algorithm 1
     #
     def get_k(self, filename):
-        # 获得 filename 和 msk_filename 文件的路径
-        msk_filename = filename.split('/')
-        msk_filename.insert(-1, "mask")
-        msk_filename[-1] = (msk_filename[-1])[0:-4] + "-mask" + (msk_filename[-1][-4:])
-        msk_filename = '/'.join(msk_filename)
         
-        # 打开两个文件
-        gimg = cv2.imread(filename, 0)
-        gimg_msk = cv2.imread(msk_filename, 0)
-
         # 提取 gimg 文件 lbp
+        gimg = cv2.imread(filename, 0)
         lbp = feature.local_binary_pattern(gimg, self.number_points, self.radius, method="ror")
-        lbp[gimg_msk <127] = 256
         data = lbp.ravel()
-        data = data[data<256]
         x, y =np.histogram(data, range(0,256+1)) 
         x = x.tolist()
         x.sort(reverse=True)
@@ -88,7 +78,6 @@ class dlbp_training:
             acc += item
             total = sum(x)
             if acc/total > self.occupied:
-                # return (i,list(map(lambda x: x/total, x)))
                 return (i, x)
 
 
@@ -116,20 +105,17 @@ class dlbp_feature(dlbp_training):
     # @param gimg 输入的待提取特征的图像
     # @param gimg_msk 输入的待提取特征的图像的掩码图
     #
-    def get_dlbp_feature(self, gimg, gimg_msk):
+    def get_dlbp_feature(self, gimg):
         if self.k == 0:
             print("DLBP need training first\n")
             return None
         
         lbp = feature.local_binary_pattern(gimg, self.number_points, self.radius, method="ror")
-        lbp[gimg_msk <127] = 256
         data = lbp.ravel()
-        data = data[data<256]
         x, y =np.histogram(data, range(0,256+1)) 
         x = x.tolist()
         total = sum(x)
         x.sort(reverse=True)
-        # x = list(map(lambda x: x/total, x))
         return np.array(x[:self.k])
 
 
