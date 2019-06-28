@@ -38,6 +38,7 @@ class dlbp_training:
         self.radius = radius
         self.occupied = occupied
         self.k = 0
+        self.k_c = 3
         pass
 
     ## 见 DLBP Algorithm 2
@@ -58,7 +59,7 @@ class dlbp_training:
                         elif filename[-5] == 'N':
                             labels.append('N')
                 k = k / len(files)
-                self.k = np.int0(k+0.5)
+                self.k = np.int0(k+0.5) + self.k_c
                 return (k,vtrs,labels)
 
     ## 见 DLBP Algorithm 1

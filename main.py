@@ -58,8 +58,7 @@ for cmd,arg in opts:
         image_name = image_path.split('/')[-1][0:-4]
     elif cmd in ("--save-regions"):
         arg_save_region = True 
-        arg_save_regions_path = arg
-        arg_save_regions_path[-1] == '/' or "".join([arg_save_mask_path,"/"])
+        arg_save_regions_path = arg[-1] == '/' and arg or "".join([arg,"/"])
     elif cmd in ("--save-mask"):
         arg_save_mask_path = arg
         arg_save_mask = True

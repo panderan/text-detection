@@ -6,7 +6,7 @@ import cv2
 
 class svc:
     
-    def __init__(self, gamma='scale', kernel='poly', degree=10):
+    def __init__(self, gamma='scale', kernel='poly', degree=19):
         self.gamma = gamma
         self.kernel= kernel
         self.degree = degree
@@ -34,4 +34,6 @@ class svc:
         vet = self.dlbp_ft.get_dlbp_feature(gimg)
         pre = self.svc.predict(np.array(vet).reshape(1,-1))
         return pre[0]
-
+    
+    def grid_search(self):
+        pass 
