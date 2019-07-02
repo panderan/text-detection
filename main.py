@@ -225,7 +225,12 @@ if arg_save_region:
 text_regions_binaries = ctr.binaries.copy()
 final_result = []
 if arg_enable_svm:
-    classification = svm.svc()
+    kernel = config['svm']['kernel']
+    degree = config['svm']['degree']
+    k_c =    config['svm']['k_c']
+    gamma =  config['svm']['gamma']
+
+    classification = svm.svc(kernel, gamma, degree, k_c)
     classification.train(arg_training_path)
     segimgs = ctr.get_detected_segimgs(msr.color_img)
     for si in segimgs:

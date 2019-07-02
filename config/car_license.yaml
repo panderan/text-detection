@@ -37,8 +37,14 @@ contours:
     merged_aspect_lim: 3.8
     merged_areasize_lim: 20000
 
-
 contours_filter:
     enable: True 
     area_lim: [400, 20000]
     aspect_lim: [2.0, 100]
+
+svm:
+    kernel: 'rbf'
+    degree: 20
+    k_c: 5 
+    gamma: 0.00001
+
