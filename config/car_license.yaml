@@ -25,7 +25,7 @@ morph:
 morph_filter:
     enable: True 
     area_lim: [20, 8000]
-    aspect_lim: [0.125, 4.0]
+    aspect_lim: [0.125, 5.0]
 
 contours:
     name: "car_license"
@@ -34,13 +34,13 @@ contours:
     area_size: 50
     ar_of_direction_type: 2.5
     distance: 1.0
-    merged_aspect_lim: 3.8
+    merged_aspect_lim: 4.6
     merged_areasize_lim: 20000
 
 contours_filter:
     enable: True 
     area_lim: [400, 20000]
-    aspect_lim: [2.0, 100]
+    aspect_lim: [1.8, 5.0]
 
 svm:
     kernel: 'rbf'

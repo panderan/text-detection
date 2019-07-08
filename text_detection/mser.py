@@ -202,13 +202,14 @@ class mser_cls:
     
     @property
     def color_img(self):
-        return self.__orig_gray_img
+        return self.__color_img
     @color_img.setter
     def color_img(self, val):
         if type(val) == type(np.zeros((3,3))):
             color_img = val
             gimg = cv2.cvtColor(color_img, cv2.COLOR_BGR2GRAY)
             mul = sqrt(gimg.shape[0]*gimg.shape[1]/self.total_pixels)
+            self.__color_img = cv2.resize(color_img, (int(gimg.shape[1]/mul), int(gimg.shape[0]/mul)))
             b_img = cv2.resize(color_img[:,:,0], (int(gimg.shape[1]/mul), int(gimg.shape[0]/mul)))
             self.__b_img = self._preprocessing(b_img)
             g_img = cv2.resize(color_img[:,:,1], (int(gimg.shape[1]/mul), int(gimg.shape[0]/mul)))
@@ -226,9 +227,16 @@ class mser_cls:
     
     @property
     def gray_img(self):
-        return self.__gray_img
+        return self.__orig_gray_img
     @gray_img.setter
     def gray_img(self, val):
+        pass
+
+    @property
+    def prep_gray_img(self):
+            return self.__gray_img
+    @prep_gray_img.setter
+    def prep_gray_img(self, val):
         pass
 
     @property

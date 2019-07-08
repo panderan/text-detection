@@ -24,6 +24,11 @@ arg_enable_eval = False
 arg_ground_truth_img_path = ""
 arg_config_file_path = "config/default.yaml"
 arg_is_show_result = True
+arg_color = False
+arg_ocolor = ""
+arg_gray = True 
+arg_ogray = ""
+arg_prep = False
 
 arg_enable_debug_mser=False
 arg_enable_debug_morph=False
@@ -48,7 +53,8 @@ def usage():
 try:
     opts, args = getopt.getopt(sys.argv[1:], "i:", \
                     ["svm=","save-regions=","eval=","save-mask=", \
-                    "debug=","disable-show","config=","cProfile=","help"])
+                    "debug=","disable-show","config=","cProfile=", \
+                    "ocolor=","ogray=","color", "gray", "prep","help"])
 except getopt.GetoptError:
     print("argv error")
 
@@ -94,6 +100,18 @@ for cmd,arg in opts:
             arg_profile_svm = True
     elif cmd in ("--disable-show"):
         arg_is_show_result = False
+    elif cmd in ("--ocolor"):
+        arg_ocolor = arg 
+        arg_color = True
+    elif cmd in ("--ogray"):
+        arg_ogray = arg 
+        arg_gray = True 
+    elif cmd in ("--color"):
+        arg_color = True
+    elif cmd in ("--gray"):
+        arg_gray = True 
+    elif cmd in ("--prep"):
+        arg_prep = True 
     elif cmd in ("--config"):
         arg_config_file_path = arg
     else:
@@ -206,7 +224,7 @@ if config['contours_filter']['enable'] == True:
 
 # 生成训练数据
 if arg_save_region:
-    segimgs = ctr.get_detected_segimgs(msr.color_img)
+    segimgs = ctr.get_detected_segimgs(msr.gray_img)
     # 标记并保存图像
     plt.ion()
     for i,(box,simg) in enumerate(segimgs):
@@ -232,13 +250,13 @@ if arg_enable_svm:
 
     classification = svm.svc(kernel, gamma, degree, k_c)
     classification.train(arg_training_path)
-    segimgs = ctr.get_detected_segimgs(msr.color_img)
+    segimgs = ctr.get_detected_segimgs(msr.gray_img)
     for si in segimgs:
         ret = classification.predict(si[1])
         if ret =="Y":
             final_result.append(si)
 else:
-    final_result = ctr.get_detected_segimgs(msr.color_img)
+    final_result = ctr.get_detected_segimgs(msr.gray_img)
 
 
 # 计算 f-measure 评估结果
@@ -254,13 +272,32 @@ if arg_enable_eval:
 
 
 # 标记最终选区
-if arg_is_show_result:
+ret_img = None
+if arg_color:
+    ret_img = cv2.cvtColor(msr.color_img, cv2.COLOR_RGB2BGR)
+elif arg_prep:
+    ret_img = cv2.cvtColor(msr.prep_gray_img, cv2.COLOR_GRAY2BGR)
+else:
     ret_img = cv2.cvtColor(msr.gray_img, cv2.COLOR_GRAY2BGR)
-    ret_img = regions.regions.label_image_with_box(ret_img, ctr.get_boxes(), (255,0,0))
-    for si in final_result:
-        ret_img = cv2.drawContours(ret_img, [np.int0(si[0])], 0, (0,255,0), thickness=1)
-
+ret_img = regions.regions.label_image_with_box(ret_img, ctr.get_boxes(), (255,0,0))
+for si in final_result:
+    tmp = cv2.drawContours(ret_img.copy(), [np.int0(si[0])], 0, (0,0,255), thickness=4)
+    plt.ion()
+    plt.imshow(tmp)
+    plt.show() 
+    judge = input("is text region? : ")
+    if judge == "Y":
+        ret_img = cv2.drawContours(ret_img, [np.int0(si[0])], 0, (0,255,0), thickness=4)
+    
+if arg_is_show_result:
+    plt.ioff()
     plt.figure(figsize=(10,8))
     plt.imshow(ret_img, "gray")
     plt.show()
+
+if arg_ocolor != "":
+    cv2.imwrite(arg_ocolor, cv2.cvtColor(ret_img, cv2.COLOR_BGR2RGB))
+
+if arg_ogray != "":
+    cv2.imwrite(arg_ogray, (ret_img))
 
