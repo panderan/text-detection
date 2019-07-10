@@ -140,6 +140,12 @@ class common:
     
         return upright_img
 
+    @staticmethod
+    def apply_canny(gray_img, sigma=0.33):
+        v = np.median(gray_img)
+        lower = int(max(0, (1.0 - sigma) * v))
+        upper = int(min(255, (1.0 + sigma) * v))
+        return cv2.Canny(gray_img, lower, upper)
 
 
 

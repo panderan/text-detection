@@ -171,14 +171,10 @@ else:
 
 # 对由候选区组成的二值图像进行形态学处理
 mph = morph.morph()
-mph.k_erode   = cv2.getStructuringElement(cv2.MORPH_RECT, \
-                    (config['morph']['k_erode'],config['morph']['k_erode']))
-mph.k_dilate  = cv2.getStructuringElement(cv2.MORPH_RECT, \
-                    (config['morph']['k_dilate'],config['morph']['k_dilate']))
-mph.k_opening = cv2.getStructuringElement(cv2.MORPH_RECT, \
-                    (config['morph']['k_opening'],config['morph']['k_opening']))
-mph.k_closing = cv2.getStructuringElement(cv2.MORPH_RECT, \
-                    (config['morph']['k_closing'],config['morph']['k_closing']))
+mph.k_erode   = cv2.getStructuringElement(cv2.MORPH_RECT, (config['morph']['k_erode'],config['morph']['k_erode']))
+mph.k_dilate  = cv2.getStructuringElement(cv2.MORPH_RECT, (config['morph']['k_dilate'],config['morph']['k_dilate']))
+mph.k_opening = cv2.getStructuringElement(cv2.MORPH_RECT, (config['morph']['k_opening'],config['morph']['k_opening']))
+mph.k_closing = cv2.getStructuringElement(cv2.MORPH_RECT, (config['morph']['k_closing'],config['morph']['k_closing']))
 
 mph_flt = None
 if config['morph_filter']['enable'] == True:
@@ -186,11 +182,14 @@ if config['morph_filter']['enable'] == True:
     mph_flt.area_lim = config['morph_filter']['area_lim']
     mph_flt.aspect_lim = config['morph_filter']['aspect_lim']
 
+swt_flt = None
+swt_flt = filter.swtFilter(msr.gray_img)
+
 if arg_profile_morph:
     cProfile.run('binaries = mph.morph_operation(binaries, flt=mph_flt, \
                                debug=arg_enable_debug_morph)')
 else:
-    binaries = mph.morph_operation(binaries, flt=mph_flt, \
+    binaries = mph.morph_operation(binaries, flts=[mph_flt, swt_flt], \
                                debug=arg_enable_debug_morph)
 
 
@@ -281,13 +280,7 @@ else:
     ret_img = cv2.cvtColor(msr.gray_img, cv2.COLOR_GRAY2BGR)
 ret_img = regions.regions.label_image_with_box(ret_img, ctr.get_boxes(), (255,0,0))
 for si in final_result:
-    tmp = cv2.drawContours(ret_img.copy(), [np.int0(si[0])], 0, (0,0,255), thickness=4)
-    plt.ion()
-    plt.imshow(tmp)
-    plt.show() 
-    judge = input("is text region? : ")
-    if judge == "Y":
-        ret_img = cv2.drawContours(ret_img, [np.int0(si[0])], 0, (0,255,0), thickness=4)
+    ret_img = cv2.drawContours(ret_img, [np.int0(si[0])], 0, (0,255,0), thickness=4)
     
 if arg_is_show_result:
     plt.ioff()

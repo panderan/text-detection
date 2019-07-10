@@ -11,7 +11,6 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-
 ## 图像形态学处理类
 #
 class morph:
@@ -46,31 +45,37 @@ class morph:
     # 对二值图像中的每一个连通域进行先腐蚀后膨胀，如果腐蚀后连通域消失则略过
     # 腐蚀操作。然后进行闭运算和开运算
     #
-    def morph_operation(self, binaries, flt=None, debug = False):
+    def morph_operation(self, binaries, flts=[], debug = False):
         image, contours, hierarchies = cv2.findContours(binaries, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
         ret_bins = np.zeros_like(binaries)
-
+    
         for i, ctr in enumerate(contours):
             temp_binaries = np.zeros_like(binaries)
             temp_binaries = cv2.drawContours(temp_binaries, [ctr], 0, 255, thickness=cv2.FILLED)
-
             temp_binaries = self._morph_operation_once(temp_binaries, debug)
+
             _,temp_contours,_ = cv2.findContours(temp_binaries, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
             for ctr in temp_contours:
                 ro_rect = cv2.minAreaRect(ctr)
                 box = np.int0(cv2.boxPoints(ro_rect))
-                if type(flt) != type(None):
-                    ret = flt.verification(box, debug)
-                    debug and print("%s" % ret)
-                    if debug:
-                        tmp = ret_bins.copy()
-                        tmp[temp_binaries > 128] = 128
-                        cv2.namedWindow("Debug",0);
-                        cv2.resizeWindow("Debug", 800, 600);
-                        cv2.imshow("Debug", tmp)
-                        cv2.waitKey(0)
-                    if ret == False:
+                if flts != []:
+                    flt_flag = True 
+                    for flt in flts:
+                        flt_flag = flt.verification(box, debug)
+                        debug and print("%s" % flt_flag)
+                        if debug:
+                            tmp = ret_bins.copy()
+                            tmp[temp_binaries > 128] = 128
+                            cv2.namedWindow("Debug",0);
+                            cv2.resizeWindow("Debug", 800, 600);
+                            cv2.imshow("Debug", tmp)
+                            cv2.waitKey(0)
+                        if flt_flag == False:
+                            break
+
+                    if flt_flag == False:
                         continue
+
                 ret_bins = cv2.drawContours(ret_bins, [ctr], 0, 255, thickness=cv2.FILLED)
 
         return ret_bins

@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cv2
 import math
+from text_detection.swt import swt
 
 ## 几何过滤类
 #
@@ -245,11 +246,35 @@ class areaAspectFilter:
         return (dw*dh, dw, dh)
 
 
-class sobelFilter:
-    def __init__(self):
-        pass    
+class swtFilter:
+    def __init__(self, gray_img):
+        self._swt = swt(gray_img)
+        pass
+        
+    def verification(self, box, debug=False):
+        xywh = (box[:,0].min(), 
+                box[:,1].min(), 
+                box[:,0].max()-box[:,0].min(), 
+                box[:,1].max()-box[:,1].min())
 
+        stroke_widths, stroke_widths_opp = self._swt.get_strokes(xywh)
+        stroke_widths = np.append(stroke_widths, stroke_widths_opp, axis=0)
+        retval = self._swt.get_stroke_properties(stroke_widths)
 
+        total_cnt = len(stroke_widths)
+        sw, sw_cnt, mean, std, maxval, minval = retval
+        debug and print("total:%d mode:%.2f mode_cnt:%.2f mean:%.2f std:%.2f maxval:%.2f minval:%.2f" \
+                        % (total_cnt, sw, sw_cnt, mean, std, maxval, minval))
+        
+        if sw < 1.5:
+            return False    
+        if total_cnt < 30:
+            return True
+        if std < 0.5 or std > 2.5:
+            return False
+        if mean < 2.0 or mean > 5.0:
+            return False 
+        return True
 
 
 

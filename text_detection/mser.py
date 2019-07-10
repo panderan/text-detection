@@ -8,11 +8,13 @@
 # @author panderan@163.com 
 #
 
-from math import sqrt
+
 import cv2
-import matplotlib.pyplot as plt
 import numpy as np
+import matplotlib.pyplot as plt
+from math import sqrt
 from text_detection import common
+
 
 EXTRACT_NONE=0x0
 EXTRACT_RED=0x1
@@ -20,6 +22,8 @@ EXTRACT_GREEN=0x2
 EXTRACT_BLUE=0x4
 EXTRACT_GRAY=0x8
 EXTRACT_ALL = EXTRACT_RED + EXTRACT_GREEN + EXTRACT_BLUE + EXTRACT_GRAY
+
+
 ## MSER 连通域提取类
 #
 # 从一幅灰度图像中提取 MSER 连通域
@@ -48,30 +52,22 @@ class mser_cls:
     # @retval retmsrs 候选连通域列表，每一个元素为包含了该连通域的所有点的列表
     # @retval retboxes 候选连通域列表，每一个元素包含了该连通域的外接矩形
     #
-    def extraction(self, flt = 0, direction = 0, channel=EXTRACT_GRAY, debug=False):
+    def extraction(self, flt = None, direction = 0, channel=EXTRACT_GRAY, debug=False):
+
         img = None
-        if channel == EXTRACT_BLUE:
-            img = self.b_img
-        elif channel == EXTRACT_GREEN:
-            img = self.g_img
-        elif channel == EXTRACT_RED:
-            img = self.r_img
-        elif channel == EXTRACT_GRAY:
-            img = self.gray_img
-        else:
+        try:
+            img = self._target_channels[channel]
+        except KeyError as e:
             return None,None
 
         mser = cv2.MSER_create(_delta = self.delta, _min_area = self.min_area, _max_area = self.max_area)
-        if direction == 0:
-            msers, bboxes = mser.detectRegions(img)
-        else:
-            msers, bboxes = mser.detectRegions(255 - img)
+        msers, bboxes = mser.detectRegions(img) if direction == 0 else mser.detectRegions(255-img)
 
         retmsrs = []
         retboxes = []
         debug_img = debug and np.zeros_like(img)
 
-        if type(flt) != type(0):
+        if flt != None:
             flt.gray_img = img
             for i in range(len(msers)):
                 points = msers[i]
@@ -219,6 +215,12 @@ class mser_cls:
             gimg = cv2.resize(gimg, (int(gimg.shape[1]/mul), int(gimg.shape[0]/mul)))
             self.__orig_gray_img = gimg
             self.__gray_img = self._preprocessing(gimg)
+            self._target_channels = {
+                EXTRACT_BLUE    :self.b_img,
+                EXTRACT_GREEN   :self.g_img,
+                EXTRACT_RED     :self.r_img,
+                EXTRACT_GRAY    :self.gray_img
+                }
         else:
             self.__gray_img = None
             self.__b_img = None
