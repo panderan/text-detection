@@ -206,6 +206,8 @@ ctr.t_of_area_size = config['contours']['area_size']
 ctr.t_of_ar_of_direction_type = config['contours']['ar_of_direction_type']
 ctr.t_of_distance = config['contours']['distance']
 ctr.t_of_merged_aspect_lim = config['contours']['merged_aspect_lim']
+ctr.t_of_merged_areasize_lim = config['contours']['merged_areasize_lim']
+ctr.strategy = config['contours']['strategy']
 
 if arg_profile_contours:
     cProfile.run('ctr.aggreate_contours(debug=arg_enable_debug_contours, \
@@ -280,7 +282,7 @@ else:
     ret_img = cv2.cvtColor(msr.gray_img, cv2.COLOR_GRAY2BGR)
 ret_img = regions.regions.label_image_with_box(ret_img, ctr.get_boxes(), (255,0,0))
 for si in final_result:
-    ret_img = cv2.drawContours(ret_img, [np.int0(si[0])], 0, (0,255,0), thickness=4)
+    ret_img = cv2.drawContours(ret_img, [np.int0(si[0])], 0, (0,255,0), thickness=1)
     
 if arg_is_show_result:
     plt.ioff()

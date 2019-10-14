@@ -5,7 +5,7 @@ mser:
     variation: 0.25
     total_pixels: 400000
     gamma: 3.0
-    channels: ["Gray", "Red"]
+    channels: ["Gray", "Blue"]
 
 mser_filter:
     perimeter_lim: 12.0
@@ -28,18 +28,18 @@ morph_filter:
     aspect_lim: [0.125, 5.0]
 
 contours:
-    name: "car_license"
+    name: "idcards"
     extreme_area_ratio_for_ab: 24
     overlap_ratio: 0.75
     area_size: 50
     ar_of_direction_type: 2.5
-    distance: 1.0
-    merged_aspect_lim: 4.6
-    merged_areasize_lim: 20000
-    strategy: "Horizon"
+    distance: 2.5
+    merged_aspect_lim: 100000000
+    merged_areasize_lim: 200000000000
+    strategy: "Vertical"
 
 contours_filter:
-    enable: True 
+    enable: False 
     area_lim: [400, 20000]
     aspect_lim: [1.8, 5.0]
 

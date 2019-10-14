@@ -20,6 +20,6 @@ class regions:
     def label_image_with_box(img, boxes, color):
         ret_img = img.copy()
         for i,box in enumerate(boxes):
-            ret_img = cv2.drawContours(ret_img, [np.int0(box)], 0, color, thickness=4)
+            ret_img = cv2.drawContours(ret_img, [np.int0(box)], 0, color, thickness=1)
         return ret_img
 

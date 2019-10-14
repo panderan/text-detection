@@ -170,7 +170,7 @@ class tdcontours:
                 continue
             areasize,_,_ = comn.get_box_area(box)
             direction = comn.get_box_direction(box)
-            aspectratio,width,height = comn.get_box_aspect_ratio(box)
+            aspectratio,width,height = comn.get_box_aspect_ratio(box, True)
             self._boxes_db[idx] = [box, width, height, areasize, direction, aspectratio]
 
         if record_sheet is None:
@@ -194,11 +194,12 @@ class tdcontours:
                     print("======================================================")
                     print("BBox:")
                     print("  bbox size: Width:%d Height:%d (%d)" % (bbox_width, bbox_height, bbox_width*bbox_height))
+                    print("  bbox areasize: %.3f (<%.3f)" % (bbox_width*bbox_height, self.t_of_merged_areasize_lim))
                     print("  bbox aspect: %.3f (<%.3f)" % (bbox_aspect, self.t_of_merged_aspect_lim))
 
                 if (bbox_width*bbox_height) > self.t_of_merged_areasize_lim:
                     record_sheet[idxa,idxb] = JDG_DISALLOW
-                    debug and not print("The aspect of merged box exceeded \n%s" % False) \
+                    debug and not print("The areasize of merged box exceeded \n%s" % False) \
                           and self._debug_judge_2boxes_show(boxa, boxb, debug_verbose)
                     continue
 
@@ -255,7 +256,7 @@ class tdcontours:
                     return len(self.boxes),record_sheet
 
                 # 按两个 Box 的相关数据动态判断是否合并
-                t_of_area_ratio_for_rect = self._get_threshold_of_area_ratio(boxa, boxb)
+                t_of_area_ratio_for_rect = self._get_threshold_of_area_ratio(boxa_db, boxb_db)
                 debug and print("  plus/rect:     %.3f(%.3f)" % (pos_ratio, t_of_area_ratio_for_rect))
                 if pos_ratio > t_of_area_ratio_for_rect:
                     if self._judge_direction(boxa_db, boxb_db, debug) \
