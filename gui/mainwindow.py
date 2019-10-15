@@ -42,7 +42,7 @@ class app_mainwindow(QMainWindow):
         strfile.close()
     
     def on_action_about(self):
-        QMessageBox.about(self, "关于", self.strings["ABOUT"])
+        QMessageBox.about(self, "About", self.strings["ABOUT"])
 
     def on_action_open(self):
         fname, _ = QFileDialog.getOpenFileName(self, "Open file", \

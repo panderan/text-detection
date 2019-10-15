@@ -47,7 +47,7 @@ def img_qt2cv(img_qt):
  #
 class DisplayWidget(QWidget):
     def __init__(self, parent=None):
-        super().__init__()
+        super().__init__(parent)
         self.display_image = None 
         self.display_width = 0 
         self.display_height = 0
