@@ -12,7 +12,7 @@ import cv2
 import numpy as np
 
 
-class preprocessing:
+class TdPreprocessing:
     
     def __init__(self, color_img = None, total_pixels = 400000):
         self.total_pixels = total_pixels
@@ -33,11 +33,11 @@ class preprocessing:
         self.gradsY = None
         return
     
-    def set_total_pixels(self, total_pixels):
+    def setTotalPixels(self, total_pixels):
         self.total_pixels = total_pixels
         return
          
-    def set_image(self, color_img):
+    def setImage(self, color_img):
         if (color_img == None):
             return 
 

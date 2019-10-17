@@ -5,52 +5,18 @@ from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QPainter, QColor, QFont, QImage
 from PyQt5.QtCore import Qt, QByteArray, QRect
 from PyQt5.QtWidgets import QApplication 
-import cv2, numpy
-
-
-## 将 OpenCV 格式的图片转换成 QImage
- #
-def img_cv2qt(img_cv):
-    format = None
-    height, width, chns = img_cv.shape
-    if (img_cv.dtype != numpy.dtype(numpy.uint8)):
-        return None
-    else:
-        if (chns == 3):
-            format = QImage.Format_RGB888
-        elif (chns == 1):
-            format = QImage.Format_Grayscale8
-        else:
-            return None
-    return QImage(img_cv.data, width, height, width*chns, format)
-
-
-## 将 QImage 格式转换为 OpenCV 格式
- #
-def img_qt2cv(img_qt):
-    width = img_qt.width()
-    height = img_qt.height()
-    fmt_dict = {
-        QImage.Format_RGB888 : 3,
-        QImage.Format_Grayscale8 : 1
-        }
-    channels = fmt_dict.get(img_qt.format(), -1)
-    if (channels == -1):
-        return None
-
-    ptr = img_qt.bits()
-    ptr.setsize(img_qt.byteCount())
-    return numpy.array(ptr).reshape(height, width, channels);
+import app_widgets.common as apw_comm 
 
 
 ## 用于显示图像的 Widget 控件
  #
-class DisplayWidget(QWidget):
+class BasicDisplayWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.display_image = None 
         self.display_width = 0 
         self.display_height = 0
+        return
 
     def paintEvent(self, e):
         painter = QPainter(self)
@@ -73,18 +39,19 @@ class DisplayWidget(QWidget):
                 delta = (self.geometry().width()-window_rect.width())*0.5
                 window_rect.setX(delta)
                 window_rect.setWidth(window_rect.width()+delta)
-                pass
-
-            painter.drawImage(window_rect, self.display_image, image_rect)            
+            painter.drawImage(window_rect, self.display_image, image_rect)
+        return
 
     def setDisplayCvImage(self, img_cv):
-        self.setDisplayQImage(img_cv2qt(img_cv))
+        self.setDisplayQImage(apw_comm.img_cv2qt(img_cv))
+        return
 
     def setDisplayQImage(self, img_qt):
         self.display_image = img_qt
         self.display_width = img_qt.width()
         self.display_height = img_qt.height()
         self.update()
+        return
 
 
 if __name__ == '__main__':
@@ -94,4 +61,3 @@ if __name__ == '__main__':
     # widget.setDisplayImage(img)
     widget.show()
     sys.exit(app.exec_())
-

@@ -2,13 +2,13 @@
 
 # Form implementation generated from reading ui file 'app.ui'
 #
-# Created by: PyQt5 UI code generator 5.13.0
+# Created by: PyQt5 UI code generator 5.13.1
 #
 # WARNING! All changes made in this file will be lost!
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from display_widget import DisplayWidget
+
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -18,14 +18,17 @@ class Ui_MainWindow(object):
         self.centralwidget.setObjectName("centralwidget")
         self.verticalLayout = QtWidgets.QVBoxLayout(self.centralwidget)
         self.verticalLayout.setObjectName("verticalLayout")
-        self.display_widget = DisplayWidget(self.centralwidget)
+        self.horizontalLayout = QtWidgets.QHBoxLayout()
+        self.horizontalLayout.setObjectName("horizontalLayout")
+        self.display_widget = QtWidgets.QWidget(self.centralwidget)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.Expanding)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.display_widget.sizePolicy().hasHeightForWidth())
         self.display_widget.setSizePolicy(sizePolicy)
         self.display_widget.setObjectName("display_widget")
-        self.verticalLayout.addWidget(self.display_widget)
+        self.horizontalLayout.addWidget(self.display_widget)
+        self.verticalLayout.addLayout(self.horizontalLayout)
         self.botton_layout = QtWidgets.QHBoxLayout()
         self.botton_layout.setObjectName("botton_layout")
         self.btn_locate = QtWidgets.QPushButton(self.centralwidget)
@@ -43,7 +46,7 @@ class Ui_MainWindow(object):
         self.verticalLayout.addWidget(self.plainTextEdit)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 846, 23))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 22))
         self.menubar.setObjectName("menubar")
         self.menu_file = QtWidgets.QMenu(self.menubar)
         self.menu_file.setObjectName("menu_file")
@@ -52,9 +55,6 @@ class Ui_MainWindow(object):
         self.menu_help = QtWidgets.QMenu(self.menubar)
         self.menu_help.setObjectName("menu_help")
         MainWindow.setMenuBar(self.menubar)
-        self.statusbar = QtWidgets.QStatusBar(MainWindow)
-        self.statusbar.setObjectName("statusbar")
-        MainWindow.setStatusBar(self.statusbar)
         self.action_open = QtWidgets.QAction(MainWindow)
         self.action_open.setObjectName("action_open")
         self.action_exit = QtWidgets.QAction(MainWindow)
@@ -67,12 +67,15 @@ class Ui_MainWindow(object):
         self.action_save_config.setObjectName("action_save_config")
         self.action_about = QtWidgets.QAction(MainWindow)
         self.action_about.setObjectName("action_about")
+        self.action_open_current_control_panel = QtWidgets.QAction(MainWindow)
+        self.action_open_current_control_panel.setObjectName("action_open_current_control_panel")
         self.menu_file.addAction(self.action_open)
         self.menu_file.addSeparator()
         self.menu_file.addAction(self.action_exit)
         self.menu_settings.addAction(self.action_load_config)
         self.menu_settings.addAction(self.action_save_config)
         self.menu_settings.addAction(self.action_preferences)
+        self.menu_settings.addAction(self.action_open_current_control_panel)
         self.menu_help.addAction(self.action_about)
         self.menubar.addAction(self.menu_file.menuAction())
         self.menubar.addAction(self.menu_settings.menuAction())
@@ -96,3 +99,4 @@ class Ui_MainWindow(object):
         self.action_preferences.setText(_translate("MainWindow", "Preferences"))
         self.action_save_config.setText(_translate("MainWindow", "Save Config"))
         self.action_about.setText(_translate("MainWindow", "About"))
+        self.action_open_current_control_panel.setText(_translate("MainWindow", "Open Current Control Panel"))
