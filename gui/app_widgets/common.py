@@ -47,5 +47,11 @@ def img_qt2cv(img_qt):
         return None
 
     ptr = img_qt.bits()
-    ptr.setsize(img_qt.byteCount())
+    total_bytes = img_qt.byteCount()
+    if total_bytes != width*height*channels:
+        print("QImage byteCount(%d) is not equal to w*h*c(%d*%d*%d)" \
+            %(total_bytes, width, height, channels))
+        total_bytes = width*height*channels
+
+    ptr.setsize(total_bytes)
     return numpy.array(ptr).reshape(height, width, channels)
