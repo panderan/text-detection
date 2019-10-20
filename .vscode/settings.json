@@ -1,0 +1,10 @@
+{
+    "python.pythonPath": "D:\\PanFiles\\Python3\\textdetection\\Scripts\\python.exe",
+    "python.linting.enabled": true,
+    "python.linting.pylintArgs": [
+        "--extension-pkg-whitelist=PyQt5,cv2",
+        "--disable=R1711,C0103,C0301"
+    ],
+    "editor.fontFamily": "Consolas, 'Monaco', monospace",
+    "editor.fontSize": 15,
+}

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'preprocess_control.ui'
 #
-# Created by: PyQt5 UI code generator 5.13.1
+# Created by: PyQt5 UI code generator 5.13.0
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -13,7 +13,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_PrepCtrlWidget(object):
     def setupUi(self, PrepCtrlWidget):
         PrepCtrlWidget.setObjectName("PrepCtrlWidget")
-        PrepCtrlWidget.resize(319, 262)
+        PrepCtrlWidget.resize(502, 258)
         self.verticalLayout = QtWidgets.QVBoxLayout(PrepCtrlWidget)
         self.verticalLayout.setObjectName("verticalLayout")
         self.paramsLayout = QtWidgets.QFormLayout()
@@ -29,11 +29,6 @@ class Ui_PrepCtrlWidget(object):
         self.paramsLayout.setWidget(1, QtWidgets.QFormLayout.LabelRole, self.label_display_source)
         self.combo_sources = QtWidgets.QComboBox(PrepCtrlWidget)
         self.combo_sources.setObjectName("combo_sources")
-        self.combo_sources.addItem("")
-        self.combo_sources.addItem("")
-        self.combo_sources.addItem("")
-        self.combo_sources.addItem("")
-        self.combo_sources.addItem("")
         self.combo_sources.addItem("")
         self.combo_sources.addItem("")
         self.combo_sources.addItem("")
@@ -65,10 +60,5 @@ class Ui_PrepCtrlWidget(object):
         self.combo_sources.setItemText(2, _translate("PrepCtrlWidget", "Red Channel"))
         self.combo_sources.setItemText(3, _translate("PrepCtrlWidget", "Green Channel"))
         self.combo_sources.setItemText(4, _translate("PrepCtrlWidget", "Canny Image"))
-        self.combo_sources.setItemText(5, _translate("PrepCtrlWidget", "Sobel X"))
-        self.combo_sources.setItemText(6, _translate("PrepCtrlWidget", "Sobel Y"))
-        self.combo_sources.setItemText(7, _translate("PrepCtrlWidget", "Magnitudes"))
-        self.combo_sources.setItemText(8, _translate("PrepCtrlWidget", "Grads X"))
-        self.combo_sources.setItemText(9, _translate("PrepCtrlWidget", "Grads Y"))
         self.label_gama.setText(_translate("PrepCtrlWidget", "Gama :"))
         self.btn_ok.setText(_translate("PrepCtrlWidget", "OK"))

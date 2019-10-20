@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>319</width>
-    <height>262</height>
+    <width>502</width>
+    <height>258</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -62,31 +62,6 @@
        <item>
         <property name="text">
          <string>Canny Image</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Sobel X</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Sobel Y</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Magnitudes</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Grads X</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>Grads Y</string>
         </property>
        </item>
       </widget>

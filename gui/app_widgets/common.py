@@ -1,27 +1,41 @@
-import cv2, numpy
+'''
+公共函数
+'''
+
+import numpy
 from PyQt5.QtGui import QImage
 
 
-## 将 OpenCV 格式的图片转换成 QImage
- #
 def img_cv2qt(img_cv):
-    format = None
-    height, width, chns = img_cv.shape
-    if (img_cv.dtype != numpy.dtype(numpy.uint8)):
-        return None
+    '''
+    将 OpenCV 格式的图像转换为 QImage
+    '''
+    img_format = None
+    shape_len = len(img_cv.shape)
+    if shape_len == 3:
+        height, width, chns = img_cv.shape
+    elif shape_len == 2:
+        height, width = img_cv.shape
+        chns = 1
     else:
-        if (chns == 3):
-            format = QImage.Format_RGB888
-        elif (chns == 1):
-            format = QImage.Format_Grayscale8
-        else:
-            return None
-    return QImage(img_cv.data, width, height, width*chns, format)
+        return None
+
+    if img_cv.dtype != numpy.dtype(numpy.uint8):
+        return None
+
+    if chns == 3:
+        img_format = QImage.Format_RGB888
+    elif chns == 1:
+        img_format = QImage.Format_Grayscale8
+    else:
+        return None
+    return QImage(img_cv.data, width, height, width*chns, img_format)
 
 
-## 将 QImage 格式转换为 OpenCV 格式
- #
 def img_qt2cv(img_qt):
+    '''
+    将 QImage 格式的图像转换为 OpenCV 图像
+    '''
     width = img_qt.width()
     height = img_qt.height()
     fmt_dict = {
@@ -29,11 +43,9 @@ def img_qt2cv(img_qt):
         QImage.Format_Grayscale8 : 1
         }
     channels = fmt_dict.get(img_qt.format(), -1)
-    if (channels == -1):
+    if channels == -1:
         return None
 
     ptr = img_qt.bits()
     ptr.setsize(img_qt.byteCount())
-    return numpy.array(ptr).reshape(height, width, channels);
-
-
+    return numpy.array(ptr).reshape(height, width, channels)
