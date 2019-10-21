@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>502</width>
-    <height>258</height>
+    <width>473</width>
+    <height>410</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -46,6 +46,11 @@
        </item>
        <item>
         <property name="text">
+         <string>Gray</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
          <string>Blue Channel</string>
         </property>
        </item>
@@ -75,6 +80,26 @@
      </item>
      <item row="2" column="1">
       <widget class="QDoubleSpinBox" name="spinbox_gama"/>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="label_struct_element_size">
+       <property name="text">
+        <string>Struct Element Size :</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="0">
+      <widget class="QLabel" name="label_guass_blur_size">
+       <property name="text">
+        <string>Guass Blur Size :</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="QSpinBox" name="spinbox_struct_element_size"/>
+     </item>
+     <item row="5" column="1">
+      <widget class="QSpinBox" name="spinbox_guass_blur_size"/>
      </item>
     </layout>
    </item>

@@ -1,25 +1,6 @@
-mser:
-    delta: 5
-    min_area: 9
-    max_area: 500
-    variation: 0.25
-    total_pixels: 400000
-
-filter:
-    perimeter_lim: 12.0
-    aspect_ratio_lim: 15.0
-    occupation_lim: [0.15, 0.90]
-    compactness_lim: [0.003, 0.1]
-
-morph:
-    k_dilate: 6
-    k_erode: 3
-    k_opening: 3
-    k_closing: 3
-
-contours:
-    extreme_area_ratio_for_ab: 24
-    overlap_ratio: 0.25
-    area_size: 140
-    ar_of_direction_type: 2.5
-    distance: 2.6
+prep:
+    total_pixels: 800000
+    channels: ["Gray", "Red"]
+    gamma: 3.0
+    struct_element_size: 5
+    gauss_blur_size: 51

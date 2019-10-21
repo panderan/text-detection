@@ -35,18 +35,18 @@ class BasicDisplayWidget(QWidget):
             painter.setFont(QFont("Arial", 30))
             painter.drawText(e.rect(), Qt.AlignCenter, "Text Detection")
         else:
-            window_rect = self.geometry()
+            window_rect = self.rect()
             image_rect = QRect(0, 0, self.display_width, self.display_height)
             ratio_of_image = image_rect.width() / image_rect.height()
             ratio_of_window = window_rect.width() / window_rect.height()
             if ratio_of_image > ratio_of_window:
                 window_rect.setHeight(window_rect.width()/ratio_of_image)
-                delta = (self.geometry().height()-window_rect.height())*0.5
+                delta = (self.rect().height()-window_rect.height())*0.5
                 window_rect.setY(delta)
                 window_rect.setHeight(window_rect.height()+delta)
             else:
                 window_rect.setWidth(window_rect.height()*ratio_of_image)
-                delta = (self.geometry().width()-window_rect.width())*0.5
+                delta = (self.rect().width()-window_rect.width())*0.5
                 window_rect.setX(delta)
                 window_rect.setWidth(window_rect.width()+delta)
             painter.drawImage(window_rect, self.display_image, image_rect)
