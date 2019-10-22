@@ -1,6 +1,7 @@
 prep:
-    total_pixels: 800000
-    channels: ["Gray", "Red"]
+    total_pixels: 400000
+    channels: ["Gray", "Red Channel"]
     gamma: 3.0
+    canny: [0.9, 0.7]
     struct_element_size: 5
     gauss_blur_size: 51

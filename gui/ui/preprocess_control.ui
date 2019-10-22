@@ -96,10 +96,18 @@
       </widget>
      </item>
      <item row="4" column="1">
-      <widget class="QSpinBox" name="spinbox_struct_element_size"/>
+      <widget class="QSpinBox" name="spinbox_struct_element_size">
+       <property name="maximum">
+        <number>1000</number>
+       </property>
+      </widget>
      </item>
      <item row="5" column="1">
-      <widget class="QSpinBox" name="spinbox_guass_blur_size"/>
+      <widget class="QSpinBox" name="spinbox_guass_blur_size">
+       <property name="maximum">
+        <number>1000</number>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>

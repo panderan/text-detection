@@ -12,15 +12,15 @@
 from math import sqrt
 import cv2
 import numpy as np
+import matplotlib.pyplot as plt
 
 
-def applyCanny(img, sigma=0.33):
+def applyCanny(img, sigma=0.2):
     '''
     提取 Canny 边缘
     '''
-    v = np.median(img)
-    lower = int(max(0, (1.0 - sigma) * v))
-    upper = int(min(255, (1.0 + sigma) * v))
+    lower = int(np.max(img)*(1-sigma))
+    upper = int(np.max(img)*0.5)
     return cv2.Canny(img, lower, upper)
 
 
@@ -29,12 +29,15 @@ class TdPreprocessing:
     图像预处理
     '''
     def __init__(self, color_img=None, total_pixels=400000, \
-                    gamma=3.0, struct_element_size=5, gauss_blur_size=51):
+                    gamma=3.0, struct_element_size=5, gauss_blur_size=51, \
+                    canny_max = 0.9, canny_min = 0.7):
         # 参数
         self.total_pixels = total_pixels
         self.gamma = gamma
         self.struct_element_size = struct_element_size
         self.gauss_blur_size = gauss_blur_size
+        self.canny_max = canny_max
+        self.canny_min = canny_min
         self.height = 0
         self.width = 0
         # 数据
@@ -84,8 +87,9 @@ class TdPreprocessing:
         old_total_pixels = self.total_pixels
         self.setConfig(config)
         if old_total_pixels != self.total_pixels:
-                self.setImage(self.color_img)
-
+            self.setImage(self.color_img)
+        
+        self.printParams()
         input_image = None
         input_srcs = {"Red Channel": self.red_channel,
                       "Blue Channel": self.blue_channel,
@@ -98,7 +102,9 @@ class TdPreprocessing:
                                     (self.struct_element_size, self.struct_element_size))
         tophat = cv2.morphologyEx(input_image, cv2.MORPH_TOPHAT, struct_element)
         # 提取 Canny 边缘
-        cy = applyCanny(tophat)
+        cy =  cv2.Canny(tophat, \
+                        np.max(tophat)*self.canny_max, \
+                        np.max(tophat)*self.canny_min)
         # 消除水平边缘
         sobely = cv2.Sobel(cy, -1, 1, 0)
         # 高斯模糊
@@ -133,21 +139,43 @@ class TdPreprocessing:
         if config is None:
             return
         try:
-            self.gamma = float(config["Gamma"])
+            self.gamma = float(config["gamma"])
         except KeyError:
             pass
 
         try:
-            self.struct_element_size = int(config["StructElementSize"])
+            self.struct_element_size = int(config["struct_element_size"])
         except KeyError:
             pass
 
         try:
-            self.gauss_blur_size = int(config["GaussBlurSize"])
+            self.gauss_blur_size = int(config["gauss_blur_size"])
         except KeyError:
             pass
 
         try:
-            self.total_pixels = int(config["TotalPixels"])
+            self.total_pixels = int(config["total_pixels"])
         except KeyError:
             pass
+
+        try:
+            self.canny_max = float(config["canny"][0])
+        except KeyError:
+            pass
+
+        try:
+            self.canny_min = float(config["canny"][1])
+        except KeyError:
+            pass
+    
+    def printParams(self):
+        '''
+        打印当前参数
+        '''
+        params = {"total_pixels": self.total_pixels,
+                  "gamma": self.gamma,
+                  "canny": [self.canny_max, self.canny_min],
+                  "gauss_blur_size": self.gauss_blur_size,
+                  "struct_element_size": self.struct_element_size}
+        print("Current Params %s" % params)
+

@@ -31,9 +31,9 @@ class PreprocessDisplayCtrlWidget(QWidget):
         获得配置信息
         '''
         config = {}
-        config['TotalPixels'] = self.ui.linedit_total_pixels.text()
-        config['Source'] = self.ui.combo_sources.currentText()
-        config['StructElementSize'] = self.ui.spinbox_struct_element_size.value()
-        config['GaussBlurSize'] = self.ui.spinbox_guass_blur_size.value()
-        config['Gamma'] = self.ui.spinbox_gama.value()
+        config['total_pixels'] = self.ui.linedit_total_pixels.text()
+        config['source'] = self.ui.combo_sources.currentText()
+        config['struct_element_size'] = self.ui.spinbox_struct_element_size.value()
+        config['gauss_blur_size'] = self.ui.spinbox_guass_blur_size.value()
+        config['gamma'] = self.ui.spinbox_gama.value()
         return config
