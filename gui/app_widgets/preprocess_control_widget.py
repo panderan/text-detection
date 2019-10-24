@@ -7,7 +7,7 @@
 from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QIcon
 import gui.ui.preprocess_control_ui as prep_ctrl_ui
-from config.config import TdConfig
+from conf.config import TdConfig
 
 class PreprocessDisplayCtrlWidget(QWidget):
     '''
@@ -24,6 +24,8 @@ class PreprocessDisplayCtrlWidget(QWidget):
         self.ui.spinbox_gama.setValue(conf_from_file["gamma"])
         self.ui.spinbox_guass_blur_size.setValue(conf_from_file["gauss_blur_size"])
         self.ui.spinbox_struct_element_size.setValue(conf_from_file["struct_element_size"])
+        self.ui.spinbox_canny_max.setValue(conf_from_file["canny"][0])
+        self.ui.spinbox_canny_min.setValue(conf_from_file["canny"][1])
         return
 
     def getConfiguration(self):
@@ -36,4 +38,5 @@ class PreprocessDisplayCtrlWidget(QWidget):
         config['struct_element_size'] = self.ui.spinbox_struct_element_size.value()
         config['gauss_blur_size'] = self.ui.spinbox_guass_blur_size.value()
         config['gamma'] = self.ui.spinbox_gama.value()
+        config['canny'] = [self.ui.spinbox_canny_max.value(), self.ui.spinbox_canny_min.value()]
         return config

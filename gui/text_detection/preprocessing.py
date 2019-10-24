@@ -88,23 +88,28 @@ class TdPreprocessing:
         self.setConfig(config)
         if old_total_pixels != self.total_pixels:
             self.setImage(self.color_img)
-        
+
         self.printParams()
         input_image = None
         input_srcs = {"Red Channel": self.red_channel,
                       "Blue Channel": self.blue_channel,
                       "Green Channel": self.green_channel,
                       "Gray": self.gray_img}
-        input_image = input_srcs[img_type_name]
+        try:
+            input_image = input_srcs[img_type_name]
+        except KeyError:
+            return None
 
         # 顶帽运算
         struct_element = cv2.getStructuringElement(cv2.MORPH_RECT, \
                                     (self.struct_element_size, self.struct_element_size))
         tophat = cv2.morphologyEx(input_image, cv2.MORPH_TOPHAT, struct_element)
+        backhat = cv2.morphologyEx(input_image, cv2.MORPH_BLACKHAT, struct_element)
+        hat = tophat*(tophat >= backhat) + backhat*(backhat > tophat)
         # 提取 Canny 边缘
-        cy =  cv2.Canny(tophat, \
-                        np.max(tophat)*self.canny_max, \
-                        np.max(tophat)*self.canny_min)
+        cy = cv2.Canny(hat, \
+                        np.max(hat)*self.canny_max, \
+                        np.max(hat)*self.canny_min)
         # 消除水平边缘
         sobely = cv2.Sobel(cy, -1, 1, 0)
         # 高斯模糊
@@ -130,7 +135,12 @@ class TdPreprocessing:
         else:
             return None
 
-        return out_image
+        ret_dict = {"Result": out_image,
+                    "Hat": hat,
+                    "Canny": cy,
+                    "SobelY": sobely,
+                    "GaussBlur": blur}
+        return ret_dict
 
     def setConfig(self, config):
         '''

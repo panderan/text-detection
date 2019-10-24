@@ -9,7 +9,7 @@ import getopt
 import cv2
 import matplotlib.pyplot as plt
 from gui.text_detection.preprocessing import TdPreprocessing
-from config.config import TdConfig
+from conf.config import TdConfig
 
 def usage():
     '''
@@ -42,9 +42,9 @@ class cli:
 
         # 预处理
         self.preprocessing.setImage(imput_image)
-        preped_image = self.preprocessing.doPreprocessing("Blue Channel", \
+        preped_images_dict = self.preprocessing.doPreprocessing("Blue Channel", \
                                                 self.config.getPrepConfig())
-        plt.imshow(preped_image, "gray")
+        plt.imshow(preped_images_dict["Result"], "gray")
         plt.show()
 
     def parseArgs(self):

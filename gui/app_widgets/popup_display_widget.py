@@ -11,8 +11,23 @@ class DisplayResultWidget(BasicDisplayWidget):
     '''
     弹窗显示指定图像
     '''
-    def __init__(self, cv_image, parent=None):
+    def __init__(self, cv_images_dict, parent=None):
         super().__init__(parent)
+        self.cv_images_dict = cv_images_dict
         self.ui = Ui_ResultDisplay()
         self.ui.setupUi(self)
-        self.setDisplayCvImage(cv_image)
+
+        # 将所有源插入 comboBox 中
+        for keystr in cv_images_dict:
+            self.ui.combo_sources.addItem(keystr)
+        # 显示 comboBox 中第一个图像
+        if self.ui.combo_sources.count() > 0:
+            self.setDisplayCvImage(self.cv_images_dict[self.ui.combo_sources.itemText(0)])
+        self.ui.combo_sources.activated.connect(self.onActionActived)
+
+    def onActionActived(self, idx):
+        '''
+        切换显示
+        '''
+        if self.ui.combo_sources.count() > 0:
+            self.setDisplayCvImage(self.cv_images_dict[self.ui.combo_sources.itemText(idx)])

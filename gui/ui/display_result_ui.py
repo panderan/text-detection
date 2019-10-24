@@ -14,6 +14,9 @@ class Ui_ResultDisplay(object):
     def setupUi(self, ResultDisplay):
         ResultDisplay.setObjectName("ResultDisplay")
         ResultDisplay.resize(627, 474)
+        self.combo_sources = QtWidgets.QComboBox(ResultDisplay)
+        self.combo_sources.setGeometry(QtCore.QRect(0, 0, 171, 31))
+        self.combo_sources.setObjectName("combo_sources")
 
         self.retranslateUi(ResultDisplay)
         QtCore.QMetaObject.connectSlotsByName(ResultDisplay)

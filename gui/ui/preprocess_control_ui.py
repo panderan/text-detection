@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'preprocess_control.ui'
+# Form implementation generated from reading ui file 'gui\ui\preprocess_control.ui'
 #
 # Created by: PyQt5 UI code generator 5.13.0
 #
@@ -13,6 +13,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_PrepCtrlWidget(object):
     def setupUi(self, PrepCtrlWidget):
         PrepCtrlWidget.setObjectName("PrepCtrlWidget")
+        PrepCtrlWidget.setWindowModality(QtCore.Qt.NonModal)
         PrepCtrlWidget.resize(473, 410)
         self.verticalLayout = QtWidgets.QVBoxLayout(PrepCtrlWidget)
         self.verticalLayout.setObjectName("verticalLayout")
@@ -56,6 +57,20 @@ class Ui_PrepCtrlWidget(object):
         self.spinbox_guass_blur_size.setMaximum(1000)
         self.spinbox_guass_blur_size.setObjectName("spinbox_guass_blur_size")
         self.paramsLayout.setWidget(5, QtWidgets.QFormLayout.FieldRole, self.spinbox_guass_blur_size)
+        self.label_canny_max = QtWidgets.QLabel(PrepCtrlWidget)
+        self.label_canny_max.setObjectName("label_canny_max")
+        self.paramsLayout.setWidget(6, QtWidgets.QFormLayout.LabelRole, self.label_canny_max)
+        self.label_canny_min = QtWidgets.QLabel(PrepCtrlWidget)
+        self.label_canny_min.setObjectName("label_canny_min")
+        self.paramsLayout.setWidget(7, QtWidgets.QFormLayout.LabelRole, self.label_canny_min)
+        self.spinbox_canny_max = QtWidgets.QDoubleSpinBox(PrepCtrlWidget)
+        self.spinbox_canny_max.setMaximum(1.0)
+        self.spinbox_canny_max.setObjectName("spinbox_canny_max")
+        self.paramsLayout.setWidget(6, QtWidgets.QFormLayout.FieldRole, self.spinbox_canny_max)
+        self.spinbox_canny_min = QtWidgets.QDoubleSpinBox(PrepCtrlWidget)
+        self.spinbox_canny_min.setMaximum(1.0)
+        self.spinbox_canny_min.setObjectName("spinbox_canny_min")
+        self.paramsLayout.setWidget(7, QtWidgets.QFormLayout.FieldRole, self.spinbox_canny_min)
         self.verticalLayout.addLayout(self.paramsLayout)
         self.btn_ok = QtWidgets.QPushButton(PrepCtrlWidget)
         self.btn_ok.setObjectName("btn_ok")
@@ -79,4 +94,6 @@ class Ui_PrepCtrlWidget(object):
         self.label_gama.setText(_translate("PrepCtrlWidget", "Gama :"))
         self.label_struct_element_size.setText(_translate("PrepCtrlWidget", "Struct Element Size :"))
         self.label_guass_blur_size.setText(_translate("PrepCtrlWidget", "Guass Blur Size :"))
+        self.label_canny_max.setText(_translate("PrepCtrlWidget", "Canny Max :"))
+        self.label_canny_min.setText(_translate("PrepCtrlWidget", "Canny Min :"))
         self.btn_ok.setText(_translate("PrepCtrlWidget", "OK"))

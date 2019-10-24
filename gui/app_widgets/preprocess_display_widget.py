@@ -35,17 +35,12 @@ class PreprocessDisplayWidget(BasicDisplayWidget):
         '''
         # 获取参数,进行预处理
         config = self.control_panel.getConfiguration()
-        self.preprocesser.doPreprocessing(config["Source"], config)
+        preped_images_dict = self.preprocesser.doPreprocessing(config["source"], config)
         # 显示预处理结果
-        preped_image = {"Gray": self.preprocesser.gray_img_preped,
-                        "Blue Channel": self.preprocesser.blue_channel_preped,
-                        "Red Channel": self.preprocesser.red_channel_preped,
-                        "Green Channel": self.preprocesser.green_channel_preped}
-        try:
-            self.dr_widget = DisplayResultWidget(preped_image[config["Source"]], None)
+        if preped_images_dict is not None:
+            self.dr_widget = DisplayResultWidget(preped_images_dict)
             self.dr_widget.show()
-        except KeyError:
-            return
+
         # 显示原图
         srcs_image = {"Color Image (RGB)": self.preprocesser.color_img,
                       "Gray": self.preprocesser.gray_img,
@@ -53,7 +48,7 @@ class PreprocessDisplayWidget(BasicDisplayWidget):
                       "Red Channel": self.preprocesser.red_channel,
                       "Green Channel": self.preprocesser.green_channel}
         try:
-            self.setDisplayCvImage(srcs_image[config["Source"]])
+            self.setDisplayCvImage(srcs_image[config["source"]])
         except KeyError:
             self.setDisplayCvImage(None)
             return
