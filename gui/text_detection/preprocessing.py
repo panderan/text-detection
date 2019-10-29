@@ -12,7 +12,6 @@
 from math import sqrt
 import cv2
 import numpy as np
-import matplotlib.pyplot as plt
 
 
 def applyCanny(img, sigma=0.2):
@@ -30,7 +29,7 @@ class TdPreprocessing:
     '''
     def __init__(self, color_img=None, total_pixels=400000, \
                     gamma=3.0, struct_element_size=5, gauss_blur_size=51, \
-                    canny_max = 0.9, canny_min = 0.7):
+                    canny_max=0.9, canny_min=0.7):
         # 参数
         self.total_pixels = total_pixels
         self.gamma = gamma
@@ -83,12 +82,7 @@ class TdPreprocessing:
         '''
         图像预处理
         '''
-        # 判断图像是否需要重新缩放
-        old_total_pixels = self.total_pixels
         self.setConfig(config)
-        if old_total_pixels != self.total_pixels:
-            self.setImage(self.color_img)
-
         self.printParams()
         input_image = None
         input_srcs = {"Red Channel": self.red_channel,
@@ -142,42 +136,41 @@ class TdPreprocessing:
                     "GaussBlur": blur}
         return ret_dict
 
+    def __setConfigItem(self, keystr, config):
+        try:
+            if keystr == "gamma":
+                self.gamma = config[keystr]
+            elif keystr == "struct_element_size":
+                self.struct_element_size = config[keystr]
+            elif keystr == "gauss_blur_size":
+                self.gauss_blur_size = config[keystr]
+            elif keystr == "total_pixels":
+                old_total_pixels = self.total_pixels
+                self.total_pixels = config[keystr]
+                if old_total_pixels != self.total_pixels:
+                    self.setImage(self.color_img)
+            elif keystr == "canny":
+                self.canny_max = config[keystr][0]
+                self.canny_min = config[keystr][1]
+            else:
+                pass
+        except KeyError:
+            pass
+        return
+
     def setConfig(self, config):
-        '''
-        设置配置文件
+        ''' 设置配置文件
         '''
         if config is None:
             return
-        try:
-            self.gamma = float(config["gamma"])
-        except KeyError:
-            pass
+        self.__setConfigItem("gamma", config)
+        self.__setConfigItem("struct_element_size", config)
+        self.__setConfigItem("gauss_blur_size", config)
+        self.__setConfigItem("total_pixels", config)
+        self.__setConfigItem("canny", config)
+        return
 
-        try:
-            self.struct_element_size = int(config["struct_element_size"])
-        except KeyError:
-            pass
 
-        try:
-            self.gauss_blur_size = int(config["gauss_blur_size"])
-        except KeyError:
-            pass
-
-        try:
-            self.total_pixels = int(config["total_pixels"])
-        except KeyError:
-            pass
-
-        try:
-            self.canny_max = float(config["canny"][0])
-        except KeyError:
-            pass
-
-        try:
-            self.canny_min = float(config["canny"][1])
-        except KeyError:
-            pass
-    
     def printParams(self):
         '''
         打印当前参数
@@ -187,5 +180,52 @@ class TdPreprocessing:
                   "canny": [self.canny_max, self.canny_min],
                   "gauss_blur_size": self.gauss_blur_size,
                   "struct_element_size": self.struct_element_size}
-        print("Current Params %s" % params)
+        print("Prep Params %s" % params)
 
+    @property
+    def gray_img_preped(self):
+        '''
+        获取 Gray 预处理后图像，获取时计算
+        '''
+        if self.__gray_img_preped is None:
+            self.doPreprocessing("Gray")
+        return self.__gray_img_preped
+    @gray_img_preped.setter
+    def gray_img_preped(self, val):
+        self.__gray_img_preped = val
+
+    @property
+    def red_channel_preped(self):
+        '''
+        获取 Red Channel 预处理后图像，获取时计算
+        '''
+        if self.__red_channel_preped is None:
+            self.doPreprocessing("Red Channel")
+        return self.__red_channel_preped
+    @red_channel_preped.setter
+    def red_channel_preped(self, val):
+        self.__red_channel_preped = val
+
+    @property
+    def green_channel_preped(self):
+        '''
+        获取 Green Channel 预处理后图像，获取时计算
+        '''
+        if self.__green_channel_preped is None:
+            self.doPreprocessing("Green Channel")
+        return self.__green_channel_preped
+    @green_channel_preped.setter
+    def green_channel_preped(self, val):
+        self.__green_channel_preped = val
+
+    @property
+    def blue_channel_preped(self):
+        '''
+        获取 Blue Channel 预处理后图像，获取时计算
+        '''
+        if self.__blue_channel_preped is None:
+            self.doPreprocessing("Blue Channel")
+        return self.__blue_channel_preped
+    @blue_channel_preped.setter
+    def blue_channel_preped(self, val):
+        self.__blue_channel_preped = val

@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'app.ui'
+# Form implementation generated from reading ui file 'gui\ui\app.ui'
 #
-# Created by: PyQt5 UI code generator 5.13.1
+# Created by: PyQt5 UI code generator 5.13.0
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -46,7 +46,7 @@ class Ui_MainWindow(object):
         self.verticalLayout.addWidget(self.plainTextEdit)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 22))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 26))
         self.menubar.setObjectName("menubar")
         self.menu_file = QtWidgets.QMenu(self.menubar)
         self.menu_file.setObjectName("menu_file")
@@ -54,6 +54,8 @@ class Ui_MainWindow(object):
         self.menu_settings.setObjectName("menu_settings")
         self.menu_help = QtWidgets.QMenu(self.menubar)
         self.menu_help.setObjectName("menu_help")
+        self.menuStage = QtWidgets.QMenu(self.menubar)
+        self.menuStage.setObjectName("menuStage")
         MainWindow.setMenuBar(self.menubar)
         self.action_open = QtWidgets.QAction(MainWindow)
         self.action_open.setObjectName("action_open")
@@ -69,6 +71,20 @@ class Ui_MainWindow(object):
         self.action_about.setObjectName("action_about")
         self.action_open_current_control_panel = QtWidgets.QAction(MainWindow)
         self.action_open_current_control_panel.setObjectName("action_open_current_control_panel")
+        self.action_preprocessing = QtWidgets.QAction(MainWindow)
+        self.action_preprocessing.setCheckable(True)
+        self.action_preprocessing.setChecked(False)
+        self.action_preprocessing.setObjectName("action_preprocessing")
+        self.action_extract_connect_domain = QtWidgets.QAction(MainWindow)
+        self.action_extract_connect_domain.setCheckable(True)
+        self.action_extract_connect_domain.setChecked(False)
+        self.action_extract_connect_domain.setObjectName("action_extract_connect_domain")
+        self.action_merging_text_line = QtWidgets.QAction(MainWindow)
+        self.action_merging_text_line.setCheckable(True)
+        self.action_merging_text_line.setObjectName("action_merging_text_line")
+        self.action_identify_with_feature = QtWidgets.QAction(MainWindow)
+        self.action_identify_with_feature.setCheckable(True)
+        self.action_identify_with_feature.setObjectName("action_identify_with_feature")
         self.menu_file.addAction(self.action_open)
         self.menu_file.addSeparator()
         self.menu_file.addAction(self.action_exit)
@@ -77,8 +93,13 @@ class Ui_MainWindow(object):
         self.menu_settings.addAction(self.action_preferences)
         self.menu_settings.addAction(self.action_open_current_control_panel)
         self.menu_help.addAction(self.action_about)
+        self.menuStage.addAction(self.action_preprocessing)
+        self.menuStage.addAction(self.action_extract_connect_domain)
+        self.menuStage.addAction(self.action_merging_text_line)
+        self.menuStage.addAction(self.action_identify_with_feature)
         self.menubar.addAction(self.menu_file.menuAction())
         self.menubar.addAction(self.menu_settings.menuAction())
+        self.menubar.addAction(self.menuStage.menuAction())
         self.menubar.addAction(self.menu_help.menuAction())
 
         self.retranslateUi(MainWindow)
@@ -93,6 +114,7 @@ class Ui_MainWindow(object):
         self.menu_file.setTitle(_translate("MainWindow", "File"))
         self.menu_settings.setTitle(_translate("MainWindow", "Settings"))
         self.menu_help.setTitle(_translate("MainWindow", "Help"))
+        self.menuStage.setTitle(_translate("MainWindow", "Stage"))
         self.action_open.setText(_translate("MainWindow", "Open"))
         self.action_exit.setText(_translate("MainWindow", "Exit"))
         self.action_load_config.setText(_translate("MainWindow", "Load Config"))
@@ -100,3 +122,7 @@ class Ui_MainWindow(object):
         self.action_save_config.setText(_translate("MainWindow", "Save Config"))
         self.action_about.setText(_translate("MainWindow", "About"))
         self.action_open_current_control_panel.setText(_translate("MainWindow", "Open Current Control Panel"))
+        self.action_preprocessing.setText(_translate("MainWindow", "Preprocessing"))
+        self.action_extract_connect_domain.setText(_translate("MainWindow", "Extract Connect-Domain"))
+        self.action_merging_text_line.setText(_translate("MainWindow", "Merging Text Line"))
+        self.action_identify_with_feature.setText(_translate("MainWindow", "Identify with Feature"))

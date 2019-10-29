@@ -3,7 +3,7 @@
     "python.linting.enabled": true,
     "python.linting.pylintArgs": [
         "--extension-pkg-whitelist=PyQt5,cv2",
-        "--disable=R1711,C0103,C0301,R0903,R0902"
+        "--disable=R1711,C0103,C0301,R0903,R0902,R0914,R0913,R0911"
     ],
     "editor.fontFamily": "Consolas, 'Monaco', monospace",
     "editor.fontSize": 15,

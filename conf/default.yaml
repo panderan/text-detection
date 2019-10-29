@@ -1,7 +1,24 @@
 prep:
     total_pixels: 400000
-    channels: ["Gray", "Red Channel"]
     gamma: 3.0
     canny: [0.9, 0.7]
     struct_element_size: 5
     gauss_blur_size: 51
+extract:
+    delta: 5
+    area_lim: [9, 500]
+    variation: 0.25
+    channels: ["Gray", "Red Channel"]
+    filter_params: 
+        enable: True
+        flag: 31
+        area_lim: 20000
+        perimeter_lim: 12
+        aspect_ratio_lim: [1.0, 15.0]
+        aspect_ratio_gt1: True
+        occupation_lim: [0.15, 0.90]
+        compactness_lim: [3e-3, 1e-1]
+        width_lim: [0, 800]
+        height_lim: [0, 800]
+    filter_swt_params:
+        enable: False

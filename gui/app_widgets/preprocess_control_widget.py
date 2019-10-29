@@ -19,13 +19,13 @@ class PreprocessDisplayCtrlWidget(QWidget):
         self.ui.setupUi(self)
         self.setWindowIcon(QIcon(':/images/icon.png'))
 
-        conf_from_file = TdConfig().getPrepConfig()
-        self.ui.linedit_total_pixels.setText(str(conf_from_file["total_pixels"]))
-        self.ui.spinbox_gama.setValue(conf_from_file["gamma"])
-        self.ui.spinbox_guass_blur_size.setValue(conf_from_file["gauss_blur_size"])
-        self.ui.spinbox_struct_element_size.setValue(conf_from_file["struct_element_size"])
-        self.ui.spinbox_canny_max.setValue(conf_from_file["canny"][0])
-        self.ui.spinbox_canny_min.setValue(conf_from_file["canny"][1])
+        prep_conf = TdConfig().getPrepConfig()
+        self.ui.linedit_total_pixels.setText(str(prep_conf["total_pixels"]))
+        self.ui.spinbox_gama.setValue(prep_conf["gamma"])
+        self.ui.spinbox_guass_blur_size.setValue(prep_conf["gauss_blur_size"])
+        self.ui.spinbox_struct_element_size.setValue(prep_conf["struct_element_size"])
+        self.ui.spinbox_canny_max.setValue(prep_conf["canny"][0])
+        self.ui.spinbox_canny_min.setValue(prep_conf["canny"][1])
         return
 
     def getConfiguration(self):
