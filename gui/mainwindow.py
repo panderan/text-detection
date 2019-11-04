@@ -3,13 +3,17 @@
 '''
 mainwindow.py
 '''
-
-from PyQt5.QtCore import QFile, QIODevice, QTextStream
+import logging
+from PyQt5.QtCore import Qt, QFile, QIODevice, QTextStream
 from PyQt5.QtWidgets import QMainWindow, QMessageBox, QFileDialog
 from PyQt5.QtGui import QImage, QIcon
 import gui.ui.app_ui as ui
 import gui.resources.resources
 from gui.app_widgets.preprocess_display_widget import PreprocessDisplayWidget
+from gui.app_widgets.extract_display_widget import ExtractDisplayWidget
+
+
+logger = logging.getLogger(__name__)
 
 
 class AppMainWindow(QMainWindow):
@@ -87,7 +91,7 @@ class AppMainWindow(QMainWindow):
         if fname == '':
             return
         input_image = QImage(fname).convertToFormat(QImage.Format_RGB888)
-        self.ui.display_widget.setImage(input_image)
+        self.preprocess_display_widget.setImage(input_image)
         return
 
     def onActionOpenCurrentControlPanel(self):
@@ -111,19 +115,43 @@ class AppMainWindow(QMainWindow):
         self.ui.display_widget = self.preprocess_display_widget
 
         self.ui.action_preprocessing.setChecked(True)
+        self.preprocess_display_widget.show()
         self.ui.action_extract_connect_domain.setChecked(False)
+        if self.extract_display_widget is not None:
+            self.extract_display_widget.hide()
         self.ui.action_merging_text_line.setChecked(False)
+        if self.merging_display_widget is not None:
+            self.merging_display_widget.hide()
         self.ui.action_identify_with_feature.setChecked(False)
+        if self.ldp_display_widget is not None:
+            self.ldp_display_widget.hide()
         return
 
     def onActionExtratConnectDomain(self):
         '''
         Stage->Extract Connect Domain 菜单响应函数，将连通域提取窗口设置为当前窗口
         '''
-        self.ui.action_preprocessing.setChecked(False)
+        if self.extract_display_widget is None:
+            self.extract_display_widget = ExtractDisplayWidget(self)
+            self.extract_display_widget.setSizePolicy(self.default_display_widget.sizePolicy())
+            self.extract_display_widget.setObjectName("extract_display_widget")
+            self.extract_display_widget.requireData.connect(self.onActionExtractorRequireData, Qt.DirectConnection)
+        old_display_widget_item = self.ui.verticalLayout.itemAt(0)
+        self.ui.verticalLayout.removeItem(old_display_widget_item)
+        self.ui.verticalLayout.insertWidget(0, self.extract_display_widget)
+        self.ui.display_widget = self.extract_display_widget
+
         self.ui.action_extract_connect_domain.setChecked(True)
+        self.extract_display_widget.show()
+        self.ui.action_preprocessing.setChecked(False)
+        if self.preprocess_display_widget is not None:
+            self.preprocess_display_widget.hide()
         self.ui.action_merging_text_line.setChecked(False)
+        if self.merging_display_widget is not None:
+            self.merging_display_widget.hide()
         self.ui.action_identify_with_feature.setChecked(False)
+        if self.ldp_display_widget is not None:
+            self.ldp_display_widget.hide()
         return
 
 
@@ -147,3 +175,16 @@ class AppMainWindow(QMainWindow):
         self.ui.action_merging_text_line.setChecked(False)
         self.ui.action_identify_with_feature.setChecked(True)
         return
+
+    def onActionExtractorRequireData(self, chnls):
+        datas = []
+        if "Gray" in chnls:
+            datas.append(self.preprocess_display_widget.preprocesser.gray_img_preped)
+        if "Blue Channel" in chnls:
+            datas.append(self.preprocess_display_widget.preprocesser.blue_channel_preped)
+        if "Red Channel" in chnls:
+            datas.append(self.preprocess_display_widget.preprocesser.red_channel_preped)
+        if "Green Channel" in chnls:
+            datas.append(self.preprocess_display_widget.preprocesser.green_channel_preped)
+        self.extract_display_widget.input_images = datas
+        logger.info("Data is fed for extractor")

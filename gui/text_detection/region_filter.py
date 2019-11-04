@@ -21,11 +21,13 @@ class TdFilterCheckType(Enum):
     需要检查的类型
     '''
     AREA = 1
-    PERIMETER = 2
-    ASPECTRATIO = 4
-    OCCURPIEDRATIO = 8
-    COMPACTNESS = 16
-    SWT = 32
+    WIDTH = 2
+    HEIGH = 4
+    PERIMETER = 8
+    ASPECTRATIO = 16
+    OCCURPIEDRATIO = 32
+    COMPACTNESS = 64
+    SWT = 128
 
 
 class TdFilter:
@@ -45,46 +47,52 @@ class TdFilter:
         self.swt = None
         self.canny_image = None
         self.gray_image = gray_img
+        self.debug_enable = True
+        self.debug_data = {}
 
     def validate(self, region, box):
         ''' 验证单个选区是否满足条件
-
         Args:
             region: MSER 提取的选区所有像素点列表
             box: MSER 提取的选区外接矩形
-
         Returns:
             True 满足
             False 不满足
         '''
         # 长宽度过滤
         if self.flag & TdFilterCheckType.AREA.value:
+            self.debug_data['width'] = None if not self.debug_enable else box[2]
             if box[2] < self.width_lim[0] or box[2] > self.width_lim[1]:
                 return False
+            self.debug_data['height'] = None if not self.debug_enable else box[3]
             if box[3] < self.height_lim[0] or box[3] > self.height_lim[1]:
                 return False
 
         # 周长
         if self.flag & TdFilterCheckType.PERIMETER.value:
             retval = self.getPerimeter(box)
+            self.debug_data['perimeter'] = None if not self.debug_enable else retval
             if retval < self.perimeter_lim:
                 return False
 
         # 横纵比
         if self.flag & TdFilterCheckType.ASPECTRATIO.value:
             retval = self.getAspectRatio(region)
+            self.debug_data['aspect_ratio'] = None if not self.debug_enable else retval
             if retval < self.aspect_ratio_lim[0] or retval > self.aspect_ratio_lim[1]:
                 return False
 
         # 占用率
         if self.flag & TdFilterCheckType.OCCURPIEDRATIO.value:
             retval = self.getOccurpiedRatio(region, box)
+            self.debug_data['occurpied_ratio'] = None if not self.debug_enable else retval
             if retval < self.occupation_lim[0] or retval > self.occupation_lim[1]:
                 return False
 
         # 紧密度
         if self.flag & TdFilterCheckType.COMPACTNESS.value:
             retval = self.getCompactness(region, box)
+            self.debug_data['compactness'] = None if not self.debug_enable else retval
             if retval < self.compactness_lim[0] or retval > self.compactness_lim[1]:
                 return False
 

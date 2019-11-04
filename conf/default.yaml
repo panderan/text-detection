@@ -10,8 +10,7 @@ extract:
     variation: 0.25
     channels: ["Gray", "Red Channel"]
     filter_params: 
-        enable: True
-        flag: 31
+        flag: 127 
         area_lim: 20000
         perimeter_lim: 12
         aspect_ratio_lim: [1.0, 15.0]
@@ -21,4 +20,7 @@ extract:
         width_lim: [0, 800]
         height_lim: [0, 800]
     filter_swt_params:
-        enable: False
+        total_points: 30
+        mode_lim: 1.5
+        mean_lim: [2.0, 5.0]
+        std_lim: [0.5, 2.5]

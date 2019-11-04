@@ -9,9 +9,13 @@
 @author panderan@163.com
 
 '''
+import logging
 from math import sqrt
 import cv2
 import numpy as np
+
+
+logger = logging.getLogger(__name__)
 
 
 def applyCanny(img, sigma=0.2):
@@ -79,11 +83,10 @@ class TdPreprocessing:
         return
 
     def doPreprocessing(self, img_type_name="Gray", config=None):
-        '''
-        图像预处理
+        ''' 图像预处理
         '''
         self.setConfig(config)
-        self.printParams()
+        self.printParams("Do preprocessing")
         input_image = None
         input_srcs = {"Red Channel": self.red_channel,
                       "Blue Channel": self.blue_channel,
@@ -130,6 +133,7 @@ class TdPreprocessing:
             return None
 
         ret_dict = {"Result": out_image,
+                    "Gray": input_image,
                     "Hat": hat,
                     "Canny": cy,
                     "SobelY": sobely,
@@ -171,7 +175,7 @@ class TdPreprocessing:
         return
 
 
-    def printParams(self):
+    def printParams(self, msg):
         '''
         打印当前参数
         '''
@@ -180,7 +184,8 @@ class TdPreprocessing:
                   "canny": [self.canny_max, self.canny_min],
                   "gauss_blur_size": self.gauss_blur_size,
                   "struct_element_size": self.struct_element_size}
-        print("Prep Params %s" % params)
+        msg = "%s,%s" %(msg, params)
+        logger.info(msg)
 
     @property
     def gray_img_preped(self):

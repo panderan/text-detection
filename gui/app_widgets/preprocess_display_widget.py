@@ -1,18 +1,16 @@
 #!/usr/bin/python
 
-'''
- Preprocess Display Widget
+''' Preprocess Display Widget
 '''
 
 from gui.app_widgets.basic_display_widget import BasicDisplayWidget
 from gui.text_detection.preprocessing import TdPreprocessing
 from gui.app_widgets.preprocess_control_widget import PreprocessDisplayCtrlWidget
 import gui.app_widgets.common as apw_comm
-from gui.app_widgets.popup_display_widget import DisplayResultWidget
+from gui.app_widgets.verbose_show_widget import VerboseDisplayWidget
 
 class PreprocessDisplayWidget(BasicDisplayWidget):
-    '''
-    用于显示预处理图像的 Widget 控件
+    ''' 用于显示预处理图像的 Widget 控件
     '''
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -23,32 +21,24 @@ class PreprocessDisplayWidget(BasicDisplayWidget):
         return
 
     def paintEvent(self, e):
-        '''
-        重载绘制函数
+        ''' 重载绘制函数
         '''
         super().paintEvent(e)
         return
 
     def doPreprocess(self):
-        '''
-        进行预处理
+        ''' 进行预处理
         '''
         # 获取参数,进行预处理
         config = self.control_panel.getConfiguration()
         preped_images_dict = self.preprocesser.doPreprocessing(config["source"], config)
         # 显示预处理结果
-        if preped_images_dict is not None:
-            self.dr_widget = DisplayResultWidget(preped_images_dict)
+        if config['show_verbose'] and preped_images_dict is not None:
+            self.dr_widget = VerboseDisplayWidget(preped_images_dict)
             self.dr_widget.show()
 
-        # 显示原图
-        srcs_image = {"Color Image (RGB)": self.preprocesser.color_img,
-                      "Gray": self.preprocesser.gray_img,
-                      "Blue Channel": self.preprocesser.blue_channel,
-                      "Red Channel": self.preprocesser.red_channel,
-                      "Green Channel": self.preprocesser.green_channel}
         try:
-            self.setDisplayCvImage(srcs_image[config["source"]])
+            self.setDisplayCvImage(preped_images_dict['Result'])
         except KeyError:
             self.setDisplayCvImage(None)
             return
@@ -57,8 +47,7 @@ class PreprocessDisplayWidget(BasicDisplayWidget):
         return
 
     def openControlPanel(self):
-        '''
-        打开参数控制面板
+        ''' 打开参数控制面板
         '''
         if self.control_panel is None:
             self.control_panel = PreprocessDisplayCtrlWidget()
@@ -67,8 +56,7 @@ class PreprocessDisplayWidget(BasicDisplayWidget):
         return
 
     def setImage(self, qimage):
-        '''
-        载入图像
+        ''' 载入图像
         '''
         self.setDisplayQImage(qimage)
         self.preprocesser.setImage(apw_comm.img_qt2cv(qimage))

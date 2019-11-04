@@ -26,6 +26,8 @@ class TdExtractConnectDomain:
         self.min_area = 9
         self.max_area = 500
         self.variation = 0.25
+        self.debug_enable = True
+        self.debug_data = []
 
     def extract(self, gray_image, flt=None, direction=ExtractDirection.Positive):
         ''' 提取 MSER 连通区域
@@ -52,8 +54,13 @@ class TdExtractConnectDomain:
         retpoints, retboxes = [], []
         if flt is not None:
             flt.gray_img = gray_image
+            if self.debug_enable:
+                self.debug_data.append([])
             for (points, box) in zip(region_points, region_boxes):
                 ret = flt.validate(points, box)
+                if self.debug_enable:
+                    cnt = len(self.debug_data) - 1
+                    self.debug_data[cnt].append({"points":points, "box":box, "flt_params": flt.debug_data})
                 if ret:
                     retpoints.append(points)
                     retboxes.append(box)
@@ -137,3 +144,6 @@ class TdExtractConnectDomain:
                   "max_area": self.max_area,
                   "variation": self.variation}
         print("Extract Params %s" % params)
+
+    def debug(self):
+        pass

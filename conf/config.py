@@ -50,8 +50,8 @@ class TdExtractConfig:
         self.max_area = 500
         self.variation = 0.25
         self.channels = ['Gray']
-        self.filter_params = [False]
-        self.filter_swt_params = [False]
+        self.filter_params = None
+        self.filter_swt_params = None
 
     def setConfig(self, yaml_config):
         ''' 设置参数
@@ -64,7 +64,6 @@ class TdExtractConfig:
 
         # 基本过滤器参数
         filter_params = {}
-        filter_params['enable'] = yaml_config['extract']['filter_params']['enable']
         filter_params['flag'] = int(yaml_config['extract']['filter_params']['flag'])
         filter_params['area_lim'] = int(yaml_config['extract']['filter_params']['area_lim'])
         filter_params['perimeter_lim'] = int(yaml_config['extract']['filter_params']['perimeter_lim'])
@@ -80,7 +79,16 @@ class TdExtractConfig:
         filter_params['height_lim'] = [int(yaml_config['extract']['filter_params']['height_lim'][0]), \
                                        int(yaml_config['extract']['filter_params']['height_lim'][1])]
         self.filter_params = filter_params
-        self.filter_swt_params = yaml_config['extract']['filter_swt_params']
+
+        # SWT 过滤参数
+        filter_swt_params = {}
+        filter_swt_params['total_points'] = int(yaml_config['extract']['filter_swt_params']['total_points'])
+        filter_swt_params['mode_lim'] = float(yaml_config['extract']['filter_swt_params']['mode_lim'])
+        filter_swt_params['mean_lim'] = [float(yaml_config['extract']['filter_swt_params']['mean_lim'][0]), \
+                                         float(yaml_config['extract']['filter_swt_params']['mean_lim'][1])]
+        filter_swt_params['std_lim'] = [float(yaml_config['extract']['filter_swt_params']['std_lim'][0]), \
+                                        float(yaml_config['extract']['filter_swt_params']['std_lim'][1])]
+        self.filter_swt_params = filter_swt_params
 
     def getConfig(self):
         ''' 获取配置参数
