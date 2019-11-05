@@ -8,6 +8,7 @@ from gui.app_widgets.basic_display_widget import BasicDisplayWidget
 from gui.text_detection.extract_connect_domain import TdExtractConnectDomain
 from gui.text_detection.region_filter import TdFilter
 from gui.app_widgets.extract_control_widget import ExtractDisplayCtrlWidget
+from gui.app_widgets.verbose_show_widget import VerboseDisplayWidget
 # import gui.app_widgets.common as apw_comm
 # from gui.app_widgets.popup_display_widget import DisplayResultWidget
 
@@ -49,7 +50,14 @@ class ExtractDisplayWidget(BasicDisplayWidget):
         logger.info("Extractor tell data was recevied")
 
         # 提取连通域
+        self.extracter.debug_enable = config['debug']
         result_image = self.extracter.extract_with_labels_for_images(self.input_images, self.filter)
+        # 显示处理结果
+        if config['show_verbose'] and self.extracter.debug_data is not None:
+            self.dr_widget = VerboseDisplayWidget()
+            self.dr_widget.setExtracterVerboseData(self.extracter.debug_data)
+            self.dr_widget.show()
+
         self.setDisplayCvImage(result_image)
         return
 

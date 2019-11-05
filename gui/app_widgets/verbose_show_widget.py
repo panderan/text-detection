@@ -4,18 +4,21 @@
 弹窗显示指定图像
 '''
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QWidget
+from PyQt5.QtWidgets import QWidget, QListWidgetItem
 from gui.ui.verbose_show_ui import Ui_VerboseDisplay
 from gui.app_widgets.basic_display_widget import BasicDisplayWidget
-
+import cv2
+import numpy as np
 
 class VerboseDisplayWidget(QWidget):
+    ''' 弹窗显示指定图像
     '''
-    弹窗显示指定图像
-    '''
-    def __init__(self, cv_images_dict, parent=None):
+    cv_image = None
+    temp_image_1 = None
+
+    def __init__(self, parent=None):
         super().__init__(parent)
-        self.cv_images_dict = cv_images_dict
+        self.cv_verbose_dict = None
         self.ui = Ui_VerboseDisplay()
         self.ui.setupUi(self)
         self.setAttribute(Qt.WA_QuitOnClose, False)
@@ -30,18 +33,99 @@ class VerboseDisplayWidget(QWidget):
 
         self.ui.label_info.hide()
         self.ui.line_vertical_2.hide()
-        self.ui.list_view.setEnabled(False)
+        self.ui.line_horiz_2.hide()
+        self.ui.checkbox_color_keep.hide()
+        self.ui.checkbox_use_final_ret_as_bg.hide()
+        self.ui.list_widget.setEnabled(False)
+
+    def onActionStateChangeUseFinalRetAsBg(self, state):
+        self.temp_image_1 = None
+        self.cv_image = None
+
+    def setPrepVerboseData(self, cv_verbose_dict):
+        ''' 添加 Prep Verbose 数据
+        '''
+        self.cv_verbose_dict = cv_verbose_dict
 
         # 将所有源插入 comboBox 中
-        for keystr in cv_images_dict:
+        for keystr in cv_verbose_dict:
             self.ui.combo_sources.addItem(keystr)
         # 显示 comboBox 中第一个图像
         if self.ui.combo_sources.count() > 0:
-            self.display_widget.setDisplayCvImage(self.cv_images_dict[self.ui.combo_sources.itemText(0)])
-        self.ui.combo_sources.activated.connect(self.onActionActived)
+            self.display_widget.setDisplayCvImage(self.cv_verbose_dict[self.ui.combo_sources.itemText(0)])
+        self.ui.combo_sources.activated.connect(self.onActionPrepActived)
 
-    def onActionActived(self, idx):
+    def onActionPrepActived(self, idx):
         ''' 切换显示
         '''
         if self.ui.combo_sources.count() > 0:
-            self.display_widget.setDisplayCvImage(self.cv_images_dict[self.ui.combo_sources.itemText(idx)])
+            self.display_widget.setDisplayCvImage(self.cv_verbose_dict[self.ui.combo_sources.itemText(idx)])
+
+    def setExtracterVerboseData(self, cv_verbose_dict):
+        ''' 添加 Extracter Verbose 数据
+        '''
+        self.cv_verbose_dict = cv_verbose_dict
+        for item in cv_verbose_dict:
+            self.ui.combo_sources.addItem(item["name"])
+
+        self.ui.label_info.setVisible(True)
+        self.ui.line_horiz_2.setVisible(True)
+        self.ui.checkbox_color_keep.setVisible(True)
+        self.ui.checkbox_use_final_ret_as_bg.setVisible(True)
+        self.ui.label_info.setText("Info:\n")
+        self.ui.list_widget.setEnabled(True)
+        self.onActionExtracterActived(0)
+        self.ui.combo_sources.activated.connect(self.onActionExtracterActived)
+        self.ui.list_widget.itemSelectionChanged.connect(self.onActionExtracterItemSelectionChanged)
+        self.ui.checkbox_use_final_ret_as_bg.stateChanged.connect(self.onActionStateChangeUseFinalRetAsBg)
+
+    def onActionExtracterActived(self, idx):
+        ''' 切换显示
+        '''
+        cur_data = self.cv_verbose_dict[idx]
+        self.display_widget.setDisplayCvImage(cur_data["result"])
+
+        self.ui.list_widget.clear()
+        for i in range(len(cur_data["regions"])):
+            self.ui.list_widget.addItem(QListWidgetItem("region_"+str(i), self.ui.list_widget))
+
+    def onActionExtracterItemSelectionChanged(self):
+        ''' 显示
+        '''
+        row = self.ui.list_widget.currentRow()
+        if row < 0:
+            return
+
+        cur_data = self.cv_verbose_dict[self.ui.combo_sources.currentIndex()]
+        cur_info = cur_data["regions"][row]
+        message = "Info idx_" + str(row) + ":\n"
+        message = message + "  width:\n    " + str(cur_info["flt_params"]["width"]) + "\n"
+        message = message + "  height:\n    " + str(cur_info["flt_params"]["height"]) + "\n"
+        message = message + "  perimeter:\n    " + str(cur_info["flt_params"]["perimeter"]) + "\n"
+        message = message + "  aspect ratio:\n    " + str(cur_info["flt_params"]["aspect_ratio"]) + "\n"
+        message = message + "  occurpied ratio:\n    " + str(cur_info["flt_params"]["occurpied_ratio"]) + "\n"
+        message = message + "  compactness:\n    " + str(cur_info["flt_params"]["compactness"]) + "\n"
+        self.ui.label_info.setText(message)
+        
+        # temp_image_1 作为背景图像
+        if self.temp_image_1 is None:
+            if self.ui.checkbox_use_final_ret_as_bg.isChecked():
+                self.temp_image_1 = np.zeros_like(cur_data['result'])
+                for item in self.cv_verbose_dict:
+                    self.temp_image_1[:, :] = item['result'][:, :]
+            else:
+                self.temp_image_1 = cur_data['result'].copy()
+
+        if self.cv_image is None:
+            self.cv_image = self.temp_image_1.copy()
+            self.cv_image = cv2.cvtColor(self.cv_image, cv2.COLOR_GRAY2RGB)
+        else:
+            if not self.ui.checkbox_color_keep.isChecked():
+                self.cv_image[:, :, 0] = self.temp_image_1[:, :]
+                self.cv_image[:, :, 1] = self.temp_image_1[:, :]
+                self.cv_image[:, :, 2] = self.temp_image_1[:, :]
+
+        self.cv_image[cur_info['points'][:, 1], cur_info['points'][:, 0], 0] = 255
+        self.cv_image[cur_info['points'][:, 1], cur_info['points'][:, 0], 1] = 0 
+        self.cv_image[cur_info['points'][:, 1], cur_info['points'][:, 0], 2] = 0 
+        self.display_widget.setDisplayCvImage(self.cv_image)

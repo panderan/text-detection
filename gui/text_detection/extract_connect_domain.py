@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 
-'''
-提取一幅图像的 MSER 选区
+''' 提取一幅图像的 MSER 选区
 '''
 
+import logging
 from enum import Enum
 import cv2
 import numpy as np
+
+
+logger = logging.getLogger(__name__)
 
 
 class ExtractDirection(Enum):
@@ -55,12 +58,13 @@ class TdExtractConnectDomain:
         if flt is not None:
             flt.gray_img = gray_image
             if self.debug_enable:
-                self.debug_data.append([])
+                self.debug_data.append({"regions":[]})
             for (points, box) in zip(region_points, region_boxes):
                 ret = flt.validate(points, box)
                 if self.debug_enable:
                     cnt = len(self.debug_data) - 1
-                    self.debug_data[cnt].append({"points":points, "box":box, "flt_params": flt.debug_data})
+                    item = {"points":points.copy(), "box":box.copy(), "flt_params": flt.debug_data.copy()}
+                    self.debug_data[cnt]["regions"].append(item)
                 if ret:
                     retpoints.append(points)
                     retboxes.append(box)
@@ -71,7 +75,7 @@ class TdExtractConnectDomain:
             retboxes = region_boxes
         return retpoints, retboxes
 
-    def extract_with_labels(self, gray_image, flt=None, direction=ExtractDirection.Positive):
+    def extract_with_labels(self, gray_image_dict, flt=None, direction=ExtractDirection.Positive):
         ''' 提取 MSER 连通区域（带标记）
         Args:
             flt 几何条件过滤实例，为 0 则不过滤
@@ -81,12 +85,18 @@ class TdExtractConnectDomain:
             rect_img 在原图中用矩形标出候选区域图像
             binarized 以背景图像为0，提取的连通域为255 的二值图像
         '''
+        gray_image = gray_image_dict["image"]
         rect_image = gray_image.copy()
         binarized = np.zeros_like(gray_image)
         msers, bboxes = self.extract(gray_image, flt, direction)
         for i, box in enumerate(bboxes):
             rect_image = cv2.rectangle(rect_image, (box[0], box[1]), (box[0]+box[2], box[1]+box[3]), (255, 0, 0))
             binarized[msers[i][:, 1], msers[i][:, 0]] = 255
+
+        if self.debug_enable:
+            self.debug_data[len(self.debug_data)-1]["name"] = gray_image_dict["name"]
+            self.debug_data[len(self.debug_data)-1]["result"] = binarized.copy()
+
         return rect_image, binarized
 
     def extract_with_labels_for_images(self, gray_images, flt=None, direction=ExtractDirection.Positive):
@@ -99,10 +109,10 @@ class TdExtractConnectDomain:
             binarized 以背景图像为0，提取的连通域为255 的二值图像
         '''
         ret_binarized = None
-        for gray_image in gray_images:
-            _, binarized = self.extract_with_labels(gray_image, flt, direction)
+        for gray_image_dict in gray_images:
+            _, binarized = self.extract_with_labels(gray_image_dict, flt, direction)
             if ret_binarized is None:
-                ret_binarized = binarized
+                ret_binarized = binarized.copy()
             else:
                 ret_binarized[binarized > 128] = binarized[binarized > 128]
         return ret_binarized
@@ -143,7 +153,7 @@ class TdExtractConnectDomain:
                   "min_area": self.min_area,
                   "max_area": self.max_area,
                   "variation": self.variation}
-        print("Extract Params %s" % params)
+        logger.info("Extract Params %s" % params)
 
     def debug(self):
         pass

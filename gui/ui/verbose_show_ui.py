@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'verbose_show.ui'
+# Form implementation generated from reading ui file 'gui/ui/verbose_show.ui'
 #
-# Created by: PyQt5 UI code generator 5.13.0
+# Created by: PyQt5 UI code generator 5.13.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -13,7 +13,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_VerboseDisplay(object):
     def setupUi(self, VerboseDisplay):
         VerboseDisplay.setObjectName("VerboseDisplay")
-        VerboseDisplay.resize(1029, 669)
+        VerboseDisplay.resize(897, 481)
         self.horizontalLayout = QtWidgets.QHBoxLayout(VerboseDisplay)
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.widget_display = QtWidgets.QWidget(VerboseDisplay)
@@ -24,13 +24,34 @@ class Ui_VerboseDisplay(object):
         self.line_vertical_1.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.line_vertical_1.setObjectName("line_vertical_1")
         self.horizontalLayout.addWidget(self.line_vertical_1)
+        self.verticalLayout_2 = QtWidgets.QVBoxLayout()
+        self.verticalLayout_2.setSizeConstraint(QtWidgets.QLayout.SetDefaultConstraint)
+        self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.label_info = QtWidgets.QLabel(VerboseDisplay)
         self.label_info.setEnabled(True)
         self.label_info.setMinimumSize(QtCore.QSize(150, 0))
         self.label_info.setMaximumSize(QtCore.QSize(150, 16777215))
         self.label_info.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignTop)
         self.label_info.setObjectName("label_info")
-        self.horizontalLayout.addWidget(self.label_info)
+        self.verticalLayout_2.addWidget(self.label_info)
+        self.line_horiz_2 = QtWidgets.QFrame(VerboseDisplay)
+        self.line_horiz_2.setMinimumSize(QtCore.QSize(150, 0))
+        self.line_horiz_2.setMaximumSize(QtCore.QSize(150, 16777215))
+        self.line_horiz_2.setFrameShape(QtWidgets.QFrame.HLine)
+        self.line_horiz_2.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.line_horiz_2.setObjectName("line_horiz_2")
+        self.verticalLayout_2.addWidget(self.line_horiz_2)
+        self.checkbox_color_keep = QtWidgets.QCheckBox(VerboseDisplay)
+        self.checkbox_color_keep.setMinimumSize(QtCore.QSize(150, 0))
+        self.checkbox_color_keep.setMaximumSize(QtCore.QSize(150, 16777215))
+        self.checkbox_color_keep.setObjectName("checkbox_color_keep")
+        self.verticalLayout_2.addWidget(self.checkbox_color_keep)
+        self.checkbox_use_final_ret_as_bg = QtWidgets.QCheckBox(VerboseDisplay)
+        self.checkbox_use_final_ret_as_bg.setMinimumSize(QtCore.QSize(150, 0))
+        self.checkbox_use_final_ret_as_bg.setMaximumSize(QtCore.QSize(150, 16777215))
+        self.checkbox_use_final_ret_as_bg.setObjectName("checkbox_use_final_ret_as_bg")
+        self.verticalLayout_2.addWidget(self.checkbox_use_final_ret_as_bg)
+        self.horizontalLayout.addLayout(self.verticalLayout_2)
         self.line_vertical_2 = QtWidgets.QFrame(VerboseDisplay)
         self.line_vertical_2.setFrameShape(QtWidgets.QFrame.VLine)
         self.line_vertical_2.setFrameShadow(QtWidgets.QFrame.Sunken)
@@ -63,16 +84,10 @@ class Ui_VerboseDisplay(object):
         self.line_horiz_1.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.line_horiz_1.setObjectName("line_horiz_1")
         self.verticalLayout.addWidget(self.line_horiz_1)
-        self.list_view = QtWidgets.QListView(VerboseDisplay)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Fixed, QtWidgets.QSizePolicy.Expanding)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.list_view.sizePolicy().hasHeightForWidth())
-        self.list_view.setSizePolicy(sizePolicy)
-        self.list_view.setMinimumSize(QtCore.QSize(200, 0))
-        self.list_view.setMaximumSize(QtCore.QSize(200, 16777215))
-        self.list_view.setObjectName("list_view")
-        self.verticalLayout.addWidget(self.list_view)
+        self.list_widget = QtWidgets.QListWidget(VerboseDisplay)
+        self.list_widget.setMaximumSize(QtCore.QSize(200, 16777215))
+        self.list_widget.setObjectName("list_widget")
+        self.verticalLayout.addWidget(self.list_widget)
         self.horizontalLayout.addLayout(self.verticalLayout)
         self.horizontalLayout.setStretch(0, 1)
 
@@ -83,4 +98,6 @@ class Ui_VerboseDisplay(object):
         _translate = QtCore.QCoreApplication.translate
         VerboseDisplay.setWindowTitle(_translate("VerboseDisplay", "Verbose Result"))
         self.label_info.setText(_translate("VerboseDisplay", "Info:"))
+        self.checkbox_color_keep.setText(_translate("VerboseDisplay", "Color Keep"))
+        self.checkbox_use_final_ret_as_bg.setText(_translate("VerboseDisplay", "Use Final Ret as BG"))
         self.label_sources.setText(_translate("VerboseDisplay", "Sources:"))

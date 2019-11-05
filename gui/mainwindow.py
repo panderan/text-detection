@@ -177,14 +177,20 @@ class AppMainWindow(QMainWindow):
         return
 
     def onActionExtractorRequireData(self, chnls):
+        ''' 获取 Extracter 所需的数据
+        '''
         datas = []
         if "Gray" in chnls:
-            datas.append(self.preprocess_display_widget.preprocesser.gray_img_preped)
+            datas.append({"name":"Gray", 
+                          "image":self.preprocess_display_widget.preprocesser.gray_img_preped})
         if "Blue Channel" in chnls:
-            datas.append(self.preprocess_display_widget.preprocesser.blue_channel_preped)
+            datas.append({"name":"Blue Channel",
+                          "image":self.preprocess_display_widget.preprocesser.blue_channel_preped})
         if "Red Channel" in chnls:
-            datas.append(self.preprocess_display_widget.preprocesser.red_channel_preped)
+            datas.append({"name":"Red Channel",
+                          "image":self.preprocess_display_widget.preprocesser.red_channel_preped})
         if "Green Channel" in chnls:
-            datas.append(self.preprocess_display_widget.preprocesser.green_channel_preped)
+            datas.append({"name":"Green Channel",
+                          "image":self.preprocess_display_widget.preprocesser.green_channel_preped})
         self.extract_display_widget.input_images = datas
         logger.info("Data is fed for extractor")

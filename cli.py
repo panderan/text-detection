@@ -3,6 +3,7 @@
 ''' text-detection 命令行程序(CLI)
 '''
 
+import logging
 import sys
 import getopt
 import cv2
@@ -12,6 +13,13 @@ from gui.text_detection.preprocessing import TdPreprocessing
 from gui.text_detection.extract_connect_domain import TdExtractConnectDomain
 from gui.text_detection.region_filter import TdFilter
 from conf.config import TdConfig
+
+
+logging.basicConfig(level=logging.INFO, \
+                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', \
+                    datefmt='%a, %d %b %Y %H:%M:%S')
+logger = logging.getLogger(__name__)
+
 
 def usage():
     ''' 显示帮助信息
@@ -109,3 +117,4 @@ class Cli:
 if __name__ == '__main__':
     app = Cli()
     app.run()
+

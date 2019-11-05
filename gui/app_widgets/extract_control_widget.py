@@ -86,6 +86,8 @@ class ExtractDisplayCtrlWidget(QWidget):
         config['min_area'] = self.ui.spinbox_mser_area_low.value()
         config['max_area'] = self.ui.spinbox_mser_area_high.value()
         config['variation'] = self.ui.dspinbox_mser_variation.value()
+        config['debug'] = self.ui.checkbox_mser_debug_enable.isChecked()
+        config['show_verbose'] = self.ui.checkbox_mser_debug_enable.isChecked()
         chnls = []
         if self.ui.checkbox_mser_gray.isChecked():
             chnls.append("Gray")

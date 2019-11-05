@@ -8,7 +8,7 @@ extract:
     delta: 5
     area_lim: [9, 500]
     variation: 0.25
-    channels: ["Gray", "Red Channel"]
+    channels: ["Gray"]
     filter_params: 
         flag: 127 
         area_lim: 20000

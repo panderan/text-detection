@@ -9,11 +9,15 @@
     @author panderan@163.com
 '''
 
+import logging
 import math
 from enum import Enum
 import cv2
 import numpy as np
 from gui.text_detection.swt import swt
+
+
+logger = logging.getLogger(__name__)
 
 
 class TdFilterCheckType(Enum):
@@ -240,7 +244,7 @@ class TdFilter:
                   "compactness_lim": self.compactness_lim,
                   "width_lim": self.width_lim,
                   "height_lim": self.height_lim}
-        print("Filter Params %s" % params)
+        logger.info("Filter Params %s" % params)
 
     @property
     def gray_img(self):
