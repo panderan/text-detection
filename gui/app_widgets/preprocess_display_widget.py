@@ -40,7 +40,7 @@ class PreprocessDisplayWidget(BasicDisplayWidget):
 
         try:
             self.setDisplayCvImage(preped_images_dict['Result'])
-        except KeyError:
+        except (KeyError, TypeError):
             self.setDisplayCvImage(None)
             return
 

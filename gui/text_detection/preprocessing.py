@@ -13,9 +13,17 @@ import logging
 from math import sqrt
 import cv2
 import numpy as np
+from enum import Enum
 
 
 logger = logging.getLogger(__name__)
+
+
+class TdPrepHatDirection(Enum):
+    ''' 提取方向
+    '''
+    TOPHAT = 1
+    BACKHAT = 2
 
 
 def applyCanny(img, sigma=0.2):
@@ -43,6 +51,7 @@ class TdPreprocessing:
         self.canny_min = canny_min
         self.height = 0
         self.width = 0
+        self.hat = 1
         # 数据
         self.color_img = color_img
         self.gray_img = None
@@ -87,6 +96,10 @@ class TdPreprocessing:
         '''
         self.setConfig(config)
         self.printParams("Do preprocessing")
+        if self.hat == 0:
+            logger.error("Hat param is ZERO, invalid.")
+            return None
+
         input_image = None
         input_srcs = {"Red Channel": self.red_channel,
                       "Blue Channel": self.blue_channel,
@@ -95,29 +108,50 @@ class TdPreprocessing:
         try:
             input_image = input_srcs[img_type_name]
         except KeyError:
+            msg = "Input imagee is invalid, name:%s"%img_type_name
+            logger.warning(msg)
             return None
 
         # 顶帽运算
         struct_element = cv2.getStructuringElement(cv2.MORPH_RECT, \
                                     (self.struct_element_size, self.struct_element_size))
-        tophat = cv2.morphologyEx(input_image, cv2.MORPH_TOPHAT, struct_element)
-        backhat = cv2.morphologyEx(input_image, cv2.MORPH_BLACKHAT, struct_element)
-        hat = tophat*(tophat >= backhat) + backhat*(backhat > tophat)
+        tophat = cv2.morphologyEx(input_image, cv2.MORPH_TOPHAT, struct_element) if self.hat & TdPrepHatDirection.TOPHAT.value else None
+        backhat = cv2.morphologyEx(input_image, cv2.MORPH_BLACKHAT, struct_element) if self.hat & TdPrepHatDirection.BACKHAT.value else None
+        if tophat is not None and backhat is not None:
+            hat = tophat*(tophat >= backhat) + backhat*(backhat > tophat)
+        else:
+            if tophat is not None:
+                hat = tophat
+            else:
+                hat = backhat
+
         # 提取 Canny 边缘
-        cy = cv2.Canny(hat, \
-                        np.max(hat)*self.canny_max, \
-                        np.max(hat)*self.canny_min)
+        canny_arg_max = int(np.max(hat)*self.canny_max)
+        canny_arg_min = int(np.max(hat)*self.canny_min)
+        canny_arg_max = canny_arg_max if canny_arg_max < 256 else 255
+        canny_arg_min = canny_arg_min if canny_arg_min < canny_arg_max else canny_arg_max
+        cy = cv2.Canny(hat, canny_arg_max, canny_arg_min)
+
         # 消除水平边缘
         sobely = cv2.Sobel(cy, -1, 1, 0)
         # 高斯模糊
         blur = cv2.GaussianBlur(sobely, (self.gauss_blur_size, self.gauss_blur_size), 0)
+        bgblur = cv2.GaussianBlur(input_image, (255, 255), 0)
         # 归一化
         blurf = blur/blur.max()
-        # 与原图相乘并直方图均衡化
-        out_image = np.uint8(input_image * blurf)
-        equ = cv2.equalizeHist(out_image)
+
+        # 使用原图的极大模糊图为背景图
+        blurf = 1/(1+np.exp(-(blurf-0.7)*5))
+        out_image = np.zeros_like(input_image)
+        out_image = np.uint8(input_image*blurf + bgblur*(1-blurf))
+        # out_image[blurf > 0.4] = input_image[blurf > 0.4]
+
+        # 使用黑色背景图
+        # # 与原图相乘并直方图均衡化
+        # out_image = np.uint8(input_image * blurf)
+
         # Gamma 变换
-        tp = equ/255.0
+        tp = (cv2.equalizeHist(out_image))/255.0
         o = np.power(tp, self.gamma)
         out_image = np.uint8(o*255.0)
 
@@ -156,6 +190,8 @@ class TdPreprocessing:
             elif keystr == "canny":
                 self.canny_max = config[keystr][0]
                 self.canny_min = config[keystr][1]
+            elif keystr == "hat":
+                self.hat = config[keystr]
             else:
                 pass
         except KeyError:
@@ -172,6 +208,7 @@ class TdPreprocessing:
         self.__setConfigItem("gauss_blur_size", config)
         self.__setConfigItem("total_pixels", config)
         self.__setConfigItem("canny", config)
+        self.__setConfigItem("hat", config)
         return
 
 

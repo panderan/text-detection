@@ -49,6 +49,13 @@ class TdFilter:
         self.height_lim = [0, 800]
 
         self.swt = None
+        self.swt_total_cnt = [0, 30]
+        self.swt_mode = [1.5, 999.0]
+        self.swt_mode_cnt = 3
+        self.swt_mean = [2.0, 5.0]
+        self.swt_std = [0.5, 2.5]
+        self.swt_val_range = [0, 255]
+
         self.canny_image = None
         self.gray_image = gray_img
         self.debug_enable = True
@@ -121,21 +128,41 @@ class TdFilter:
             retval = self.swt.get_stroke_properties(stroke_widths)
 
             total_cnt = len(stroke_widths)
-            sw, sw_cnt, mean, std, maxval, minval = retval
+            mode, mode_cnt, mean, std, maxval, minval = retval
 
-            if sw < 1.5:
+            self.fillDebugData("swt_mode", mode, self.swt_mode)
+            if mode < self.swt_mode[0] or mode > self.swt_mode[1]:
+                self.markDebugDataResult("swt_mode", False)
                 return False
-            if sw_cnt < 0:
+
+            self.fillDebugData("swt_mode_cnt", mode_cnt, self.swt_mode_cnt)
+            if mode_cnt < self.swt_mode_cnt:
+                self.markDebugDataResult("swt_mode_cnt", False)
                 return False
-            if total_cnt < 30:
-                return True
-            if mean < 2.0 or mean > 5.0:
+
+            self.fillDebugData("swt_total_cnt", total_cnt, self.swt_total_cnt)
+            if total_cnt < self.swt_total_cnt[0] or total_cnt > self.swt_total_cnt[1]:
+                self.markDebugDataResult("swt_total_cnt", False)
                 return False
-            if std < 0.5 or std > 2.5:
+
+            self.fillDebugData("swt_mean", mean, self.swt_mean)
+            if mean < self.swt_mean[0] or mean > self.swt_mean[1]:
+                self.markDebugDataResult("swt_mean", False)
                 return False
-            if maxval < 0:
+
+            self.fillDebugData("swt_std", std, self.swt_std)
+            if std < self.swt_std[0] or std > self.swt_std[1]:
+                self.markDebugDataResult("wst_std", False)
                 return False
-            if minval < 0:
+
+            self.fillDebugData("maxval", maxval, self.swt_val_range[1])
+            if maxval > self.swt_val_range[1]:
+                self.markDebugDataResult("maxval", False)
+                return False
+
+            self.fillDebugData("minval", minval, self.swt_val_range[0])
+            if minval < self.swt_val_range[0]:
+                self.markDebugDataResult("minval", False)
                 return False
 
         return True
@@ -231,12 +258,6 @@ class TdFilter:
         self.__setConfigItem("compactness_lim", config)
         self.__setConfigItem("width_lim", config)
         self.__setConfigItem("height_lim", config)
-        try:
-            if not config['enable']:
-                return None
-        except KeyError:
-            pass
-
         self.printParams()
         return self
 
@@ -252,7 +273,8 @@ class TdFilter:
                   "compactness_lim": self.compactness_lim,
                   "width_lim": self.width_lim,
                   "height_lim": self.height_lim}
-        logger.info("Filter Params %s" % params)
+        msg = "Filter Params %s" % params
+        logger.info(msg)
 
     @property
     def gray_img(self):
@@ -272,7 +294,9 @@ class TdFilter:
             self.canny_image = None
 
     def initDebugData(self):
-        self.debug_data = {"width":None, 
+        ''' 初始化 Debug 数据
+        '''
+        self.debug_data = {"width":None,
                            "height":None,
                            "perimeter":None,
                            "aspect_ratio":None,
@@ -280,11 +304,15 @@ class TdFilter:
                            "compactness":None}
 
     def fillDebugData(self, key, value, lim):
+        ''' 填充 Debug 数据
+        '''
         if self.debug_enable:
             self.debug_data[key] = {"value":value, "lim":lim, "result":True}
         else:
             self.debug_data[key] = None
 
     def markDebugDataResult(self, key, flag=False):
+        ''' 修改 Debug 数据中的 Result 值
+        '''
         if self.debug_enable and self.debug_data[key] is not None:
             self.debug_data[key]['result'] = flag

@@ -16,18 +16,21 @@ class TdPrepConfig:
         self.gamma = 3.0
         self.struct_element_size = 5
         self.gauss_blur_size = 51
+        self.hat = 1
         if yaml_config is not None:
             self.setConfig(yaml_config)
 
     def setConfig(self, yaml_config):
         ''' 设置配置文件
         '''
-        self.total_pixels = int(yaml_config['prep']['total_pixels'])
-        self.gamma = float(yaml_config['prep']['gamma'])
-        self.struct_element_size = int(yaml_config['prep']['struct_element_size'])
-        self.gauss_blur_size = int(yaml_config['prep']['gauss_blur_size'])
-        self.canny_max = float(yaml_config['prep']['canny'][0])
-        self.canny_min = float(yaml_config['prep']['canny'][1])
+        yaml_prep_config = yaml_config['prep']
+        self.total_pixels = int(yaml_prep_config['total_pixels'])
+        self.gamma = float(yaml_prep_config['gamma'])
+        self.struct_element_size = int(yaml_prep_config['struct_element_size'])
+        self.gauss_blur_size = int(yaml_prep_config['gauss_blur_size'])
+        self.canny_max = float(yaml_prep_config['canny'][0])
+        self.canny_min = float(yaml_prep_config['canny'][1])
+        self.hat = int(yaml_prep_config['hat'])
 
     def getConfig(self):
         ''' 获取配置
@@ -38,6 +41,7 @@ class TdPrepConfig:
         config['canny'] = [self.canny_max, self.canny_min]
         config['struct_element_size'] = self.struct_element_size
         config['gauss_blur_size'] = self.gauss_blur_size
+        config['hat'] = self.hat
         return config
 
 
@@ -50,45 +54,49 @@ class TdExtractConfig:
         self.max_area = 500
         self.variation = 0.25
         self.channels = ['Gray']
+        self.direction = 1
         self.filter_params = None
-        self.filter_swt_params = None
 
     def setConfig(self, yaml_config):
         ''' 设置参数
         '''
-        self.delta = int(yaml_config['extract']['delta'])
-        self.channels = yaml_config['extract']['channels']
-        self.min_area = int(yaml_config['extract']['area_lim'][0])
-        self.max_area = int(yaml_config['extract']['area_lim'][1])
-        self.variation = float(yaml_config['extract']['variation'])
+        yaml_mser_config = yaml_config['extract']
+        self.delta = int(yaml_mser_config['delta'])
+        self.channels = yaml_mser_config['channels']
+        self.min_area = int(yaml_mser_config['area_lim'][0])
+        self.max_area = int(yaml_mser_config['area_lim'][1])
+        self.variation = float(yaml_mser_config['variation'])
+        self.direction = int(yaml_mser_config['direction'])
 
         # 基本过滤器参数
         filter_params = {}
-        filter_params['flag'] = int(yaml_config['extract']['filter_params']['flag'])
-        filter_params['area_lim'] = int(yaml_config['extract']['filter_params']['area_lim'])
-        filter_params['perimeter_lim'] = int(yaml_config['extract']['filter_params']['perimeter_lim'])
-        filter_params['aspect_ratio_lim'] = [float(yaml_config['extract']['filter_params']['aspect_ratio_lim'][0]), \
-                                             float(yaml_config['extract']['filter_params']['aspect_ratio_lim'][1])]
-        filter_params['aspect_ratio_gt1'] = yaml_config['extract']['filter_params']['aspect_ratio_gt1']
-        filter_params['occupation_lim'] = [float(yaml_config['extract']['filter_params']['occupation_lim'][0]), \
-                                           float(yaml_config['extract']['filter_params']['occupation_lim'][1])]
-        filter_params['compactness_lim'] = [float(yaml_config['extract']['filter_params']['compactness_lim'][0]), \
-                                            float(yaml_config['extract']['filter_params']['compactness_lim'][1])]
-        filter_params['width_lim'] = [int(yaml_config['extract']['filter_params']['width_lim'][0]), \
-                                      int(yaml_config['extract']['filter_params']['width_lim'][1])]
-        filter_params['height_lim'] = [int(yaml_config['extract']['filter_params']['height_lim'][0]), \
-                                       int(yaml_config['extract']['filter_params']['height_lim'][1])]
+        yaml_filter_config = yaml_mser_config['filter_params']
+        filter_params['flag'] = int(yaml_filter_config['flag'])
+        filter_params['area_lim'] = int(yaml_filter_config['area_lim'])
+        filter_params['perimeter_lim'] = int(yaml_filter_config['perimeter_lim'])
+        filter_params['aspect_ratio_lim'] = [float(yaml_filter_config['aspect_ratio_lim'][0]), \
+                                             float(yaml_filter_config['aspect_ratio_lim'][1])]
+        filter_params['aspect_ratio_gt1'] = yaml_filter_config['aspect_ratio_gt1']
+        filter_params['occupation_lim'] = [float(yaml_filter_config['occupation_lim'][0]), \
+                                           float(yaml_filter_config['occupation_lim'][1])]
+        filter_params['compactness_lim'] = [float(yaml_filter_config['compactness_lim'][0]), \
+                                            float(yaml_filter_config['compactness_lim'][1])]
+        filter_params['width_lim'] = [int(yaml_filter_config['width_lim'][0]), \
+                                      int(yaml_filter_config['width_lim'][1])]
+        filter_params['height_lim'] = [int(yaml_filter_config['height_lim'][0]), \
+                                       int(yaml_filter_config['height_lim'][1])]
         self.filter_params = filter_params
 
         # SWT 过滤参数
         filter_swt_params = {}
-        filter_swt_params['total_points'] = int(yaml_config['extract']['filter_swt_params']['total_points'])
-        filter_swt_params['mode_lim'] = float(yaml_config['extract']['filter_swt_params']['mode_lim'])
-        filter_swt_params['mean_lim'] = [float(yaml_config['extract']['filter_swt_params']['mean_lim'][0]), \
-                                         float(yaml_config['extract']['filter_swt_params']['mean_lim'][1])]
-        filter_swt_params['std_lim'] = [float(yaml_config['extract']['filter_swt_params']['std_lim'][0]), \
-                                        float(yaml_config['extract']['filter_swt_params']['std_lim'][1])]
-        self.filter_swt_params = filter_swt_params
+        yaml_filter_swt_config = yaml_filter_config['filter_swt_params']
+        filter_swt_params['total_points'] = int(yaml_filter_swt_config['total_points'])
+        filter_swt_params['mode_lim'] = float(yaml_filter_swt_config['mode_lim'])
+        filter_swt_params['mean_lim'] = [float(yaml_filter_swt_config['mean_lim'][0]), \
+                                         float(yaml_filter_swt_config['mean_lim'][1])]
+        filter_swt_params['std_lim'] = [float(yaml_filter_swt_config['std_lim'][0]), \
+                                        float(yaml_filter_swt_config['std_lim'][1])]
+        self.filter_params['swt_params'] = filter_swt_params
 
     def getConfig(self):
         ''' 获取配置参数
@@ -99,8 +107,8 @@ class TdExtractConfig:
         config['min_area'] = self.min_area
         config['max_area'] = self.max_area
         config['variation'] = self.variation
+        config['direction'] = self.direction
         config['filter_params'] = self.filter_params
-        config['filter_swt_params'] = self.filter_swt_params
         return config
 
 

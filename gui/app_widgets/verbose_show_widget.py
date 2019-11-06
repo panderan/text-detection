@@ -125,7 +125,7 @@ class VerboseDisplayWidget(QWidget):
                               + str(format(cur_info['flt_params']['compactness']['value'], '.3f')) + " ∈ " \
                               + str(cur_info['flt_params']['compactness']['lim']) + "\n"
         self.ui.label_info.setText(message)
-        
+
         # temp_image_1 作为背景图像
         if self.temp_image_1 is None:
             if self.ui.checkbox_use_final_ret_as_bg.isChecked():

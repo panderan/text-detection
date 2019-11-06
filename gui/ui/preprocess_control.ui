@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>447</width>
-    <height>332</height>
+    <height>299</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -94,11 +94,6 @@
          <string>Green Channel</string>
         </property>
        </item>
-       <item>
-        <property name="text">
-         <string>Canny Image</string>
-        </property>
-       </item>
       </widget>
      </item>
      <item row="2" column="0">
@@ -176,7 +171,7 @@
        </property>
       </widget>
      </item>
-     <item row="5" column="1">
+     <item row="6" column="1">
       <layout class="QHBoxLayout" name="horizontalLayout">
        <property name="sizeConstraint">
         <enum>QLayout::SetMaximumSize</enum>
@@ -209,7 +204,7 @@
           </size>
          </property>
          <property name="maximum">
-          <double>1.000000000000000</double>
+          <double>10.000000000000000</double>
          </property>
         </widget>
        </item>
@@ -241,27 +236,27 @@
           </size>
          </property>
          <property name="maximum">
-          <double>1.000000000000000</double>
+          <double>10.000000000000000</double>
          </property>
         </widget>
        </item>
       </layout>
      </item>
-     <item row="5" column="0">
+     <item row="6" column="0">
       <widget class="QLabel" name="label_canny">
        <property name="text">
         <string>Canny :</string>
        </property>
       </widget>
      </item>
-     <item row="6" column="0">
+     <item row="7" column="0">
       <widget class="QLabel" name="label_show_verbose">
        <property name="text">
         <string>Show Verbose :</string>
        </property>
       </widget>
      </item>
-     <item row="6" column="1">
+     <item row="7" column="1">
       <widget class="QCheckBox" name="checkbox_show_verbose">
        <property name="text">
         <string>Enable</string>
@@ -270,6 +265,58 @@
         <bool>true</bool>
        </property>
       </widget>
+     </item>
+     <item row="5" column="0">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>Hat Direction :</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1">
+      <layout class="QHBoxLayout" name="layout_hat_options">
+       <property name="sizeConstraint">
+        <enum>QLayout::SetMaximumSize</enum>
+       </property>
+       <item>
+        <widget class="QCheckBox" name="checkbox_top_hat">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>100</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>TopHat</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="checkbox_back_hat">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>100</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>BackHat</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </item>
     </layout>
    </item>

@@ -17,7 +17,6 @@ class ExtractDirection(Enum):
     '''
     Positive = 1
     Negitive = 2
-    Both = 4
 
 
 class TdExtractConnectDomain:
@@ -29,10 +28,11 @@ class TdExtractConnectDomain:
         self.min_area = 9
         self.max_area = 500
         self.variation = 0.25
+        self.direction = 1
         self.debug_enable = True
         self.debug_data = []
 
-    def extract(self, gray_image, flt=None, direction=ExtractDirection.Positive):
+    def extract(self, gray_image, flt=None):
         ''' 提取 MSER 连通区域
         Args:
             flt 几何条件过滤实例，为 0 则不过滤
@@ -45,11 +45,11 @@ class TdExtractConnectDomain:
         self.printParams()
         region_points, region_boxes = [], []
         mser = cv2.MSER_create(_delta=self.delta, _min_area=self.min_area, _max_area=self.max_area)
-        if direction in (ExtractDirection.Positive, ExtractDirection.Both):
+        if self.direction & ExtractDirection.Positive.value:
             points, boxes = mser.detectRegions(gray_image)
             region_points.extend(points)
             region_boxes.extend(boxes)
-        if direction in (ExtractDirection.Negitive, ExtractDirection.Both):
+        if self.direction & ExtractDirection.Negitive.value:
             points, boxes = mser.detectRegions(255-gray_image)
             region_points.extend(points)
             region_boxes.extend(boxes)
@@ -75,11 +75,10 @@ class TdExtractConnectDomain:
             retboxes = region_boxes
         return retpoints, retboxes
 
-    def extract_with_labels(self, gray_image_dict, flt=None, direction=ExtractDirection.Positive):
+    def extract_with_labels(self, gray_image_dict, flt=None):
         ''' 提取 MSER 连通区域（带标记）
         Args:
             flt 几何条件过滤实例，为 0 则不过滤
-            direction MSER 提取方向，0 为 MSER+ ，1 为 MSER-
             channel 在指定通道上提取 MSERs
         Returns:
             rect_img 在原图中用矩形标出候选区域图像
@@ -88,7 +87,7 @@ class TdExtractConnectDomain:
         gray_image = gray_image_dict["image"]
         rect_image = gray_image.copy()
         binarized = np.zeros_like(gray_image)
-        msers, bboxes = self.extract(gray_image, flt, direction)
+        msers, bboxes = self.extract(gray_image, flt)
         for i, box in enumerate(bboxes):
             rect_image = cv2.rectangle(rect_image, (box[0], box[1]), (box[0]+box[2], box[1]+box[3]), (255, 0, 0))
             binarized[msers[i][:, 1], msers[i][:, 0]] = 255
@@ -99,18 +98,18 @@ class TdExtractConnectDomain:
 
         return rect_image, binarized
 
-    def extract_with_labels_for_images(self, gray_images, flt=None, direction=ExtractDirection.Positive):
+    def extract_with_labels_for_images(self, gray_images, flt=None):
         ''' 提取所有通道的 MSER，包括R，G，B，Gray
         Args:
             flt 几何条件过滤实例，为 0 则不过滤
-            direction MSER 提取方向，0 为 MSER+ ，1 为 MSER-
             channel 在指定通道上提取 MSERs
         Returns:
             binarized 以背景图像为0，提取的连通域为255 的二值图像
         '''
+        self.initDebugData()
         ret_binarized = None
         for gray_image_dict in gray_images:
-            _, binarized = self.extract_with_labels(gray_image_dict, flt, direction)
+            _, binarized = self.extract_with_labels(gray_image_dict, flt)
             if ret_binarized is None:
                 ret_binarized = binarized.copy()
             else:
@@ -129,6 +128,8 @@ class TdExtractConnectDomain:
                 self.max_area = config["max_area"]
             elif keystr == "variation":
                 self.variation = config["variation"]
+            elif keystr == "direction":
+                self.direction = config["direction"]
             else:
                 pass
         except KeyError:
@@ -144,6 +145,7 @@ class TdExtractConnectDomain:
         self.__setConfigItem("min_area", config)
         self.__setConfigItem("max_area", config)
         self.__setConfigItem("variation", config)
+        self.__setConfigItem("direction", config)
         return
 
     def printParams(self):
@@ -152,5 +154,12 @@ class TdExtractConnectDomain:
         params = {"delta": self.delta,
                   "min_area": self.min_area,
                   "max_area": self.max_area,
-                  "variation": self.variation}
-        logger.info("Extract Params %s" % params)
+                  "variation": self.variation,
+                  "direction": self.direction}
+        msg = "Extract Params %s" % params
+        logger.info(msg)
+
+    def initDebugData(self):
+        ''' 重置 Debug
+        '''
+        self.debug_data = []

@@ -10,8 +10,8 @@ from PyQt5.QtWidgets import QWidget
 from PyQt5.QtGui import QIcon
 import gui.ui.extract_control_ui as extract_ctrl_ui
 from gui.text_detection.region_filter import TdFilterCheckType
+from gui.text_detection.extract_connect_domain import ExtractDirection
 from conf.config import TdConfig
-
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +39,10 @@ class ExtractDisplayCtrlWidget(QWidget):
         self.ui.checkbox_mser_blue.setChecked(check_flag)
         check_flag = True if "Green Channel" in extract_conf['channels'] else False
         self.ui.checkbox_mser_green.setChecked(check_flag)
+        check_flag = True if int(extract_conf['direction']) & ExtractDirection.Positive.value else False
+        self.ui.checkbox_mser_direction_positive.setChecked(check_flag)
+        check_flag = True if int(extract_conf['direction']) & ExtractDirection.Negitive.value else False
+        self.ui.checkbox_mser_direction_negative.setChecked(check_flag)
 
         filter_conf = extract_conf['filter_params']
         self.ui.checkbox_filter_enable.setChecked(bool(filter_conf['flag'] > 0))
@@ -56,7 +60,7 @@ class ExtractDisplayCtrlWidget(QWidget):
         self.ui.spinbox_filter_height_low.setValue(filter_conf['height_lim'][0])
         self.ui.spinbox_filter_height_high.setValue(filter_conf['height_lim'][1])
 
-        filter_swt_conf = extract_conf['filter_swt_params']
+        filter_swt_conf = filter_conf['swt_params']
         self.ui.spinbox_filter_swt_total_points.setValue(filter_swt_conf['total_points'])
         self.ui.dspinbox_filter_swt_mode_lim.setValue(filter_swt_conf['mode_lim'])
         self.ui.dspinbox_filter_swt_mean_low.setValue(filter_swt_conf['mean_lim'][0])
@@ -69,6 +73,8 @@ class ExtractDisplayCtrlWidget(QWidget):
         return
 
     def initConnects(self):
+        ''' 初始化信号与槽的连接
+        '''
         self.ui.checkbox_filter_area_lim.stateChanged.connect(self.onActionCheckboxFilterAreaLim)
         self.ui.checkbox_filter_perimeter_lim.stateChanged.connect(self.onActionCheckboxFilterPerimeterLim)
         self.ui.checkbox_filter_aspect_ratio_lim.stateChanged.connect(self.onActionCheckboxFilterAspectRatioLim)
@@ -98,6 +104,9 @@ class ExtractDisplayCtrlWidget(QWidget):
         if self.ui.checkbox_mser_green.isChecked():
             chnls.append("Green Channel")
         config['channels'] = chnls
+        ret = ExtractDirection.Positive.value if self.ui.checkbox_mser_direction_positive.isChecked() else 0
+        ret += ExtractDirection.Negitive.value if self.ui.checkbox_mser_direction_negative.isChecked() else 0
+        config['direction'] = ret
 
         filter_config = {}
         filter_config['area_lim'] = self.ui.spinbox_filter_area_lim.value()
@@ -124,14 +133,16 @@ class ExtractDisplayCtrlWidget(QWidget):
         if self.ui.checkbox_filter_height_lim.isChecked():
             flag += TdFilterCheckType.HEIGH.value
         filter_config['flag'] = flag
-        config['filter_params'] = filter_config
 
         filter_swt_config = {}
         filter_swt_config['total_points'] = self.ui.spinbox_filter_swt_total_points.value()
         filter_swt_config['mode_lim'] = self.ui.dspinbox_filter_swt_mode_lim.value()
         filter_swt_config['mean_lim'] = [self.ui.dspinbox_filter_swt_mean_low.value(), self.ui.dspinbox_filter_swt_mean_high.value()]
         filter_swt_config['std_lim'] = [self.ui.dspinbox_filter_swt_std_low.value(), self.ui.dspinbox_filter_swt_std_high.value()]
-        config['filter_swt_params'] = filter_swt_config
+        filter_config['filter_swt_params'] = filter_swt_config
+        filter_config['swt_params'] = filter_swt_config
+
+        config['filter_params'] = filter_config
         return config
 
     def setEnabledForFilter(self, flag):
@@ -172,31 +183,47 @@ class ExtractDisplayCtrlWidget(QWidget):
         self.ui.dspinbox_filter_swt_std_high.setEnabled(bflag)
 
     def onActionCheckboxFilterAreaLim(self, state):
+        ''' 响应 CheckBox Filter Area
+        '''
         self.ui.spinbox_filter_area_lim.setEnabled(bool(state))
 
     def onActionCheckboxFilterPerimeterLim(self, state):
+        ''' 响应 Checkbox Filter Perimeter Lim
+        '''
         self.ui.spinbox_filter_perimeter_lim.setEnabled(bool(state))
 
     def onActionCheckboxFilterAspectRatioLim(self, state):
+        ''' 响应 Checkbox Filter Aspect Ratio Lim
+        '''
         self.ui.dspinbox_filter_aspect_ratio_low.setEnabled(bool(state))
         self.ui.dspinbox_filter_aspect_ratio_high.setEnabled(bool(state))
         self.ui.checkbox_filter_abs_aspect_ratio.setEnabled(bool(state))
 
     def onActionCheckboxFilterOccupationLim(self, state):
+        ''' 响应 Checkbox Filter Occupation Lim
+        '''
         self.ui.dspinbox_filter_occupation_low.setEnabled(bool(state))
         self.ui.dspinbox_filter_occupation_high.setEnabled(bool(state))
 
     def onActionCheckboxFilterCompactnessLim(self, state):
+        ''' 响应 Checkbox Filter Compactness Lim
+        '''
         self.ui.dspinbox_filter_compactness_low.setEnabled(bool(state))
         self.ui.dspinbox_filter_compactness_high.setEnabled(bool(state))
 
     def onActionCheckboxFilterWidthLim(self, state):
+        ''' 响应 Checkbox Filter Width Lim
+        '''
         self.ui.spinbox_filter_width_low.setEnabled(bool(state))
         self.ui.spinbox_filter_width_high.setEnabled(bool(state))
 
     def onActionCheckboxFilterHeightLim(self, state):
+        ''' 响应 Checkbox Filter Height Lim
+        '''
         self.ui.spinbox_filter_height_low.setEnabled(bool(state))
         self.ui.spinbox_filter_height_high.setEnabled(bool(state))
 
     def onActionCheckboxFilterSwtFilterEnable(self, state):
+        ''' 响应 Checkbox Filter Swt Filter Enable
+        '''
         self.setEnabledForFilterSWT()
