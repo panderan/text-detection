@@ -154,6 +154,3 @@ class TdExtractConnectDomain:
                   "max_area": self.max_area,
                   "variation": self.variation}
         logger.info("Extract Params %s" % params)
-
-    def debug(self):
-        pass

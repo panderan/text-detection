@@ -1,10 +1,12 @@
 '''
 公共函数
 '''
-
+import logging
 import numpy
 from PyQt5.QtGui import QImage
 
+
+logger = logging.getLogger(__name__)
 
 def img_cv2qt(img_cv):
     '''
@@ -49,14 +51,17 @@ def img_qt2cv(img_qt):
     ptr = img_qt.bits()
     total_bytes = img_qt.byteCount()
     if total_bytes != width*height*channels:
-        print("QImage byteCount(%d) is not equal to w*h*c(%d*%d*%d)" \
-            %(total_bytes, width, height, channels))
+        msg = "QImage byteCount(%d) is not equal to w*h*c(%d*%d*%d). "%(total_bytes, width, height, channels)
         delta = total_bytes - width*height*channels
         if delta%(height*channels) == 0:
             width += int(delta/(height*channels))
+            msg += "Change width to %d. "%width
         elif delta%(width*channels) == 0:
             height += int(delta/(width*channels))
+            msg += "Change height to %d. "%height
         else:
             total_bytes = width*height*channels
+            msg += "Change total to %ld. "%total_bytes
+        logger.info(msg)
     ptr.setsize(total_bytes)
     return numpy.array(ptr).reshape(height, width, channels)

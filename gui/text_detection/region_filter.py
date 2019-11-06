@@ -63,41 +63,49 @@ class TdFilter:
             True 满足
             False 不满足
         '''
+        self.initDebugData()
         # 长宽度过滤
         if self.flag & TdFilterCheckType.AREA.value:
-            self.debug_data['width'] = None if not self.debug_enable else box[2]
+            self.fillDebugData("width", box[2], self.width_lim)
             if box[2] < self.width_lim[0] or box[2] > self.width_lim[1]:
+                self.markDebugDataResult("width", False)
                 return False
-            self.debug_data['height'] = None if not self.debug_enable else box[3]
+
+            self.fillDebugData("height", box[3], self.height_lim)
             if box[3] < self.height_lim[0] or box[3] > self.height_lim[1]:
+                self.markDebugDataResult("height", False)
                 return False
 
         # 周长
         if self.flag & TdFilterCheckType.PERIMETER.value:
             retval = self.getPerimeter(box)
-            self.debug_data['perimeter'] = None if not self.debug_enable else retval
+            self.fillDebugData("perimeter", retval, self.perimeter_lim)
             if retval < self.perimeter_lim:
+                self.markDebugDataResult("perimeter", False)
                 return False
 
         # 横纵比
         if self.flag & TdFilterCheckType.ASPECTRATIO.value:
             retval = self.getAspectRatio(region)
-            self.debug_data['aspect_ratio'] = None if not self.debug_enable else retval
+            self.fillDebugData("aspect_ratio", retval, self.aspect_ratio_lim)
             if retval < self.aspect_ratio_lim[0] or retval > self.aspect_ratio_lim[1]:
+                self.markDebugDataResult("aspect_ratio", False)
                 return False
 
         # 占用率
         if self.flag & TdFilterCheckType.OCCURPIEDRATIO.value:
             retval = self.getOccurpiedRatio(region, box)
-            self.debug_data['occurpied_ratio'] = None if not self.debug_enable else retval
+            self.fillDebugData("occupation_ratio", retval, self.occupation_lim)
             if retval < self.occupation_lim[0] or retval > self.occupation_lim[1]:
+                self.markDebugDataResult("occupation_ratio", False)
                 return False
 
         # 紧密度
         if self.flag & TdFilterCheckType.COMPACTNESS.value:
             retval = self.getCompactness(region, box)
-            self.debug_data['compactness'] = None if not self.debug_enable else retval
+            self.fillDebugData("compactness", retval, self.compactness_lim)
             if retval < self.compactness_lim[0] or retval > self.compactness_lim[1]:
+                self.markDebugDataResult("compactness", False)
                 return False
 
         if self.flag & TdFilterCheckType.SWT.value:
@@ -262,3 +270,21 @@ class TdFilter:
         else:
             self.__gray_image = None
             self.canny_image = None
+
+    def initDebugData(self):
+        self.debug_data = {"width":None, 
+                           "height":None,
+                           "perimeter":None,
+                           "aspect_ratio":None,
+                           "occupation_ratio":None,
+                           "compactness":None}
+
+    def fillDebugData(self, key, value, lim):
+        if self.debug_enable:
+            self.debug_data[key] = {"value":value, "lim":lim, "result":True}
+        else:
+            self.debug_data[key] = None
+
+    def markDebugDataResult(self, key, flag=False):
+        if self.debug_enable and self.debug_data[key] is not None:
+            self.debug_data[key]['result'] = flag

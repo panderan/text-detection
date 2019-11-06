@@ -65,6 +65,7 @@ class VerboseDisplayWidget(QWidget):
         ''' 添加 Extracter Verbose 数据
         '''
         self.cv_verbose_dict = cv_verbose_dict
+        self.ui.combo_sources.clear()
         for item in cv_verbose_dict:
             self.ui.combo_sources.addItem(item["name"])
 
@@ -98,13 +99,31 @@ class VerboseDisplayWidget(QWidget):
 
         cur_data = self.cv_verbose_dict[self.ui.combo_sources.currentIndex()]
         cur_info = cur_data["regions"][row]
-        message = "Info idx_" + str(row) + ":\n"
-        message = message + "  width:\n    " + str(cur_info["flt_params"]["width"]) + "\n"
-        message = message + "  height:\n    " + str(cur_info["flt_params"]["height"]) + "\n"
-        message = message + "  perimeter:\n    " + str(cur_info["flt_params"]["perimeter"]) + "\n"
-        message = message + "  aspect ratio:\n    " + str(cur_info["flt_params"]["aspect_ratio"]) + "\n"
-        message = message + "  occurpied ratio:\n    " + str(cur_info["flt_params"]["occurpied_ratio"]) + "\n"
-        message = message + "  compactness:\n    " + str(cur_info["flt_params"]["compactness"]) + "\n"
+        message = "Info Idx:" + str(row) + "\n----------------\n"
+        if cur_info['flt_params']['width'] is not None:
+            message = message + "("+str(cur_info['flt_params']['width']['result'])+") Width:\n    "\
+                              + str(cur_info['flt_params']['width']['value']) + " ∈ " \
+                              + str(cur_info['flt_params']['width']['lim']) + "\n"
+        if cur_info['flt_params']['height'] is not None:
+            message = message + "("+str(cur_info['flt_params']['height']['result'])+") Height:\n    "\
+                              + str(cur_info['flt_params']['height']['value']) + " ∈ " \
+                              + str(cur_info['flt_params']['height']['lim']) + "\n"
+        if cur_info['flt_params']['perimeter'] is not None:
+            message = message + "("+str(cur_info['flt_params']['perimeter']['result'])+") Perimeter:\n    "\
+                              + str(cur_info['flt_params']['perimeter']['value']) + " > " \
+                              + str(cur_info['flt_params']['perimeter']['lim']) + "\n"
+        if cur_info['flt_params']['aspect_ratio'] is not None:
+            message = message + "("+str(cur_info['flt_params']['aspect_ratio']['result'])+") Aspect Ratio:\n    "\
+                              + str(format(cur_info['flt_params']['aspect_ratio']['value'], '.3f')) + " ∈ " \
+                              + str(cur_info['flt_params']['aspect_ratio']['lim']) + "\n"
+        if cur_info['flt_params']['occupation_ratio'] is not None:
+            message = message + "("+str(cur_info['flt_params']['occupation_ratio']['result'])+") Occupation Ratio:\n    "\
+                              + str(format(cur_info['flt_params']['occupation_ratio']['value'], '.3f')) + " ∈ " \
+                              + str(cur_info['flt_params']['occupation_ratio']['lim']) + "\n"
+        if cur_info['flt_params']['compactness'] is not None:
+            message = message + "("+str(cur_info['flt_params']['compactness']['result'])+") Compactness:\n    "\
+                              + str(format(cur_info['flt_params']['compactness']['value'], '.3f')) + " ∈ " \
+                              + str(cur_info['flt_params']['compactness']['lim']) + "\n"
         self.ui.label_info.setText(message)
         
         # temp_image_1 作为背景图像
