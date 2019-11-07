@@ -34,7 +34,8 @@ class PreprocessDisplayWidget(BasicDisplayWidget):
         preped_images_dict = self.preprocesser.doPreprocessing(config["source"], config)
         # 显示预处理结果
         if config['show_verbose'] and preped_images_dict is not None:
-            self.dr_widget = VerboseDisplayWidget()
+            if self.dr_widget is None:
+                self.dr_widget = VerboseDisplayWidget()
             self.dr_widget.setPrepVerboseData(preped_images_dict)
             self.dr_widget.show()
 

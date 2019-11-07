@@ -1,10 +1,11 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 ''' 读取配置文件
 '''
 
 import sys
 import yaml
+from gui.text_detection.region_filter import TdFilterCheckType
 
 class TdPrepConfig:
     ''' 预处理参数
@@ -14,6 +15,8 @@ class TdPrepConfig:
         self.canny_max = 0.9
         self.canny_min = 0.7
         self.gamma = 3.0
+        self.sigmod_center = 0.7
+        self.sigmod_zoom = 5
         self.struct_element_size = 5
         self.gauss_blur_size = 51
         self.hat = 1
@@ -28,6 +31,8 @@ class TdPrepConfig:
         self.gamma = float(yaml_prep_config['gamma'])
         self.struct_element_size = int(yaml_prep_config['struct_element_size'])
         self.gauss_blur_size = int(yaml_prep_config['gauss_blur_size'])
+        self.sigmod_center = float(yaml_prep_config['sigmod'][0])
+        self.sigmod_zoom = float(yaml_prep_config['sigmod'][1])
         self.canny_max = float(yaml_prep_config['canny'][0])
         self.canny_min = float(yaml_prep_config['canny'][1])
         self.hat = int(yaml_prep_config['hat'])
@@ -38,6 +43,7 @@ class TdPrepConfig:
         config = {}
         config['total_pixels'] = self.total_pixels
         config['gamma'] = self.gamma
+        config['sigmod'] = [self.sigmod_center, self.sigmod_zoom]
         config['canny'] = [self.canny_max, self.canny_min]
         config['struct_element_size'] = self.struct_element_size
         config['gauss_blur_size'] = self.gauss_blur_size
@@ -71,9 +77,18 @@ class TdExtractConfig:
         # 基本过滤器参数
         filter_params = {}
         yaml_filter_config = yaml_mser_config['filter_params']
-        filter_params['flag'] = int(yaml_filter_config['flag'])
+        flag = TdFilterCheckType.AREA.value if "area" in yaml_filter_config['flag'] else 0
+        flag += TdFilterCheckType.WIDTH.value if "width" in yaml_filter_config['flag'] else 0
+        flag += TdFilterCheckType.HEIGHT.value if "height" in yaml_filter_config['flag'] else 0
+        flag += TdFilterCheckType.PERIMETER.value if "perimeter" in yaml_filter_config['flag'] else 0
+        flag += TdFilterCheckType.ASPECTRATIO.value if "aspect_ratio" in yaml_filter_config['flag'] else 0
+        flag += TdFilterCheckType.OCCUPIEDRATIO.value if "occupied_ratio" in yaml_filter_config['flag'] else 0
+        flag += TdFilterCheckType.COMPACTNESS.value if "compactness" in yaml_filter_config['flag'] else 0
+        flag += TdFilterCheckType.SWT.value if "swt" in yaml_filter_config['flag'] else 0
+        filter_params['flag'] = flag
         filter_params['area_lim'] = int(yaml_filter_config['area_lim'])
-        filter_params['perimeter_lim'] = int(yaml_filter_config['perimeter_lim'])
+        filter_params['perimeter_lim'] = [int(yaml_filter_config['perimeter_lim'][0]), \
+                                          int(yaml_filter_config['perimeter_lim'][1])]
         filter_params['aspect_ratio_lim'] = [float(yaml_filter_config['aspect_ratio_lim'][0]), \
                                              float(yaml_filter_config['aspect_ratio_lim'][1])]
         filter_params['aspect_ratio_gt1'] = yaml_filter_config['aspect_ratio_gt1']

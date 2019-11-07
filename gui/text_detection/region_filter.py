@@ -26,10 +26,10 @@ class TdFilterCheckType(Enum):
     '''
     AREA = 1
     WIDTH = 2
-    HEIGH = 4
+    HEIGHT = 4
     PERIMETER = 8
     ASPECTRATIO = 16
-    OCCURPIEDRATIO = 32
+    OCCUPIEDRATIO = 32
     COMPACTNESS = 64
     SWT = 128
 
@@ -37,10 +37,10 @@ class TdFilterCheckType(Enum):
 class TdFilter:
     ''' 简单特征过滤
     '''
-    def __init__(self, gray_img=None):
+    def __init__(self, gray_image=None):
         self.flag = None
         self.area_lim = 0
-        self.perimeter_lim = 12
+        self.perimeter_lim = [12, 200]
         self.aspect_ratio_lim = [1.0, 15.0]
         self.aspect_ratio_gt1 = True
         self.occupation_lim = [0.15, 0.90]
@@ -57,7 +57,7 @@ class TdFilter:
         self.swt_val_range = [0, 255]
 
         self.canny_image = None
-        self.gray_image = gray_img
+        self.gray_image = gray_image
         self.debug_enable = True
         self.debug_data = {}
 
@@ -71,13 +71,22 @@ class TdFilter:
             False 不满足
         '''
         self.initDebugData()
-        # 长宽度过滤
+
+        # 面积过滤
         if self.flag & TdFilterCheckType.AREA.value:
+            self.fillDebugData("area", box[2]*box[3], self.area_lim)
+            if box[2]*box[3] < self.area_lim:
+                self.markDebugDataResult("area", False)
+                return False
+
+        # 长宽度过滤
+        if self.flag & TdFilterCheckType.WIDTH.value:
             self.fillDebugData("width", box[2], self.width_lim)
             if box[2] < self.width_lim[0] or box[2] > self.width_lim[1]:
                 self.markDebugDataResult("width", False)
                 return False
 
+        if self.flag & TdFilterCheckType.HEIGHT.value:
             self.fillDebugData("height", box[3], self.height_lim)
             if box[3] < self.height_lim[0] or box[3] > self.height_lim[1]:
                 self.markDebugDataResult("height", False)
@@ -87,7 +96,7 @@ class TdFilter:
         if self.flag & TdFilterCheckType.PERIMETER.value:
             retval = self.getPerimeter(box)
             self.fillDebugData("perimeter", retval, self.perimeter_lim)
-            if retval < self.perimeter_lim:
+            if retval < self.perimeter_lim[0] or retval > self.perimeter_lim[1]:
                 self.markDebugDataResult("perimeter", False)
                 return False
 
@@ -100,7 +109,7 @@ class TdFilter:
                 return False
 
         # 占用率
-        if self.flag & TdFilterCheckType.OCCURPIEDRATIO.value:
+        if self.flag & TdFilterCheckType.OCCUPIEDRATIO.value:
             retval = self.getOccurpiedRatio(region, box)
             self.fillDebugData("occupation_ratio", retval, self.occupation_lim)
             if retval < self.occupation_lim[0] or retval > self.occupation_lim[1]:
@@ -116,14 +125,10 @@ class TdFilter:
                 return False
 
         if self.flag & TdFilterCheckType.SWT.value:
-            xywh = (box[:, 0].min(),
-                    box[:, 1].min(),
-                    box[:, 0].max()-box[:, 0].min(),
-                    box[:, 1].max()-box[:, 1].min())
             if self.swt is None:
                 self.swt = swt()
                 self.swt.setImage(self.gray_image)
-            stroke_widths, stroke_widths_opp = self.swt.get_strokes(xywh)
+            stroke_widths, stroke_widths_opp = self.swt.get_strokes(box)
             stroke_widths = np.append(stroke_widths, stroke_widths_opp, axis=0)
             retval = self.swt.get_stroke_properties(stroke_widths)
 
@@ -152,7 +157,7 @@ class TdFilter:
 
             self.fillDebugData("swt_std", std, self.swt_std)
             if std < self.swt_std[0] or std > self.swt_std[1]:
-                self.markDebugDataResult("wst_std", False)
+                self.markDebugDataResult("swt_std", False)
                 return False
 
             self.fillDebugData("maxval", maxval, self.swt_val_range[1])
@@ -167,7 +172,7 @@ class TdFilter:
 
         return True
 
-    def getArea(self, region):
+    def getRealArea(self, region):
         ''' 获取选区面积
         '''
         return len(region)
@@ -211,12 +216,12 @@ class TdFilter:
     def getOccurpiedRatio(self, region, box):
         ''' 获取选区占有率
         '''
-        return float(self.getArea(region)) / (float(box[2]) * float(box[3]))
+        return float(self.getRealArea(region)) / (float(box[2]) * float(box[3]))
 
     def getCompactness(self, region, box):
         ''' 获取选区紧密度
         '''
-        return float(self.getArea(region)) / float(self.getPerimeter(box)**2)
+        return float(self.getRealArea(region)) / float(self.getPerimeter(box)**2)
 
     def __setConfigItem(self, keystr, config):
         ''' 设置单个参数
@@ -277,12 +282,12 @@ class TdFilter:
         logger.info(msg)
 
     @property
-    def gray_img(self):
+    def gray_image(self):
         ''' 灰度图像
         '''
         return self.__gray_image
-    @gray_img.setter
-    def gray_img(self, val):
+    @gray_image.setter
+    def gray_image(self, val):
         if val is not None:
             self.__gray_image = val
             v = np.median(self.__gray_image)
@@ -296,7 +301,8 @@ class TdFilter:
     def initDebugData(self):
         ''' 初始化 Debug 数据
         '''
-        self.debug_data = {"width":None,
+        self.debug_data = {"area":None,
+                           "width":None,
                            "height":None,
                            "perimeter":None,
                            "aspect_ratio":None,

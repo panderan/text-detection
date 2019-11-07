@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>447</width>
-    <height>299</height>
+    <width>492</width>
+    <height>386</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -117,6 +117,9 @@
          <height>0</height>
         </size>
        </property>
+       <property name="singleStep">
+        <double>0.100000000000000</double>
+       </property>
       </widget>
      </item>
      <item row="3" column="1">
@@ -169,9 +172,15 @@
        <property name="maximum">
         <number>1000</number>
        </property>
+       <property name="singleStep">
+        <number>2</number>
+       </property>
+       <property name="value">
+        <number>3</number>
+       </property>
       </widget>
      </item>
-     <item row="6" column="1">
+     <item row="7" column="1">
       <layout class="QHBoxLayout" name="horizontalLayout">
        <property name="sizeConstraint">
         <enum>QLayout::SetMaximumSize</enum>
@@ -184,8 +193,17 @@
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
+         <property name="minimumSize">
+          <size>
+           <width>50</width>
+           <height>0</height>
+          </size>
+         </property>
          <property name="text">
           <string>Max:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
          </property>
         </widget>
        </item>
@@ -203,8 +221,17 @@
            <height>0</height>
           </size>
          </property>
+         <property name="maximumSize">
+          <size>
+           <width>100</width>
+           <height>16777215</height>
+          </size>
+         </property>
          <property name="maximum">
           <double>10.000000000000000</double>
+         </property>
+         <property name="singleStep">
+          <double>0.100000000000000</double>
          </property>
         </widget>
        </item>
@@ -216,8 +243,17 @@
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
+         <property name="minimumSize">
+          <size>
+           <width>50</width>
+           <height>0</height>
+          </size>
+         </property>
          <property name="text">
           <string>Min:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
          </property>
         </widget>
        </item>
@@ -235,28 +271,37 @@
            <height>0</height>
           </size>
          </property>
+         <property name="maximumSize">
+          <size>
+           <width>100</width>
+           <height>16777215</height>
+          </size>
+         </property>
          <property name="maximum">
           <double>10.000000000000000</double>
+         </property>
+         <property name="singleStep">
+          <double>0.100000000000000</double>
          </property>
         </widget>
        </item>
       </layout>
      </item>
-     <item row="6" column="0">
+     <item row="7" column="0">
       <widget class="QLabel" name="label_canny">
        <property name="text">
         <string>Canny :</string>
        </property>
       </widget>
      </item>
-     <item row="7" column="0">
+     <item row="8" column="0">
       <widget class="QLabel" name="label_show_verbose">
        <property name="text">
         <string>Show Verbose :</string>
        </property>
       </widget>
      </item>
-     <item row="7" column="1">
+     <item row="8" column="1">
       <widget class="QCheckBox" name="checkbox_show_verbose">
        <property name="text">
         <string>Enable</string>
@@ -266,14 +311,14 @@
        </property>
       </widget>
      </item>
-     <item row="5" column="0">
+     <item row="6" column="0">
       <widget class="QLabel" name="label">
        <property name="text">
         <string>Hat Direction :</string>
        </property>
       </widget>
      </item>
-     <item row="5" column="1">
+     <item row="6" column="1">
       <layout class="QHBoxLayout" name="layout_hat_options">
        <property name="sizeConstraint">
         <enum>QLayout::SetMaximumSize</enum>
@@ -313,6 +358,117 @@
          </property>
          <property name="text">
           <string>BackHat</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item row="5" column="0">
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>Sigmod :</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1">
+      <layout class="QHBoxLayout" name="horizontalLayout_copy">
+       <property name="sizeConstraint">
+        <enum>QLayout::SetMaximumSize</enum>
+       </property>
+       <item>
+        <widget class="QLabel" name="label_sigmod_center">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>50</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Center:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QDoubleSpinBox" name="spinbox_sigmod_center">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>100</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>100</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="maximum">
+          <double>10.000000000000000</double>
+         </property>
+         <property name="singleStep">
+          <double>0.100000000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_sigmod_zoom">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>50</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Zoom:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QDoubleSpinBox" name="spinbox_sigmod_zoom">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>100</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>100</width>
+           <height>16777215</height>
+          </size>
+         </property>
+         <property name="maximum">
+          <double>10.000000000000000</double>
          </property>
         </widget>
        </item>

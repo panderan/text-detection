@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>587</width>
-    <height>807</height>
+    <height>837</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -24,6 +24,12 @@
     <layout class="QFormLayout" name="layout_mser_params">
      <item row="0" column="0">
       <widget class="QLabel" name="label_mser_params">
+       <property name="minimumSize">
+        <size>
+         <width>180</width>
+         <height>0</height>
+        </size>
+       </property>
        <property name="text">
         <string>MSER Params</string>
        </property>
@@ -332,13 +338,6 @@
     <layout class="QFormLayout" name="layout_filter_params">
      <item row="0" column="0">
       <widget class="QLabel" name="label_filter_params">
-       <property name="text">
-        <string>Filter Params</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="0">
-      <widget class="QLabel" name="label_filter_enable">
        <property name="minimumSize">
         <size>
          <width>180</width>
@@ -346,24 +345,11 @@
         </size>
        </property>
        <property name="text">
-        <string> Filter Enable :</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        <string>    Filter Params</string>
        </property>
       </widget>
      </item>
-     <item row="1" column="1">
-      <widget class="QCheckBox" name="checkbox_filter_enable">
-       <property name="text">
-        <string>Filter Enable</string>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="0">
+     <item row="1" column="0">
       <widget class="QLabel" name="label_filter_area_lim">
        <property name="minimumSize">
         <size>
@@ -379,7 +365,49 @@
        </property>
       </widget>
      </item>
-     <item row="4" column="0">
+     <item row="1" column="1">
+      <layout class="QHBoxLayout" name="layout_filter_area_lim">
+       <item>
+        <widget class="QSpinBox" name="spinbox_filter_area_lim">
+         <property name="minimumSize">
+          <size>
+           <width>150</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximum">
+          <number>10000000</number>
+         </property>
+         <property name="value">
+          <number>20000</number>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="checkbox_filter_area_lim">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>70</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Enable</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item row="2" column="0">
       <widget class="QLabel" name="label_filter_perimeter_lim">
        <property name="minimumSize">
         <size>
@@ -395,7 +423,88 @@
        </property>
       </widget>
      </item>
-     <item row="5" column="0">
+     <item row="2" column="1">
+      <layout class="QHBoxLayout" name="layout_filter_perimeter_lim">
+       <item>
+        <widget class="QLabel" name="label_filter_perimeter_high">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>High:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QSpinBox" name="spinbox_filter_perimeter_high">
+         <property name="minimumSize">
+          <size>
+           <width>100</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="maximum">
+          <number>1000</number>
+         </property>
+         <property name="value">
+          <number>200</number>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_filter_perimeter_low">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>Low:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QSpinBox" name="spinbox_filter_perimeter_low">
+         <property name="minimumSize">
+          <size>
+           <width>100</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="value">
+          <number>12</number>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QCheckBox" name="checkbox_filter_perimeter_lim">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>70</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Enable</string>
+         </property>
+         <property name="checked">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item row="3" column="0">
       <widget class="QLabel" name="label_filter_aspect_ratio_lim">
        <property name="minimumSize">
         <size>
@@ -411,7 +520,7 @@
        </property>
       </widget>
      </item>
-     <item row="5" column="1">
+     <item row="3" column="1">
       <layout class="QHBoxLayout" name="layout_aspect_ratio_lim">
        <item>
         <widget class="QLabel" name="label_filter_aspect_ratio_high">
@@ -489,7 +598,30 @@
        </item>
       </layout>
      </item>
-     <item row="7" column="0">
+     <item row="4" column="0">
+      <widget class="QLabel" name="label_filter_abs_aspect_ratio">
+       <property name="minimumSize">
+        <size>
+         <width>180</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>Abs Aspect Ratio :</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="QCheckBox" name="checkbox_filter_abs_aspect_ratio">
+       <property name="text">
+        <string>Absolute Aspect Ratio</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="0">
       <widget class="QLabel" name="label_filter_occupation_lim">
        <property name="minimumSize">
         <size>
@@ -505,7 +637,7 @@
        </property>
       </widget>
      </item>
-     <item row="7" column="1">
+     <item row="5" column="1">
       <layout class="QHBoxLayout" name="layout_occupation_lim">
        <item>
         <widget class="QLabel" name="label_filter_occupation_high">
@@ -583,7 +715,7 @@
        </item>
       </layout>
      </item>
-     <item row="8" column="0">
+     <item row="6" column="0">
       <widget class="QLabel" name="label_filter_compactness_lim">
        <property name="minimumSize">
         <size>
@@ -599,166 +731,7 @@
        </property>
       </widget>
      </item>
-     <item row="9" column="0">
-      <widget class="QLabel" name="label_filter_width_lim">
-       <property name="minimumSize">
-        <size>
-         <width>180</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>Width Lim :</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="10" column="0">
-      <widget class="QLabel" name="label_filter_height_lim">
-       <property name="minimumSize">
-        <size>
-         <width>180</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>Height Lim :</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="13" column="0">
-      <widget class="QLabel" name="label_filter_swt_filter_enable">
-       <property name="minimumSize">
-        <size>
-         <width>180</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>SWT Filter Enable :</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="13" column="1">
-      <widget class="QCheckBox" name="checkbox_filter_swt_filter_enable">
-       <property name="text">
-        <string>SWT Filter Enable</string>
-       </property>
-      </widget>
-     </item>
-     <item row="14" column="0">
-      <widget class="QLabel" name="label_filter_swt_total_points">
-       <property name="minimumSize">
-        <size>
-         <width>180</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>Total Points:</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="15" column="0">
-      <widget class="QLabel" name="label_filter_swt_mode_lim">
-       <property name="minimumSize">
-        <size>
-         <width>180</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>Mode Lim :</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="16" column="0">
-      <widget class="QLabel" name="label_filter_swt_mean_lim">
-       <property name="minimumSize">
-        <size>
-         <width>180</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="text">
-        <string>Mean Lim :</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="16" column="1">
-      <layout class="QHBoxLayout" name="layout_filter_swt_mean_lim">
-       <item>
-        <widget class="QLabel" name="label_filter_swt_mean_high">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text">
-          <string>High:</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QDoubleSpinBox" name="dspinbox_filter_swt_mean_high">
-         <property name="minimumSize">
-          <size>
-           <width>100</width>
-           <height>0</height>
-          </size>
-         </property>
-         <property name="value">
-          <double>5.000000000000000</double>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="label_filter_swt_mean_low">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text">
-          <string>Low:</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QDoubleSpinBox" name="dspinbox_filter_swt_mean_low">
-         <property name="minimumSize">
-          <size>
-           <width>100</width>
-           <height>0</height>
-          </size>
-         </property>
-         <property name="value">
-          <double>2.000000000000000</double>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-     <item row="8" column="1">
+     <item row="6" column="1">
       <layout class="QHBoxLayout" name="layout_filter_compactness_lim">
        <item>
         <widget class="QLabel" name="label_filter_compactness_high">
@@ -842,8 +815,8 @@
        </item>
       </layout>
      </item>
-     <item row="17" column="0">
-      <widget class="QLabel" name="label_filter_swt_std_lim">
+     <item row="7" column="0">
+      <widget class="QLabel" name="label_filter_width_lim">
        <property name="minimumSize">
         <size>
          <width>180</width>
@@ -851,126 +824,14 @@
         </size>
        </property>
        <property name="text">
-        <string>Std Lim :</string>
+        <string>Width Lim :</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
      </item>
-     <item row="17" column="1">
-      <layout class="QHBoxLayout" name="layout_filter_swt_std_lim">
-       <item>
-        <widget class="QLabel" name="label_filter_swt_std_high">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text">
-          <string>High:</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QDoubleSpinBox" name="dspinbox_filter_swt_std_high">
-         <property name="minimumSize">
-          <size>
-           <width>100</width>
-           <height>0</height>
-          </size>
-         </property>
-         <property name="value">
-          <double>2.500000000000000</double>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QLabel" name="label_filter_swt_std_low">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="text">
-          <string>Low:</string>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QDoubleSpinBox" name="dspinbox_filter_swt_std_low">
-         <property name="minimumSize">
-          <size>
-           <width>100</width>
-           <height>0</height>
-          </size>
-         </property>
-         <property name="value">
-          <double>0.500000000000000</double>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-     <item row="14" column="1">
-      <widget class="QSpinBox" name="spinbox_filter_swt_total_points">
-       <property name="minimumSize">
-        <size>
-         <width>150</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="value">
-        <number>30</number>
-       </property>
-      </widget>
-     </item>
-     <item row="15" column="1">
-      <widget class="QDoubleSpinBox" name="dspinbox_filter_swt_mode_lim">
-       <property name="minimumSize">
-        <size>
-         <width>150</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="value">
-        <double>1.500000000000000</double>
-       </property>
-      </widget>
-     </item>
-     <item row="12" column="0">
-      <widget class="QLabel" name="label">
-       <property name="text">
-        <string>SWT Filter Params</string>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="0">
-      <widget class="QLabel" name="label_filter_debug">
-       <property name="minimumSize">
-        <size>
-         <width>180</width>
-         <height>0</height>
-        </size>
-       </property>
-       <property name="text">
-        <string> Filter Debug :</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="1">
-      <widget class="QCheckBox" name="checkbox_filter_debug">
-       <property name="text">
-        <string>Debug Enable</string>
-       </property>
-      </widget>
-     </item>
-     <item row="9" column="1">
+     <item row="7" column="1">
       <layout class="QHBoxLayout" name="layout_filter_width_lim">
        <item>
         <widget class="QLabel" name="label_filter_width_high">
@@ -1048,7 +909,23 @@
        </item>
       </layout>
      </item>
-     <item row="10" column="1">
+     <item row="8" column="0">
+      <widget class="QLabel" name="label_filter_height_lim">
+       <property name="minimumSize">
+        <size>
+         <width>180</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>Height Lim :</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="8" column="1">
       <layout class="QHBoxLayout" name="layout_filter_height_lim">
        <item>
         <widget class="QLabel" name="label_filter_height_high">
@@ -1132,77 +1009,15 @@
        </item>
       </layout>
      </item>
-     <item row="3" column="1">
-      <layout class="QHBoxLayout" name="layout_filter_area_lim">
-       <item>
-        <widget class="QSpinBox" name="spinbox_filter_area_lim">
-         <property name="maximum">
-          <number>10000000</number>
-         </property>
-         <property name="value">
-          <number>20000</number>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="checkbox_filter_area_lim">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>70</width>
-           <height>0</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>Enable</string>
-         </property>
-         <property name="checked">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-      </layout>
+     <item row="9" column="1">
+      <widget class="Line" name="line_2">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
      </item>
-     <item row="4" column="1">
-      <layout class="QHBoxLayout" name="layout_filter_perimeter_lim">
-       <item>
-        <widget class="QSpinBox" name="spinbox_filter_perimeter_lim">
-         <property name="value">
-          <number>12</number>
-         </property>
-        </widget>
-       </item>
-       <item>
-        <widget class="QCheckBox" name="checkbox_filter_perimeter_lim">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimumSize">
-          <size>
-           <width>70</width>
-           <height>0</height>
-          </size>
-         </property>
-         <property name="text">
-          <string>Enable</string>
-         </property>
-         <property name="checked">
-          <bool>true</bool>
-         </property>
-        </widget>
-       </item>
-      </layout>
-     </item>
-     <item row="6" column="0">
-      <widget class="QLabel" name="label_filter_abs_aspect_ratio">
+     <item row="10" column="0">
+      <widget class="QLabel" name="label">
        <property name="minimumSize">
         <size>
          <width>180</width>
@@ -1210,26 +1025,234 @@
         </size>
        </property>
        <property name="text">
-        <string>Abs Aspect Ratio :</string>
+        <string>    SWT Filter Params</string>
+       </property>
+      </widget>
+     </item>
+     <item row="11" column="0">
+      <widget class="QLabel" name="label_filter_swt_filter_enable">
+       <property name="minimumSize">
+        <size>
+         <width>180</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>SWT Filter Enable :</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
      </item>
-     <item row="6" column="1">
-      <widget class="QCheckBox" name="checkbox_filter_abs_aspect_ratio">
+     <item row="11" column="1">
+      <widget class="QCheckBox" name="checkbox_filter_swt_filter_enable">
        <property name="text">
-        <string>Absolute Aspect Ratio</string>
+        <string>SWT Filter Enable</string>
        </property>
       </widget>
      </item>
-     <item row="11" column="1">
-      <widget class="Line" name="line_2">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+     <item row="12" column="0">
+      <widget class="QLabel" name="label_filter_swt_total_points">
+       <property name="minimumSize">
+        <size>
+         <width>180</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>Total Points:</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
+     </item>
+     <item row="12" column="1">
+      <widget class="QSpinBox" name="spinbox_filter_swt_total_points">
+       <property name="minimumSize">
+        <size>
+         <width>150</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="value">
+        <number>30</number>
+       </property>
+      </widget>
+     </item>
+     <item row="13" column="0">
+      <widget class="QLabel" name="label_filter_swt_mode_lim">
+       <property name="minimumSize">
+        <size>
+         <width>180</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>Mode Lim :</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="13" column="1">
+      <widget class="QDoubleSpinBox" name="dspinbox_filter_swt_mode_lim">
+       <property name="minimumSize">
+        <size>
+         <width>150</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="value">
+        <double>1.500000000000000</double>
+       </property>
+      </widget>
+     </item>
+     <item row="14" column="0">
+      <widget class="QLabel" name="label_filter_swt_mean_lim">
+       <property name="minimumSize">
+        <size>
+         <width>180</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>Mean Lim :</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="14" column="1">
+      <layout class="QHBoxLayout" name="layout_filter_swt_mean_lim">
+       <item>
+        <widget class="QLabel" name="label_filter_swt_mean_high">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>High:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QDoubleSpinBox" name="dspinbox_filter_swt_mean_high">
+         <property name="minimumSize">
+          <size>
+           <width>100</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="value">
+          <double>5.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_filter_swt_mean_low">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>Low:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QDoubleSpinBox" name="dspinbox_filter_swt_mean_low">
+         <property name="minimumSize">
+          <size>
+           <width>100</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="value">
+          <double>2.000000000000000</double>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item row="15" column="0">
+      <widget class="QLabel" name="label_filter_swt_std_lim">
+       <property name="minimumSize">
+        <size>
+         <width>180</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>Std Lim :</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="15" column="1">
+      <layout class="QHBoxLayout" name="layout_filter_swt_std_lim">
+       <item>
+        <widget class="QLabel" name="label_filter_swt_std_high">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>High:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QDoubleSpinBox" name="dspinbox_filter_swt_std_high">
+         <property name="minimumSize">
+          <size>
+           <width>100</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="value">
+          <double>2.500000000000000</double>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="label_filter_swt_std_low">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>Low:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QDoubleSpinBox" name="dspinbox_filter_swt_std_low">
+         <property name="minimumSize">
+          <size>
+           <width>100</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="value">
+          <double>0.500000000000000</double>
+         </property>
+        </widget>
+       </item>
+      </layout>
      </item>
     </layout>
    </item>

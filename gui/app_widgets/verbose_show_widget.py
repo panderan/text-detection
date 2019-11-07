@@ -48,6 +48,7 @@ class VerboseDisplayWidget(QWidget):
         self.cv_verbose_dict = cv_verbose_dict
 
         # 将所有源插入 comboBox 中
+        self.ui.combo_sources.clear()
         for keystr in cv_verbose_dict:
             self.ui.combo_sources.addItem(keystr)
         # 显示 comboBox 中第一个图像
@@ -100,6 +101,10 @@ class VerboseDisplayWidget(QWidget):
         cur_data = self.cv_verbose_dict[self.ui.combo_sources.currentIndex()]
         cur_info = cur_data["regions"][row]
         message = "Info Idx:" + str(row) + "\n----------------\n"
+        if cur_info['flt_params']['area'] is not None:
+            message = message + "("+str(cur_info['flt_params']['area']['result'])+") Area:\n    "\
+                              + str(cur_info['flt_params']['area']['value']) + " ∈ " \
+                              + str(cur_info['flt_params']['area']['lim']) + "\n"
         if cur_info['flt_params']['width'] is not None:
             message = message + "("+str(cur_info['flt_params']['width']['result'])+") Width:\n    "\
                               + str(cur_info['flt_params']['width']['value']) + " ∈ " \

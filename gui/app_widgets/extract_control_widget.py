@@ -45,9 +45,9 @@ class ExtractDisplayCtrlWidget(QWidget):
         self.ui.checkbox_mser_direction_negative.setChecked(check_flag)
 
         filter_conf = extract_conf['filter_params']
-        self.ui.checkbox_filter_enable.setChecked(bool(filter_conf['flag'] > 0))
         self.ui.spinbox_filter_area_lim.setValue(filter_conf['area_lim'])
-        self.ui.spinbox_filter_perimeter_lim.setValue(filter_conf['perimeter_lim'])
+        self.ui.spinbox_filter_perimeter_low.setValue(filter_conf['perimeter_lim'][0])
+        self.ui.spinbox_filter_perimeter_high.setValue(filter_conf['perimeter_lim'][1])
         self.ui.dspinbox_filter_aspect_ratio_low.setValue(filter_conf['aspect_ratio_lim'][0])
         self.ui.dspinbox_filter_aspect_ratio_high.setValue(filter_conf['aspect_ratio_lim'][1])
         self.ui.checkbox_filter_abs_aspect_ratio.setChecked(filter_conf['aspect_ratio_gt1'])
@@ -110,7 +110,7 @@ class ExtractDisplayCtrlWidget(QWidget):
 
         filter_config = {}
         filter_config['area_lim'] = self.ui.spinbox_filter_area_lim.value()
-        filter_config['perimeter_lim'] = self.ui.spinbox_filter_perimeter_lim.value()
+        filter_config['perimeter_lim'] = [self.ui.spinbox_filter_perimeter_low.value(), self.ui.spinbox_filter_perimeter_high.value()]
         filter_config['aspect_ratio_lim'] = [self.ui.dspinbox_filter_aspect_ratio_low.value(), self.ui.dspinbox_filter_aspect_ratio_high.value()]
         filter_config['aspect_ratio_gt1'] = self.ui.checkbox_filter_abs_aspect_ratio.isChecked()
         filter_config['occupation_lim'] = [self.ui.dspinbox_filter_occupation_low.value(), self.ui.dspinbox_filter_occupation_high.value()]
@@ -120,18 +120,20 @@ class ExtractDisplayCtrlWidget(QWidget):
         flag = 0
         if self.ui.checkbox_filter_area_lim.isChecked():
             flag += TdFilterCheckType.AREA.value
+        if self.ui.checkbox_filter_width_lim.isChecked():
+            flag += TdFilterCheckType.WIDTH.value
+        if self.ui.checkbox_filter_height_lim.isChecked():
+            flag += TdFilterCheckType.HEIGHT.value
         if self.ui.checkbox_filter_perimeter_lim.isChecked():
             flag += TdFilterCheckType.PERIMETER.value
         if self.ui.checkbox_filter_aspect_ratio_lim.isChecked():
             flag += TdFilterCheckType.ASPECTRATIO.value
         if self.ui.checkbox_filter_occupation_lim.isChecked():
-            flag += TdFilterCheckType.OCCURPIEDRATIO.value
+            flag += TdFilterCheckType.OCCUPIEDRATIO.value
         if self.ui.checkbox_filter_compactness_lim.isChecked():
             flag += TdFilterCheckType.COMPACTNESS.value
-        if self.ui.checkbox_filter_width_lim.isChecked():
-            flag += TdFilterCheckType.WIDTH.value
-        if self.ui.checkbox_filter_height_lim.isChecked():
-            flag += TdFilterCheckType.HEIGH.value
+        if self.ui.checkbox_filter_swt_filter_enable.isChecked():
+            flag += TdFilterCheckType.SWT.value
         filter_config['flag'] = flag
 
         filter_swt_config = {}
@@ -151,29 +153,30 @@ class ExtractDisplayCtrlWidget(QWidget):
         self.ui.checkbox_filter_area_lim.setChecked(bool(flag & TdFilterCheckType.AREA.value))
         self.ui.spinbox_filter_area_lim.setEnabled(bool(flag & TdFilterCheckType.AREA.value))
         self.ui.checkbox_filter_perimeter_lim.setChecked(bool(flag & TdFilterCheckType.PERIMETER.value))
-        self.ui.spinbox_filter_perimeter_lim.setEnabled(bool(flag & TdFilterCheckType.PERIMETER.value))
+        self.ui.spinbox_filter_perimeter_low.setEnabled(bool(flag & TdFilterCheckType.PERIMETER.value))
+        self.ui.spinbox_filter_perimeter_high.setEnabled(bool(flag & TdFilterCheckType.PERIMETER.value))
         self.ui.checkbox_filter_aspect_ratio_lim.setChecked(bool(flag & TdFilterCheckType.ASPECTRATIO.value))
         self.ui.dspinbox_filter_aspect_ratio_low.setEnabled(bool(flag & TdFilterCheckType.ASPECTRATIO.value))
         self.ui.dspinbox_filter_aspect_ratio_high.setEnabled(bool(flag & TdFilterCheckType.ASPECTRATIO.value))
-        self.ui.checkbox_filter_occupation_lim.setChecked(bool(flag & TdFilterCheckType.OCCURPIEDRATIO.value))
-        self.ui.dspinbox_filter_occupation_low.setEnabled(bool(flag & TdFilterCheckType.OCCURPIEDRATIO.value))
-        self.ui.dspinbox_filter_occupation_high.setEnabled(bool(flag & TdFilterCheckType.OCCURPIEDRATIO.value))
+        self.ui.checkbox_filter_occupation_lim.setChecked(bool(flag & TdFilterCheckType.OCCUPIEDRATIO.value))
+        self.ui.dspinbox_filter_occupation_low.setEnabled(bool(flag & TdFilterCheckType.OCCUPIEDRATIO.value))
+        self.ui.dspinbox_filter_occupation_high.setEnabled(bool(flag & TdFilterCheckType.OCCUPIEDRATIO.value))
         self.ui.checkbox_filter_compactness_lim.setChecked(bool(flag & TdFilterCheckType.COMPACTNESS.value))
         self.ui.dspinbox_filter_compactness_low.setEnabled(bool(flag & TdFilterCheckType.COMPACTNESS.value))
         self.ui.dspinbox_filter_compactness_high.setEnabled(bool(flag & TdFilterCheckType.COMPACTNESS.value))
         self.ui.checkbox_filter_width_lim.setChecked(bool(flag & TdFilterCheckType.WIDTH.value))
         self.ui.spinbox_filter_height_low.setEnabled(bool(flag & TdFilterCheckType.WIDTH.value))
         self.ui.spinbox_filter_height_high.setEnabled(bool(flag & TdFilterCheckType.WIDTH.value))
-        self.ui.checkbox_filter_height_lim.setChecked(bool(flag & TdFilterCheckType.HEIGH.value))
-        self.ui.spinbox_filter_height_low.setEnabled(bool(flag & TdFilterCheckType.HEIGH.value))
-        self.ui.spinbox_filter_height_high.setEnabled(bool(flag & TdFilterCheckType.HEIGH.value))
+        self.ui.checkbox_filter_height_lim.setChecked(bool(flag & TdFilterCheckType.HEIGHT.value))
+        self.ui.spinbox_filter_height_low.setEnabled(bool(flag & TdFilterCheckType.HEIGHT.value))
+        self.ui.spinbox_filter_height_high.setEnabled(bool(flag & TdFilterCheckType.HEIGHT.value))
         self.ui.checkbox_filter_swt_filter_enable.setChecked(bool(flag & TdFilterCheckType.SWT.value))
         self.setEnabledForFilterSWT()
 
-    def setEnabledForFilterSWT(self):
+    def setEnabledForFilterSWT(self, bflag = None):
         ''' SWT Filter 参数启用/禁用控制
         '''
-        bflag = self.ui.checkbox_filter_swt_filter_enable.isChecked()
+        bflag = self.ui.checkbox_filter_swt_filter_enable.isChecked() if bflag is None else bflag
         self.ui.checkbox_filter_swt_filter_enable.setChecked(bflag)
         self.ui.spinbox_filter_swt_total_points.setEnabled(bflag)
         self.ui.dspinbox_filter_swt_mode_lim.setEnabled(bflag)
@@ -190,7 +193,8 @@ class ExtractDisplayCtrlWidget(QWidget):
     def onActionCheckboxFilterPerimeterLim(self, state):
         ''' 响应 Checkbox Filter Perimeter Lim
         '''
-        self.ui.spinbox_filter_perimeter_lim.setEnabled(bool(state))
+        self.ui.spinbox_filter_perimeter_low.setEnabled(bool(state))
+        self.ui.spinbox_filter_perimeter_high.setEnabled(bool(state))
 
     def onActionCheckboxFilterAspectRatioLim(self, state):
         ''' 响应 Checkbox Filter Aspect Ratio Lim
@@ -226,4 +230,4 @@ class ExtractDisplayCtrlWidget(QWidget):
     def onActionCheckboxFilterSwtFilterEnable(self, state):
         ''' 响应 Checkbox Filter Swt Filter Enable
         '''
-        self.setEnabledForFilterSWT()
+        self.setEnabledForFilterSWT(bool(state))

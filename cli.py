@@ -73,7 +73,7 @@ class Cli:
         # 连通域提取
         self.extracter.setConfig(self.config.getExtractConfig())
         tmp_filter = self.filter.setConfig(self.config.getExtractConfig()["filter_params"])
-        _, binarized = self.extracter.extract_with_labels(self.preprocessing.blue_channel_preped, tmp_filter)
+        _, binarized = self.extracter.extract_with_labels({"name":"Blue","image":self.preprocessing.blue_channel_preped}, tmp_filter)
         if self.show_opts & CliShowOptions.SHOW_EXTRACT.value:
             plt.imshow(binarized, "gray")
             plt.show()

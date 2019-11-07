@@ -11,10 +11,10 @@
 '''
 import logging
 from math import sqrt
+from enum import Enum
 import cv2
 import numpy as np
-from enum import Enum
-
+import gui.text_detection.common as tcomm
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +41,7 @@ class TdPreprocessing:
     '''
     def __init__(self, color_img=None, total_pixels=400000, \
                     gamma=3.0, struct_element_size=5, gauss_blur_size=51, \
-                    canny_max=0.9, canny_min=0.7):
+                    canny_max=0.9, canny_min=0.7, sigmod_center=0.5, sigmod_zoom=5.0):
         # 参数
         self.total_pixels = total_pixels
         self.gamma = gamma
@@ -49,6 +49,8 @@ class TdPreprocessing:
         self.gauss_blur_size = gauss_blur_size
         self.canny_max = canny_max
         self.canny_min = canny_min
+        self.sigmod_center = sigmod_center
+        self.sigmod_zoom = sigmod_zoom
         self.height = 0
         self.width = 0
         self.hat = 1
@@ -95,7 +97,7 @@ class TdPreprocessing:
         ''' 图像预处理
         '''
         self.setConfig(config)
-        self.printParams("Do preprocessing")
+        self.printParams("Do preprocessing[%s]"%img_type_name)
         if self.hat == 0:
             logger.error("Hat param is ZERO, invalid.")
             return None
@@ -112,11 +114,14 @@ class TdPreprocessing:
             logger.warning(msg)
             return None
 
+        ui_input_image = tcomm.uniform_illumination(input_image)
+        equ_input_image = cv2.equalizeHist(ui_input_image)
+
         # 顶帽运算
         struct_element = cv2.getStructuringElement(cv2.MORPH_RECT, \
                                     (self.struct_element_size, self.struct_element_size))
-        tophat = cv2.morphologyEx(input_image, cv2.MORPH_TOPHAT, struct_element) if self.hat & TdPrepHatDirection.TOPHAT.value else None
-        backhat = cv2.morphologyEx(input_image, cv2.MORPH_BLACKHAT, struct_element) if self.hat & TdPrepHatDirection.BACKHAT.value else None
+        tophat = cv2.morphologyEx(ui_input_image, cv2.MORPH_TOPHAT, struct_element) if self.hat & TdPrepHatDirection.TOPHAT.value else None
+        backhat = cv2.morphologyEx(ui_input_image, cv2.MORPH_BLACKHAT, struct_element) if self.hat & TdPrepHatDirection.BACKHAT.value else None
         if tophat is not None and backhat is not None:
             hat = tophat*(tophat >= backhat) + backhat*(backhat > tophat)
         else:
@@ -141,9 +146,9 @@ class TdPreprocessing:
         blurf = blur/blur.max()
 
         # 使用原图的极大模糊图为背景图
-        blurf = 1/(1+np.exp(-(blurf-0.7)*5))
+        blurf = 1/(1+np.exp(-(blurf-self.sigmod_center)*self.sigmod_zoom))
         out_image = np.zeros_like(input_image)
-        out_image = np.uint8(input_image*blurf + bgblur*(1-blurf))
+        out_image = np.uint8(equ_input_image*blurf + bgblur*(1-blurf))
         # out_image[blurf > 0.4] = input_image[blurf > 0.4]
 
         # 使用黑色背景图
@@ -151,7 +156,8 @@ class TdPreprocessing:
         # out_image = np.uint8(input_image * blurf)
 
         # Gamma 变换
-        tp = (cv2.equalizeHist(out_image))/255.0
+        # tp = (cv2.equalizeHist(out_image))/255.0
+        tp = out_image/255.0
         o = np.power(tp, self.gamma)
         out_image = np.uint8(o*255.0)
 
@@ -190,6 +196,9 @@ class TdPreprocessing:
             elif keystr == "canny":
                 self.canny_max = config[keystr][0]
                 self.canny_min = config[keystr][1]
+            elif keystr == "sigmod":
+                self.sigmod_center = config[keystr][0]
+                self.sigmod_zoom = config[keystr][1]
             elif keystr == "hat":
                 self.hat = config[keystr]
             else:
@@ -208,6 +217,7 @@ class TdPreprocessing:
         self.__setConfigItem("gauss_blur_size", config)
         self.__setConfigItem("total_pixels", config)
         self.__setConfigItem("canny", config)
+        self.__setConfigItem("sigmod", config)
         self.__setConfigItem("hat", config)
         return
 

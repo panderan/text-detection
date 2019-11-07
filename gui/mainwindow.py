@@ -11,7 +11,7 @@ import gui.ui.app_ui as ui
 import gui.resources.resources
 from gui.app_widgets.preprocess_display_widget import PreprocessDisplayWidget
 from gui.app_widgets.extract_display_widget import ExtractDisplayWidget
-
+from conf.config import TdConfig
 
 logger = logging.getLogger(__name__)
 
@@ -179,9 +179,13 @@ class AppMainWindow(QMainWindow):
     def onActionExtractorRequireData(self, chnls):
         ''' 获取 Extracter 所需的数据
         '''
+        config = TdConfig().getPrepConfig() if self.preprocess_display_widget.control_panel is None \
+                                            else self.preprocess_display_widget.control_panel.getConfiguration()
+        self.preprocess_display_widget.preprocesser.setConfig(config)
+
         datas = []
         if "Gray" in chnls:
-            datas.append({"name":"Gray", 
+            datas.append({"name":"Gray",
                           "image":self.preprocess_display_widget.preprocesser.gray_img_preped})
         if "Blue Channel" in chnls:
             datas.append({"name":"Blue Channel",
@@ -193,4 +197,6 @@ class AppMainWindow(QMainWindow):
             datas.append({"name":"Green Channel",
                           "image":self.preprocess_display_widget.preprocesser.green_channel_preped})
         self.extract_display_widget.input_images = datas
-        logger.info("Data is fed for extractor")
+
+        msg = "Data is fed for extractor. channels:%s."%chnls
+        logger.info(msg)

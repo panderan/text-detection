@@ -56,7 +56,7 @@ class TdExtractConnectDomain:
 
         retpoints, retboxes = [], []
         if flt is not None:
-            flt.gray_img = gray_image
+            flt.gray_image = gray_image
             if self.debug_enable:
                 self.debug_data.append({"regions":[]})
             for (points, box) in zip(region_points, region_boxes):

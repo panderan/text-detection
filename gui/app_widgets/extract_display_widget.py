@@ -45,7 +45,9 @@ class ExtractDisplayWidget(BasicDisplayWidget):
         config = self.control_panel.getConfiguration()
         self.extracter.setConfig(config)
         self.filter.setConfig(config['filter_params'])
-        logger.info("Extractor require datas")
+
+        msg = "Extractor require datas. channels:%s."%config['channels']
+        logger.info(msg)
         self.requireData.emit(config['channels'])
         logger.info("Extractor tell data was recevied")
 
@@ -54,7 +56,8 @@ class ExtractDisplayWidget(BasicDisplayWidget):
         result_image = self.extracter.extract_with_labels_for_images(self.input_images, self.filter)
         # 显示处理结果
         if config['show_verbose'] and self.extracter.debug_data is not None:
-            self.dr_widget = VerboseDisplayWidget()
+            if self.dr_widget is None:
+                self.dr_widget = VerboseDisplayWidget()
             self.dr_widget.setExtracterVerboseData(self.extracter.debug_data)
             self.dr_widget.show()
 

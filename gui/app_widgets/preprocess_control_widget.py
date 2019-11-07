@@ -26,6 +26,8 @@ class PreprocessDisplayCtrlWidget(QWidget):
         self.ui.spinbox_gama.setValue(prep_conf["gamma"])
         self.ui.spinbox_guass_blur_size.setValue(prep_conf["gauss_blur_size"])
         self.ui.spinbox_struct_element_size.setValue(prep_conf["struct_element_size"])
+        self.ui.spinbox_sigmod_center.setValue(prep_conf['sigmod'][0])
+        self.ui.spinbox_sigmod_zoom.setValue(prep_conf['sigmod'][1])
         self.ui.spinbox_canny_max.setValue(prep_conf["canny"][0])
         self.ui.spinbox_canny_min.setValue(prep_conf["canny"][1])
         flag = True if prep_conf['hat'] & TdPrepHatDirection.TOPHAT.value else False
@@ -45,6 +47,7 @@ class PreprocessDisplayCtrlWidget(QWidget):
         config['gauss_blur_size'] = self.ui.spinbox_guass_blur_size.value()
         config['gamma'] = self.ui.spinbox_gama.value()
         config['canny'] = [self.ui.spinbox_canny_max.value(), self.ui.spinbox_canny_min.value()]
+        config['sigmod'] = [self.ui.spinbox_sigmod_center.value(), self.ui.spinbox_sigmod_zoom.value()]
         config['show_verbose'] = self.ui.checkbox_show_verbose.isChecked()
         ret = TdPrepHatDirection.TOPHAT.value if self.ui.checkbox_top_hat.isChecked() else 0
         ret += TdPrepHatDirection.BACKHAT.value if self.ui.checkbox_back_hat.isChecked() else 0

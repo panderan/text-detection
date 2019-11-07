@@ -6,7 +6,7 @@
 import cv2
 import numpy as np
 from scipy.stats import mode, norm
-from text_detection.common import common as comm
+import gui.text_detection.common as tcomm
 
 class swt:
     ''' SWT 算法
@@ -118,7 +118,7 @@ class swt:
         ''' 设置待处理图像
         '''
         self.gray_image = gray_image
-        self.canny_image = comm.apply_canny(self.gray_image)
+        self.canny_image = tcomm.apply_canny(self.gray_image)
         # Sobel算子的数学定义 http://blog.sciencenet.cn/blog-425437-1139187.html
         self.sobelX = cv2.Sobel(self.gray_image, cv2.CV_64F, 1, 0, ksize=-1)
         self.sobelY = cv2.Sobel(self.gray_image, cv2.CV_64F, 0, 1, ksize=-1)
