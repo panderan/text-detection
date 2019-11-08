@@ -3,7 +3,8 @@ prep:
     gamma: 1.0
     canny: [1.1, 0.9]
     hat: 2
-    sigmod: [0.6, 5.0]
+    sobel: False
+    sigmod: [0.6, 6.0]
     struct_element_size: 12
     gauss_blur_size: 21
 extract:

@@ -51,6 +51,7 @@ class TdPreprocessing:
         self.canny_min = canny_min
         self.sigmod_center = sigmod_center
         self.sigmod_zoom = sigmod_zoom
+        self.sobel = False
         self.height = 0
         self.width = 0
         self.hat = 1
@@ -138,7 +139,10 @@ class TdPreprocessing:
         cy = cv2.Canny(hat, canny_arg_max, canny_arg_min)
 
         # 消除水平边缘
-        sobely = cv2.Sobel(cy, -1, 1, 0)
+        kel = cv2.getStructuringElement(cv2.MORPH_RECT, (8, 4))
+        sobely = cv2.Sobel(cy, -1, 1, 0) if self.sobel else cy
+        sobely = cv2.morphologyEx(sobely, cv2.MORPH_DILATE, kel)
+
         # 高斯模糊
         blur = cv2.GaussianBlur(sobely, (self.gauss_blur_size, self.gauss_blur_size), 0)
         bgblur = cv2.GaussianBlur(input_image, (255, 255), 0)
@@ -178,6 +182,9 @@ class TdPreprocessing:
                     "Canny": cy,
                     "SobelY": sobely,
                     "GaussBlur": blur}
+        if not self.sobel:
+            ret_dict.pop("SobelY")
+
         return ret_dict
 
     def __setConfigItem(self, keystr, config):
@@ -201,6 +208,8 @@ class TdPreprocessing:
                 self.sigmod_zoom = config[keystr][1]
             elif keystr == "hat":
                 self.hat = config[keystr]
+            elif keystr == "sobel":
+                self.sobel = config[keystr]
             else:
                 pass
         except KeyError:
@@ -219,6 +228,7 @@ class TdPreprocessing:
         self.__setConfigItem("canny", config)
         self.__setConfigItem("sigmod", config)
         self.__setConfigItem("hat", config)
+        self.__setConfigItem("sobel", config)
         return
 
 

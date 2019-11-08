@@ -65,6 +65,7 @@ class VerboseDisplayWidget(QWidget):
     def setExtracterVerboseData(self, cv_verbose_dict):
         ''' 添加 Extracter Verbose 数据
         '''
+        self.clearData()
         self.cv_verbose_dict = cv_verbose_dict
         self.ui.combo_sources.clear()
         for item in cv_verbose_dict:
@@ -150,6 +151,17 @@ class VerboseDisplayWidget(QWidget):
                 self.cv_image[:, :, 2] = self.temp_image_1[:, :]
 
         self.cv_image[cur_info['points'][:, 1], cur_info['points'][:, 0], 0] = 255
-        self.cv_image[cur_info['points'][:, 1], cur_info['points'][:, 0], 1] = 0 
-        self.cv_image[cur_info['points'][:, 1], cur_info['points'][:, 0], 2] = 0 
+        self.cv_image[cur_info['points'][:, 1], cur_info['points'][:, 0], 1] = 0
+        self.cv_image[cur_info['points'][:, 1], cur_info['points'][:, 0], 2] = 0
         self.display_widget.setDisplayCvImage(self.cv_image)
+
+    def clearData(self):
+        ''' 删除所有数据
+        '''
+        self.temp_image_1 = None
+        self.cv_image = None
+        self.ui.combo_sources.clear()
+        self.ui.list_widget.clear()
+        self.ui.label_info.setText("Info:")
+        self.display_widget.setDisplayCvImage(None)
+

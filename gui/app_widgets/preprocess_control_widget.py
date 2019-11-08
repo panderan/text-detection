@@ -30,6 +30,7 @@ class PreprocessDisplayCtrlWidget(QWidget):
         self.ui.spinbox_sigmod_zoom.setValue(prep_conf['sigmod'][1])
         self.ui.spinbox_canny_max.setValue(prep_conf["canny"][0])
         self.ui.spinbox_canny_min.setValue(prep_conf["canny"][1])
+        self.ui.checkbox_sobel_y.setChecked(prep_conf['sobel'])
         flag = True if prep_conf['hat'] & TdPrepHatDirection.TOPHAT.value else False
         self.ui.checkbox_top_hat.setChecked(flag)
         flag = True if prep_conf['hat'] & TdPrepHatDirection.BACKHAT.value else False
@@ -48,6 +49,7 @@ class PreprocessDisplayCtrlWidget(QWidget):
         config['gamma'] = self.ui.spinbox_gama.value()
         config['canny'] = [self.ui.spinbox_canny_max.value(), self.ui.spinbox_canny_min.value()]
         config['sigmod'] = [self.ui.spinbox_sigmod_center.value(), self.ui.spinbox_sigmod_zoom.value()]
+        config['sobel'] = self.ui.checkbox_sobel_y.isChecked()
         config['show_verbose'] = self.ui.checkbox_show_verbose.isChecked()
         ret = TdPrepHatDirection.TOPHAT.value if self.ui.checkbox_top_hat.isChecked() else 0
         ret += TdPrepHatDirection.BACKHAT.value if self.ui.checkbox_back_hat.isChecked() else 0

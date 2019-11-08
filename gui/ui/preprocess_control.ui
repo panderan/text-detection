@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>492</width>
-    <height>386</height>
+    <height>394</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -180,7 +180,7 @@
        </property>
       </widget>
      </item>
-     <item row="7" column="1">
+     <item row="8" column="1">
       <layout class="QHBoxLayout" name="horizontalLayout">
        <property name="sizeConstraint">
         <enum>QLayout::SetMaximumSize</enum>
@@ -287,21 +287,21 @@
        </item>
       </layout>
      </item>
-     <item row="7" column="0">
+     <item row="8" column="0">
       <widget class="QLabel" name="label_canny">
        <property name="text">
         <string>Canny :</string>
        </property>
       </widget>
      </item>
-     <item row="8" column="0">
+     <item row="9" column="0">
       <widget class="QLabel" name="label_show_verbose">
        <property name="text">
         <string>Show Verbose :</string>
        </property>
       </widget>
      </item>
-     <item row="8" column="1">
+     <item row="9" column="1">
       <widget class="QCheckBox" name="checkbox_show_verbose">
        <property name="text">
         <string>Enable</string>
@@ -311,14 +311,14 @@
        </property>
       </widget>
      </item>
-     <item row="6" column="0">
-      <widget class="QLabel" name="label">
+     <item row="7" column="0">
+      <widget class="QLabel" name="label_hat_direction">
        <property name="text">
         <string>Hat Direction :</string>
        </property>
       </widget>
      </item>
-     <item row="6" column="1">
+     <item row="7" column="1">
       <layout class="QHBoxLayout" name="layout_hat_options">
        <property name="sizeConstraint">
         <enum>QLayout::SetMaximumSize</enum>
@@ -363,14 +363,14 @@
        </item>
       </layout>
      </item>
-     <item row="5" column="0">
-      <widget class="QLabel" name="label_2">
+     <item row="6" column="0">
+      <widget class="QLabel" name="label_sigmod">
        <property name="text">
         <string>Sigmod :</string>
        </property>
       </widget>
      </item>
-     <item row="5" column="1">
+     <item row="6" column="1">
       <layout class="QHBoxLayout" name="horizontalLayout_copy">
        <property name="sizeConstraint">
         <enum>QLayout::SetMaximumSize</enum>
@@ -473,6 +473,20 @@
         </widget>
        </item>
       </layout>
+     </item>
+     <item row="5" column="0">
+      <widget class="QLabel" name="label_sobel">
+       <property name="text">
+        <string>Sobel :</string>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="1">
+      <widget class="QCheckBox" name="checkbox_sobel_y">
+       <property name="text">
+        <string>Y</string>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>

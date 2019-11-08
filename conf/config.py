@@ -15,6 +15,7 @@ class TdPrepConfig:
         self.canny_max = 0.9
         self.canny_min = 0.7
         self.gamma = 3.0
+        self.sobel = False
         self.sigmod_center = 0.7
         self.sigmod_zoom = 5
         self.struct_element_size = 5
@@ -35,6 +36,7 @@ class TdPrepConfig:
         self.sigmod_zoom = float(yaml_prep_config['sigmod'][1])
         self.canny_max = float(yaml_prep_config['canny'][0])
         self.canny_min = float(yaml_prep_config['canny'][1])
+        self.sobel = yaml_prep_config['sobel']
         self.hat = int(yaml_prep_config['hat'])
 
     def getConfig(self):
@@ -47,6 +49,7 @@ class TdPrepConfig:
         config['canny'] = [self.canny_max, self.canny_min]
         config['struct_element_size'] = self.struct_element_size
         config['gauss_blur_size'] = self.gauss_blur_size
+        config['sobel'] = self.sobel
         config['hat'] = self.hat
         return config
 
