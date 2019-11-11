@@ -13,6 +13,7 @@ import logging
 from math import sqrt
 from enum import Enum
 import cv2
+from scipy import signal
 import numpy as np
 import gui.text_detection.common as tcomm
 
@@ -138,26 +139,22 @@ class TdPreprocessing:
         canny_arg_min = canny_arg_min if canny_arg_min < canny_arg_max else canny_arg_max
         cy = cv2.Canny(hat, canny_arg_max, canny_arg_min)
 
-        # 消除水平边缘
-        kel = cv2.getStructuringElement(cv2.MORPH_RECT, (8, 4))
+        # 消除水平边缘(可选)
+        kel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
         sobely = cv2.Sobel(cy, -1, 1, 0) if self.sobel else cy
-        sobely = cv2.morphologyEx(sobely, cv2.MORPH_DILATE, kel)
+        sobely = self.enhanceTexts(sobely)
+        sobely = cv2.morphologyEx(sobely, cv2.MORPH_CLOSE, kel)
 
         # 高斯模糊
         blur = cv2.GaussianBlur(sobely, (self.gauss_blur_size, self.gauss_blur_size), 0)
         bgblur = cv2.GaussianBlur(input_image, (255, 255), 0)
-        # 归一化
-        blurf = blur/blur.max()
 
         # 使用原图的极大模糊图为背景图
+        blurf = blur/blur.max()
         blurf = 1/(1+np.exp(-(blurf-self.sigmod_center)*self.sigmod_zoom))
         out_image = np.zeros_like(input_image)
         out_image = np.uint8(equ_input_image*blurf + bgblur*(1-blurf))
         # out_image[blurf > 0.4] = input_image[blurf > 0.4]
-
-        # 使用黑色背景图
-        # # 与原图相乘并直方图均衡化
-        # out_image = np.uint8(input_image * blurf)
 
         # Gamma 变换
         # tp = (cv2.equalizeHist(out_image))/255.0
@@ -291,3 +288,15 @@ class TdPreprocessing:
     @blue_channel_preped.setter
     def blue_channel_preped(self, val):
         self.__blue_channel_preped = val
+
+    def enhanceTexts(self, cy):
+        ''' 增强文字区域
+        '''
+        k = np.array([[0.5, 0.5, 0.5, 0.5, 0.5],
+                      [0.5, 1.0, 1.0, 1.0, 0.5],
+                      [0.5, 1.0, 1.0, 1.0, 0.5],
+                      [0.5, 1.0, 1.0, 1.0, 0.5],
+                      [0.5, 0.5, 0.5, 0.5, 0.5]])
+        z = (signal.convolve2d(cy, k)/255)[2:-2, 2:-2]
+        z = cv2.equalizeHist(np.uint8(z))
+        return z
