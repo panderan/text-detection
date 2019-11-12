@@ -140,13 +140,15 @@ class TdPreprocessing:
         cy = cv2.Canny(hat, canny_arg_max, canny_arg_min)
 
         # 消除水平边缘(可选)
-        kel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
         sobely = cv2.Sobel(cy, -1, 1, 0) if self.sobel else cy
         sobely = self.enhanceTexts(sobely)
-        sobely = cv2.morphologyEx(sobely, cv2.MORPH_CLOSE, kel)
+        sobely = cv2.morphologyEx(sobely, cv2.MORPH_CLOSE, \
+                                  cv2.getStructuringElement(cv2.MORPH_RECT, (4, 4)))
+        sobely = cv2.morphologyEx(sobely, cv2.MORPH_DILATE, \
+                                  cv2.getStructuringElement(cv2.MORPH_RECT, (4, 4)))
 
         # 高斯模糊
-        blur = cv2.GaussianBlur(sobely, (self.gauss_blur_size, self.gauss_blur_size), 0)
+        blur = sobely
         bgblur = cv2.GaussianBlur(input_image, (255, 255), 0)
 
         # 使用原图的极大模糊图为背景图

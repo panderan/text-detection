@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'gui/ui/preprocess_control.ui'
 #
-# Created by: PyQt5 UI code generator 5.13.2
+# Created by: PyQt5 UI code generator 5.13.0
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -14,7 +14,7 @@ class Ui_PrepCtrlWidget(object):
     def setupUi(self, PrepCtrlWidget):
         PrepCtrlWidget.setObjectName("PrepCtrlWidget")
         PrepCtrlWidget.setWindowModality(QtCore.Qt.NonModal)
-        PrepCtrlWidget.resize(492, 394)
+        PrepCtrlWidget.resize(522, 394)
         self.verticalLayout = QtWidgets.QVBoxLayout(PrepCtrlWidget)
         self.verticalLayout.setObjectName("verticalLayout")
         self.paramsLayout = QtWidgets.QFormLayout()
@@ -145,7 +145,7 @@ class Ui_PrepCtrlWidget(object):
         self.label_show_verbose.setObjectName("label_show_verbose")
         self.paramsLayout.setWidget(9, QtWidgets.QFormLayout.LabelRole, self.label_show_verbose)
         self.checkbox_show_verbose = QtWidgets.QCheckBox(PrepCtrlWidget)
-        self.checkbox_show_verbose.setChecked(True)
+        self.checkbox_show_verbose.setChecked(False)
         self.checkbox_show_verbose.setObjectName("checkbox_show_verbose")
         self.paramsLayout.setWidget(9, QtWidgets.QFormLayout.FieldRole, self.checkbox_show_verbose)
         self.label_hat_direction = QtWidgets.QLabel(PrepCtrlWidget)

@@ -19,5 +19,7 @@ if __name__ == '__main__':
     logger.info("Text Detection Started")
     APP = QApplication(sys.argv)
     MW = mainwindow.AppMainWindow()
+    MW.ui.plain_text_edit_output.setVisible(False)
+
     MW.show()
     sys.exit(APP.exec_())

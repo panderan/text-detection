@@ -30,6 +30,13 @@
      </layout>
     </item>
     <item>
+     <widget class="Line" name="line">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+     </widget>
+    </item>
+    <item>
      <layout class="QHBoxLayout" name="botton_layout">
       <item>
        <widget class="QPushButton" name="btn_locate">
@@ -60,7 +67,7 @@
      </layout>
     </item>
     <item>
-     <widget class="QPlainTextEdit" name="plainTextEdit">
+     <widget class="QPlainTextEdit" name="plain_text_edit_output">
       <property name="maximumSize">
        <size>
         <width>16777215</width>

@@ -11,10 +11,10 @@ extract:
     delta: 5
     area_lim: [9, 500]
     variation: 0.25
-    channels: ["Gray"]
+    channels: ["Red Channel"]
     direction: 1
     filter_params: 
-        flag: ["width", "height", "perimeter", "aspect_ratio", "occupied_ratio", "compactness"] 
+        flag: ["width", "height", "perimeter", "aspect_ratio", "occupied_ratio", "compactness"]
         area_lim: 9 
         perimeter_lim: [12, 200]
         aspect_ratio_lim: [1.0, 15.0]

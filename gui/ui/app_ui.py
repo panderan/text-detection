@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'gui\ui\app.ui'
+# Form implementation generated from reading ui file 'gui/ui/app.ui'
 #
 # Created by: PyQt5 UI code generator 5.13.0
 #
@@ -29,6 +29,11 @@ class Ui_MainWindow(object):
         self.display_widget.setObjectName("display_widget")
         self.horizontalLayout.addWidget(self.display_widget)
         self.verticalLayout.addLayout(self.horizontalLayout)
+        self.line = QtWidgets.QFrame(self.centralwidget)
+        self.line.setFrameShape(QtWidgets.QFrame.HLine)
+        self.line.setFrameShadow(QtWidgets.QFrame.Sunken)
+        self.line.setObjectName("line")
+        self.verticalLayout.addWidget(self.line)
         self.botton_layout = QtWidgets.QHBoxLayout()
         self.botton_layout.setObjectName("botton_layout")
         self.btn_locate = QtWidgets.QPushButton(self.centralwidget)
@@ -40,10 +45,10 @@ class Ui_MainWindow(object):
         self.btn_recognize.setObjectName("btn_recognize")
         self.botton_layout.addWidget(self.btn_recognize)
         self.verticalLayout.addLayout(self.botton_layout)
-        self.plainTextEdit = QtWidgets.QPlainTextEdit(self.centralwidget)
-        self.plainTextEdit.setMaximumSize(QtCore.QSize(16777215, 150))
-        self.plainTextEdit.setObjectName("plainTextEdit")
-        self.verticalLayout.addWidget(self.plainTextEdit)
+        self.plain_text_edit_output = QtWidgets.QPlainTextEdit(self.centralwidget)
+        self.plain_text_edit_output.setMaximumSize(QtCore.QSize(16777215, 150))
+        self.plain_text_edit_output.setObjectName("plain_text_edit_output")
+        self.verticalLayout.addWidget(self.plain_text_edit_output)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(MainWindow)
         self.menubar.setGeometry(QtCore.QRect(0, 0, 800, 26))
