@@ -7,6 +7,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QWidget, QListWidgetItem
 from gui.ui.verbose_show_ui import Ui_VerboseDisplay
 from gui.app_widgets.basic_display_widget import BasicDisplayWidget
+from gui.text_detection.merging_textline import debugGenerateElectionImage
 import cv2
 import numpy as np
 
@@ -37,6 +38,8 @@ class VerboseDisplayWidget(QWidget):
         self.ui.checkbox_color_keep.hide()
         self.ui.checkbox_use_final_ret_as_bg.hide()
         self.ui.list_widget.setEnabled(False)
+        self.ui.list_widget_sec.setEnabled(False)
+        self.ui.list_widget_sec.setVisible(False)
 
     def onActionStateChangeUseFinalRetAsBg(self, state):
         self.temp_image_1 = None
@@ -154,6 +157,34 @@ class VerboseDisplayWidget(QWidget):
         self.cv_image[cur_info['points'][:, 1], cur_info['points'][:, 0], 1] = 0
         self.cv_image[cur_info['points'][:, 1], cur_info['points'][:, 0], 2] = 0
         self.display_widget.setDisplayCvImage(self.cv_image)
+
+    def setMergingVerboseData(self, cv_verbose_dict):
+        ''' 添加 Merging Verbose 数据
+        '''
+        self.clearData()
+        self.cv_verbose_dict = cv_verbose_dict
+        self.ui.label_info.setVisible(True)
+        self.ui.label_info.setText("Info:\n")
+        self.ui.combo_sources.clear()
+        self.ui.combo_sources.setEnabled(False)
+        self.ui.combo_sources.setVisible(False)
+
+        election = self.cv_verbose_dict['election']
+        self.ui.list_widget.clear()
+        self.ui.list_widget.setVisible(True)
+        self.ui.list_widget.setEnabled(True)
+        for i in range(len(election)):
+            self.ui.list_widget.addItem(QListWidgetItem("election_"+str(i), self.ui.list_widget))
+
+        self.ui.list_widget_sec.clear()
+        self.ui.list_widget_sec.setVisible(True)
+        self.ui.list_widget_sec.setEnabled(True)
+
+    def onActionListWidgetSecMergingItemSelectionChanged(self, idx):
+        ''' 切换显示
+        '''
+        image = debugGenerateElectionImage(self.cv_verbose_dict, idx)
+        self.display_widget.setDisplayCvImage(image)
 
     def clearData(self):
         ''' 删除所有数据

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'gui/ui/verbose_show.ui'
 #
-# Created by: PyQt5 UI code generator 5.13.2
+# Created by: PyQt5 UI code generator 5.13.0
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -13,7 +13,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_VerboseDisplay(object):
     def setupUi(self, VerboseDisplay):
         VerboseDisplay.setObjectName("VerboseDisplay")
-        VerboseDisplay.resize(897, 481)
+        VerboseDisplay.resize(1057, 552)
         self.horizontalLayout = QtWidgets.QHBoxLayout(VerboseDisplay)
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.widget_display = QtWidgets.QWidget(VerboseDisplay)
@@ -57,6 +57,16 @@ class Ui_VerboseDisplay(object):
         self.line_vertical_2.setFrameShadow(QtWidgets.QFrame.Sunken)
         self.line_vertical_2.setObjectName("line_vertical_2")
         self.horizontalLayout.addWidget(self.line_vertical_2)
+        self.list_widget_sec = QtWidgets.QListWidget(VerboseDisplay)
+        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Expanding)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.list_widget_sec.sizePolicy().hasHeightForWidth())
+        self.list_widget_sec.setSizePolicy(sizePolicy)
+        self.list_widget_sec.setMinimumSize(QtCore.QSize(200, 0))
+        self.list_widget_sec.setMaximumSize(QtCore.QSize(200, 16777215))
+        self.list_widget_sec.setObjectName("list_widget_sec")
+        self.horizontalLayout.addWidget(self.list_widget_sec)
         self.verticalLayout = QtWidgets.QVBoxLayout()
         self.verticalLayout.setObjectName("verticalLayout")
         self.label_sources = QtWidgets.QLabel(VerboseDisplay)

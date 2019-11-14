@@ -6,12 +6,14 @@
 import logging
 import sys
 import getopt
+from enum import Enum
 import cv2
 import matplotlib.pyplot as plt
-from enum import Enum
 from gui.text_detection.preprocessing import TdPreprocessing
 from gui.text_detection.extract_connect_domain import TdExtractConnectDomain
 from gui.text_detection.region_filter import TdFilter
+from gui.text_detection.morph_ops import TdMorphOperator
+from gui.text_detection.merging_textline import TdMergingTextLine, debugGenerateElectionImage
 from conf.config import TdConfig
 
 
@@ -33,9 +35,10 @@ class CliShowOptions(Enum):
     SHOW_NONE = 0
     SHOW_PREP = 1
     SHOW_EXTRACT = 2
-    SHOW_MERGE = 4
-    SHOW_FEATURE = 8
-    SHOW_RESULT = 16
+    SHOW_MORPH = 4
+    SHOW_MERGE = 8
+    SHOW_FEATURE = 16
+    SHOW_RESULT = 32
 
 
 class Cli:
@@ -48,7 +51,10 @@ class Cli:
         self.preprocessing = TdPreprocessing()
         self.extracter = TdExtractConnectDomain()
         self.filter = TdFilter()
+        self.merger = TdMergingTextLine()
+
         self.config = TdConfig()
+        self.morpher = TdMorphOperator()
         self.show_opts = CliShowOptions.SHOW_RESULT.value
 
     def run(self):
@@ -60,6 +66,7 @@ class Cli:
 
         # 加载配置
         self.config.setConfigFromFile(self.config_file_path)
+
         # 读取输入
         imput_image = cv2.imread(self.image_path)
 
@@ -73,10 +80,25 @@ class Cli:
         # 连通域提取
         self.extracter.setConfig(self.config.getExtractConfig())
         tmp_filter = self.filter.setConfig(self.config.getExtractConfig()["filter_params"])
-        _, binarized = self.extracter.extract_with_labels({"name":"Blue","image":self.preprocessing.blue_channel_preped}, tmp_filter)
+        _, binarized = self.extracter.extract_with_labels({"name":"Blue", "image":self.preprocessing.blue_channel_preped}, tmp_filter)
         if self.show_opts & CliShowOptions.SHOW_EXTRACT.value:
             plt.imshow(binarized, "gray")
             plt.show()
+
+        # 形态学处理
+        regions = self.morpher.morph_operation(binarized)
+        if self.show_opts & CliShowOptions.SHOW_MORPH.value:
+            verbose_image = self.morpher.getMaskImage(binarized, regions)
+            plt.imshow(verbose_image, "gray")
+            plt.show()
+
+        # 文本行合并
+        self.merger.debug_data['shape'] = binarized.shape
+        self.merger.debug_enable = True
+        self.merger.mergeTextLine(regions)
+        image = debugGenerateElectionImage(self.merger.debug_data, 0)
+        plt.imshow(image)
+        plt.show()
 
     def parseArgs(self):
         '''
@@ -117,4 +139,3 @@ class Cli:
 if __name__ == '__main__':
     app = Cli()
     app.run()
-

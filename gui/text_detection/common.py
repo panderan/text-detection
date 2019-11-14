@@ -28,7 +28,15 @@ def uniform_illumination(gray_image):
 
 
 def apply_canny(gray_img, sigma=0.33):
+    ''' 提取 Canny 边缘
+    '''
     v = np.median(gray_img)
     lower = int(max(0, (1.0 - sigma) * v))
     upper = int(min(255, (1.0 + sigma) * v))
     return cv2.Canny(gray_img, lower, upper)
+
+
+def is_in_range(num, range_numlist):
+    ''' 判断一个数书否在一个范围内
+    '''
+    return True if range_numlist[0] <= num <= range_numlist[1] else False
