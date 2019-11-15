@@ -93,10 +93,9 @@ class Cli:
             plt.show()
 
         # 文本行合并
-        self.merger.debug_data['shape'] = binarized.shape
-        self.merger.debug_enable = True
+        self.merger.debug.enableDebug(binarized.shape)
         self.merger.mergeTextLine(regions)
-        image = debugGenerateElectionImage(self.merger.debug_data, 0)
+        image = debugGenerateElectionImage(self.merger.debug, 0)
         plt.imshow(image)
         plt.show()
 
