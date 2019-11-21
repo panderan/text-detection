@@ -7,135 +7,239 @@ import sys
 import yaml
 from gui.text_detection.region_filter import TdFilterCheckType
 
+
 class TdPrepConfig:
     ''' 预处理参数
     '''
     def __init__(self, yaml_config=None):
-        self.total_pixels = 400000
-        self.canny_max = 0.9
-        self.canny_min = 0.7
-        self.gamma = 3.0
-        self.sobel = False
-        self.sigmod_center = 0.7
-        self.sigmod_zoom = 5
-        self.struct_element_size = 5
-        self.gauss_blur_size = 51
-        self.hat = 1
+        self.prep_configs = {
+            'total_pixels': 0,          # 总像素量
+            'canny_max': 0.0,           # canny 上限
+            'canny_min': 0.0,           # canny 下限
+            'gamma': 0.0,               # gamma 值
+            'sobel': False,             # 是否过滤掉水平边缘
+            'sigmod_center': 0.0,       # sigmod 中心点 [0.0, 1.0]
+            'sigmod_zoom': 0,           # sigmod 缩放倍率
+            'struct_element_size': 0,   # 结构元素大小 RECT
+            'gauss_blur_size': 0,       # 高斯模糊大小
+            'hat': 0                    # 顶底冒运算
+        }
         if yaml_config is not None:
             self.setConfig(yaml_config)
 
-    def setConfig(self, yaml_config):
+    def setConfig(self, configs):
         ''' 设置配置文件
         '''
-        yaml_prep_config = yaml_config['prep']
-        self.total_pixels = int(yaml_prep_config['total_pixels'])
-        self.gamma = float(yaml_prep_config['gamma'])
-        self.struct_element_size = int(yaml_prep_config['struct_element_size'])
-        self.gauss_blur_size = int(yaml_prep_config['gauss_blur_size'])
-        self.sigmod_center = float(yaml_prep_config['sigmod'][0])
-        self.sigmod_zoom = float(yaml_prep_config['sigmod'][1])
-        self.canny_max = float(yaml_prep_config['canny'][0])
-        self.canny_min = float(yaml_prep_config['canny'][1])
-        self.sobel = yaml_prep_config['sobel']
-        self.hat = int(yaml_prep_config['hat'])
+        yaml_data = configs['prep']
+        TdPrepConfig.setConfigItem(self, 'total_pixels', int(yaml_data.get('total_pixels', 0)))
+        TdPrepConfig.setConfigItem(self, 'gamma', float(yaml_data.get('gamma', 0.0)))
+        TdPrepConfig.setConfigItem(self, 'struct_element_size', int(yaml_data.get('struct_element_size', 0)))
+        TdPrepConfig.setConfigItem(self, 'gauss_blur_size', int(yaml_data.get('gauss_blur_size', 0)))
+        TdPrepConfig.setConfigItem(self, 'sigmod_center', float(yaml_data.get('sigmod', [0, 0])[0]))
+        TdPrepConfig.setConfigItem(self, 'sigmod_zoom', float(yaml_data.get('sigmod', [0, 0])[1]))
+        TdPrepConfig.setConfigItem(self, 'canny_max', float(yaml_data.get('canny', [0, 0])[0]))
+        TdPrepConfig.setConfigItem(self, 'canny_min', float(yaml_data.get('canny', [0, 0])[1]))
+        TdPrepConfig.setConfigItem(self, 'sobel', yaml_data.get('sobel', False))
+        TdPrepConfig.setConfigItem(self, 'hat', int(yaml_data.get('hat', 0)))
+
+    def setConfigItem(self, key, value):
+        ''' 设置单个参数
+        '''
+        if self.prep_configs.get(key, None) is not None:
+            self.prep_configs[key] = value
+            return True
+        return False
 
     def getConfig(self):
         ''' 获取配置
         '''
-        config = {}
-        config['total_pixels'] = self.total_pixels
-        config['gamma'] = self.gamma
-        config['sigmod'] = [self.sigmod_center, self.sigmod_zoom]
-        config['canny'] = [self.canny_max, self.canny_min]
-        config['struct_element_size'] = self.struct_element_size
-        config['gauss_blur_size'] = self.gauss_blur_size
-        config['sobel'] = self.sobel
-        config['hat'] = self.hat
-        return config
+        return self.prep_configs
 
 
 class TdExtractConfig:
     ''' 连通域提取参数
     '''
     def __init__(self):
-        self.delta = 5
-        self.min_area = 9
-        self.max_area = 500
-        self.variation = 0.25
-        self.channels = ['Gray']
-        self.direction = 1
-        self.filter_params = None
+        self.ext_configs = {
+            'delta': 0,
+            'channels': ['Gray'],
+            'min_area': 0,
+            'max_area': 0,
+            'variation': 0.0,
+            'direction': 0,
+            'debug': False,
+            'show_verbose': False
+        }
 
-    def setConfig(self, yaml_config):
+    def setConfig(self, configs):
         ''' 设置参数
         '''
-        yaml_mser_config = yaml_config['extract']
-        self.delta = int(yaml_mser_config['delta'])
-        self.channels = yaml_mser_config['channels']
-        self.min_area = int(yaml_mser_config['area_lim'][0])
-        self.max_area = int(yaml_mser_config['area_lim'][1])
-        self.variation = float(yaml_mser_config['variation'])
-        self.direction = int(yaml_mser_config['direction'])
+        yaml_data = configs['extract']
+        TdExtractConfig.setConfigItem(self, 'delta', int(yaml_data.get('delta', 0)))
+        TdExtractConfig.setConfigItem(self, 'channels', yaml_data.get('channels', ["Gray"]))
+        TdExtractConfig.setConfigItem(self, 'min_area', int(yaml_data.get('area_lim', [0, 0])[0]))
+        TdExtractConfig.setConfigItem(self, 'max_area', int(yaml_data.get('area_lim', [0, 0])[1]))
+        TdExtractConfig.setConfigItem(self, 'variation', float(yaml_data.get('variation', 0.0)))
+        TdExtractConfig.setConfigItem(self, 'direction', int(yaml_data.get('direction', 0)))
+        TdExtractConfig.setConfigItem(self, 'debug', False)
+        TdExtractConfig.setConfigItem(self, 'show_verbose', False)
 
-        # 基本过滤器参数
-        filter_params = {}
-        yaml_filter_config = yaml_mser_config['filter_params']
-        flag = TdFilterCheckType.AREA.value if "area" in yaml_filter_config['flag'] else 0
-        flag += TdFilterCheckType.WIDTH.value if "width" in yaml_filter_config['flag'] else 0
-        flag += TdFilterCheckType.HEIGHT.value if "height" in yaml_filter_config['flag'] else 0
-        flag += TdFilterCheckType.PERIMETER.value if "perimeter" in yaml_filter_config['flag'] else 0
-        flag += TdFilterCheckType.ASPECTRATIO.value if "aspect_ratio" in yaml_filter_config['flag'] else 0
-        flag += TdFilterCheckType.OCCUPIEDRATIO.value if "occupied_ratio" in yaml_filter_config['flag'] else 0
-        flag += TdFilterCheckType.COMPACTNESS.value if "compactness" in yaml_filter_config['flag'] else 0
-        flag += TdFilterCheckType.SWT.value if "swt" in yaml_filter_config['flag'] else 0
-        filter_params['flag'] = flag
-        filter_params['area_lim'] = int(yaml_filter_config['area_lim'])
-        filter_params['perimeter_lim'] = [int(yaml_filter_config['perimeter_lim'][0]), \
-                                          int(yaml_filter_config['perimeter_lim'][1])]
-        filter_params['aspect_ratio_lim'] = [float(yaml_filter_config['aspect_ratio_lim'][0]), \
-                                             float(yaml_filter_config['aspect_ratio_lim'][1])]
-        filter_params['aspect_ratio_gt1'] = yaml_filter_config['aspect_ratio_gt1']
-        filter_params['occupation_lim'] = [float(yaml_filter_config['occupation_lim'][0]), \
-                                           float(yaml_filter_config['occupation_lim'][1])]
-        filter_params['compactness_lim'] = [float(yaml_filter_config['compactness_lim'][0]), \
-                                            float(yaml_filter_config['compactness_lim'][1])]
-        filter_params['width_lim'] = [int(yaml_filter_config['width_lim'][0]), \
-                                      int(yaml_filter_config['width_lim'][1])]
-        filter_params['height_lim'] = [int(yaml_filter_config['height_lim'][0]), \
-                                       int(yaml_filter_config['height_lim'][1])]
-        self.filter_params = filter_params
-
-        # SWT 过滤参数
-        filter_swt_params = {}
-        yaml_filter_swt_config = yaml_filter_config['filter_swt_params']
-        filter_swt_params['total_points'] = int(yaml_filter_swt_config['total_points'])
-        filter_swt_params['mode_lim'] = float(yaml_filter_swt_config['mode_lim'])
-        filter_swt_params['mean_lim'] = [float(yaml_filter_swt_config['mean_lim'][0]), \
-                                         float(yaml_filter_swt_config['mean_lim'][1])]
-        filter_swt_params['std_lim'] = [float(yaml_filter_swt_config['std_lim'][0]), \
-                                        float(yaml_filter_swt_config['std_lim'][1])]
-        self.filter_params['swt_params'] = filter_swt_params
+    def setConfigItem(self, key, value):
+        ''' 设置单个参数
+        '''
+        if self.ext_configs.get(key, None) is not None:
+            self.ext_configs[key] = value
+            return True
+        return False
 
     def getConfig(self):
         ''' 获取配置参数
         '''
-        config = {}
-        config['delta'] = self.delta
-        config['channels'] = self.channels
-        config['min_area'] = self.min_area
-        config['max_area'] = self.max_area
-        config['variation'] = self.variation
-        config['direction'] = self.direction
-        config['filter_params'] = self.filter_params
-        return config
+        return self.ext_configs
 
 
-class TdConfig(TdPrepConfig, TdExtractConfig):
+class TdFilterConfig:
+    ''' 过滤器参数
+    '''
+    def __init__(self):
+        self.flt_configs = {
+            'default': {
+                'flag': 0,
+                'area_lim': 0,
+                'width_lim': [0, 0],
+                'height_lim': [0, 0],
+                'perimeter_lim': [0, 0],
+                'aspect_ratio_lim': [0, 0],
+                'asecpt_ratio_gt1': True,
+                'occupation_lim': [0, 0],
+                'compactness_lim': [0, 0],
+                'swt': {
+                    'total_points': 0,
+                    'mode_lim': 0,
+                    'mean_lim': [0, 0],
+                    'std_lim': [0, 0]
+                }
+            }
+        }
+
+    def setConfig(self, configs):
+        ''' 设置过滤器配置
+        '''
+        for fltname in configs['filters'].keys():
+            yaml_data = configs['filters'][fltname]
+            self.addNewFilter(fltname)
+            flag = TdFilterCheckType.AREA.value if "area" in yaml_data.get('flag', 0) else 0
+            flag += TdFilterCheckType.WIDTH.value if "width" in yaml_data.get('flag', 0) else 0
+            flag += TdFilterCheckType.HEIGHT.value if "height" in yaml_data.get('flag', 0) else 0
+            flag += TdFilterCheckType.PERIMETER.value if "perimeter" in yaml_data.get('flag', 0) else 0
+            flag += TdFilterCheckType.ASPECTRATIO.value if "aspect_ratio" in yaml_data.get('flag', 0) else 0
+            flag += TdFilterCheckType.OCCUPIEDRATIO.value if "occupied_ratio" in yaml_data.get('flag', 0) else 0
+            flag += TdFilterCheckType.COMPACTNESS.value if "compactness" in yaml_data.get('flag', 0) else 0
+            flag += TdFilterCheckType.SWT.value if "swt" in yaml_data.get('flag', 0) else 0
+            TdFilterConfig.setConfigItem(self, fltname, 'flag', flag)
+            TdFilterConfig.setConfigItem(self, fltname, 'area_lim', int(yaml_data.get('area_lim', 0)))
+            TdFilterConfig.setConfigItem(self, fltname, 'perimeter_lim', [int(yaml_data.get('perimeter_lim', [0, 0])[0]), int(yaml_data.get('perimeter_lim', [0, 0])[1])])
+            TdFilterConfig.setConfigItem(self, fltname, 'aspect_ratio_lim', [float(yaml_data.get('aspect_ratio_lim', [0, 0])[0]), float(yaml_data.get('aspect_ratio_lim', [0, 0])[1])])
+            TdFilterConfig.setConfigItem(self, fltname, 'occupation_lim', [float(yaml_data.get('occupation_lim', [0, 0])[0]), float(yaml_data.get('occupation_lim', [0, 0])[1])])
+            TdFilterConfig.setConfigItem(self, fltname, 'compactness_lim', [float(yaml_data.get('compactness_lim', [0, 0])[0]), float(yaml_data.get('compactness_lim', [0, 0])[1])])
+            TdFilterConfig.setConfigItem(self, fltname, 'width_lim', [int(yaml_data.get('width_lim', [0, 0])[0]), int(yaml_data.get('width_lim', [0, 0])[1])])
+            TdFilterConfig.setConfigItem(self, fltname, 'height_lim', [int(yaml_data.get('height_lim', [0, 0])[0]), int(yaml_data.get('height_lim', [0, 0])[1])])
+            TdFilterConfig.setConfigItem(self, fltname, 'aspect_ratio_gt1', yaml_data.get('aspect_ratio_gt1', True))
+
+            # SWT 过滤参数
+            yaml_swt_data = yaml_data.get('swt', None)
+            if yaml_swt_data is not None:
+                swt_config = {}
+                yaml_swt_data = yaml_data['swt']
+                swt_config['total_points'] = int(yaml_swt_data.get('total_points', 0))
+                swt_config['mode_lim'] = float(yaml_swt_data.get('mode_lim', 0))
+                swt_config['mean_lim'] = [float(yaml_swt_data.get('mean_lim', [0, 0])[0]), float(yaml_swt_data.get('mean_lim', [0, 0])[1])]
+                swt_config['std_lim'] = [float(yaml_swt_data.get('std_lim', [0, 0])[0]), float(yaml_swt_data.get('std_lim', [0, 0])[1])]
+                TdFilterConfig.setConfigItem(self, fltname, 'swt', swt_config)
+
+    def setConfigItem(self, fltname, key, value):
+        ''' 设置单个参数
+        '''
+        if self.flt_configs.get(fltname, None) is not None:
+            sub_config = self.flt_configs[fltname]
+            if sub_config.get(key, None) is not None:
+                sub_config[key] = value
+            return True
+        return False
+
+    def addNewFilter(self, fltname):
+        ''' 新增 filter
+        '''
+        newconf = {
+            'flag': 0,
+            'area_lim': 0,
+            'width_lim': [0, 0],
+            'height_lim': [0, 0],
+            'perimeter_lim': [0, 0],
+            'aspect_ratio_lim': [0, 0],
+            'aspect_ratio_gt1': True,
+            'occupation_lim': [0, 0],
+            'compactness_lim': [0, 0],
+            'swt': {
+                'total_points': 0,
+                'mode_lim': 0,
+                'mean_lim': [0, 0],
+                'std_lim': [0, 0]
+            }
+        }
+        self.flt_configs[fltname] = newconf
+
+    def getConfig(self, keystr):
+        ''' 获取过滤器配置
+        '''
+        return self.flt_configs.get(keystr, None)
+
+
+class TdMergeTLConfig:
+    ''' 文本行合并参数
+    '''
+    def __init__(self):
+        self.meg_configs = {
+            'combined_area_size_lim': 0,
+            'combined_aspect_ratio_lim': [0.0, 0.0],
+            'overlap_ratio': 0.25,
+            'distance': 0.0,
+            'strategy': "horizon",
+            'show_verbose': False
+        }
+
+    def setConfig(self, configs):
+        ''' 设置配置
+        '''
+        yaml_data = configs['mergetl']
+        TdMergeTLConfig.setConfigItem(self, 'combined_area_size_lim', int(yaml_data.get('combined_area_size_lim', 0)))
+        TdMergeTLConfig.setConfigItem(self, 'combined_aspect_ratio_lim', [float(v) for v in yaml_data.get('combined_aspect_ratio_lim', [0.0, 0.0])])
+        TdMergeTLConfig.setConfigItem(self, 'overlap_ratio', float(yaml_data.get('overlap_ratio', 0)))
+        TdMergeTLConfig.setConfigItem(self, 'distance', float(yaml_data.get('distance', 0)))
+        TdMergeTLConfig.setConfigItem(self, 'strategy', yaml_data.get('strategy', "horizon"))
+
+    def setConfigItem(self, key, value):
+        ''' 设置单个参数
+        '''
+        if self.meg_configs.get(key, None) is not None:
+            self.meg_configs[key] = value
+            return True
+        return False
+
+    def getConfig(self):
+        ''' 获取配置
+        '''
+        return self.meg_configs
+
+
+class TdConfig(TdPrepConfig, TdExtractConfig, TdMergeTLConfig, TdFilterConfig):
     ''' 配置文件类
     '''
     def __init__(self, config_file_path="conf/default.yaml"):
         TdPrepConfig.__init__(self)
         TdExtractConfig.__init__(self)
+        TdMergeTLConfig.__init__(self)
+        TdFilterConfig.__init__(self)
         self.setConfigFromFile(config_file_path)
 
     def getPrepConfig(self):
@@ -147,6 +251,16 @@ class TdConfig(TdPrepConfig, TdExtractConfig):
         ''' 获取连通域提取参数
         '''
         return TdExtractConfig.getConfig(self)
+
+    def getMergeTLConfig(self):
+        ''' 获取文本行合并参数
+        '''
+        return TdMergeTLConfig.getConfig(self)
+
+    def getFilterConfig(self, keystr):
+        ''' 获取过滤器参数
+        '''
+        return TdFilterConfig.getConfig(self, keystr)
 
     def setConfigFromFile(self, config_file_path):
         ''' 加载配置文件
@@ -160,3 +274,5 @@ class TdConfig(TdPrepConfig, TdExtractConfig):
         config_file.close()
         TdPrepConfig.setConfig(self, config)
         TdExtractConfig.setConfig(self, config)
+        TdMergeTLConfig.setConfig(self, config)
+        TdFilterConfig.setConfig(self, config)

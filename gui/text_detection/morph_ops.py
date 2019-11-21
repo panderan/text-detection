@@ -33,11 +33,11 @@ class TdMorphOperator:
             _, morphed_contours, _ = cv2.findContours(binary_image, cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
             for morphed_ctr in morphed_contours:
                 ro_rect = cv2.minAreaRect(morphed_ctr)
-                box = np.int0(cv2.boxPoints(ro_rect))
+                pbox = np.int0(cv2.boxPoints(ro_rect))
                 if td_filter is not None:
-                    if not td_filter.verification(box):
+                    if not td_filter.validateRoRect(ro_rect):
                         continue
-                ret_regions.append(box)
+                ret_regions.append(pbox)
 
         return ret_regions
 

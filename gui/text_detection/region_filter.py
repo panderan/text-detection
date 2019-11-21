@@ -61,11 +61,11 @@ class TdFilter:
         self.debug_enable = True
         self.debug_data = {}
 
-    def validate(self, region, box):
+    def validate(self, region, bbox):
         ''' 验证单个选区是否满足条件
         Args:
             region: MSER 提取的选区所有像素点列表
-            box: MSER 提取的选区外接矩形
+            bbox: MSER 提取的选区外接矩形 BoundingBox
         Returns:
             True 满足
             False 不满足
@@ -74,27 +74,27 @@ class TdFilter:
 
         # 面积过滤
         if self.flag & TdFilterCheckType.AREA.value:
-            self.fillDebugData("area", box[2]*box[3], self.area_lim)
-            if box[2]*box[3] < self.area_lim:
+            self.fillDebugData("area", bbox[2]*bbox[3], self.area_lim)
+            if bbox[2]*bbox[3] < self.area_lim:
                 self.markDebugDataResult("area", False)
                 return False
 
         # 长宽度过滤
         if self.flag & TdFilterCheckType.WIDTH.value:
-            self.fillDebugData("width", box[2], self.width_lim)
-            if box[2] < self.width_lim[0] or box[2] > self.width_lim[1]:
+            self.fillDebugData("width", bbox[2], self.width_lim)
+            if bbox[2] < self.width_lim[0] or bbox[2] > self.width_lim[1]:
                 self.markDebugDataResult("width", False)
                 return False
 
         if self.flag & TdFilterCheckType.HEIGHT.value:
-            self.fillDebugData("height", box[3], self.height_lim)
-            if box[3] < self.height_lim[0] or box[3] > self.height_lim[1]:
+            self.fillDebugData("height", bbox[3], self.height_lim)
+            if bbox[3] < self.height_lim[0] or bbox[3] > self.height_lim[1]:
                 self.markDebugDataResult("height", False)
                 return False
 
         # 周长
         if self.flag & TdFilterCheckType.PERIMETER.value:
-            retval = self.getPerimeter(box)
+            retval = self.getPerimeter(bbox)
             self.fillDebugData("perimeter", retval, self.perimeter_lim)
             if retval < self.perimeter_lim[0] or retval > self.perimeter_lim[1]:
                 self.markDebugDataResult("perimeter", False)
@@ -110,7 +110,7 @@ class TdFilter:
 
         # 占用率
         if self.flag & TdFilterCheckType.OCCUPIEDRATIO.value:
-            retval = self.getOccurpiedRatio(region, box)
+            retval = self.getOccurpiedRatio(region, bbox)
             self.fillDebugData("occupation_ratio", retval, self.occupation_lim)
             if retval < self.occupation_lim[0] or retval > self.occupation_lim[1]:
                 self.markDebugDataResult("occupation_ratio", False)
@@ -118,7 +118,7 @@ class TdFilter:
 
         # 紧密度
         if self.flag & TdFilterCheckType.COMPACTNESS.value:
-            retval = self.getCompactness(region, box)
+            retval = self.getCompactness(region, bbox)
             self.fillDebugData("compactness", retval, self.compactness_lim)
             if retval < self.compactness_lim[0] or retval > self.compactness_lim[1]:
                 self.markDebugDataResult("compactness", False)
@@ -128,7 +128,7 @@ class TdFilter:
             if self.swt is None:
                 self.swt = swt()
                 self.swt.setImage(self.gray_image)
-            stroke_widths, stroke_widths_opp = self.swt.get_strokes(box)
+            stroke_widths, stroke_widths_opp = self.swt.get_strokes(bbox)
             stroke_widths = np.append(stroke_widths, stroke_widths_opp, axis=0)
             retval = self.swt.get_stroke_properties(stroke_widths)
 
@@ -177,10 +177,10 @@ class TdFilter:
         '''
         return len(region)
 
-    def getPerimeter(self, box):
+    def getPerimeter(self, bbox):
         ''' 获取选区周长
         '''
-        tmp = self.canny_image[box[1]:box[1]+box[3], box[0]:box[0]+box[2]]
+        tmp = self.canny_image[bbox[1]:bbox[1]+bbox[3], bbox[0]:bbox[0]+bbox[2]]
         return len(np.where(tmp != 0)[0])
 
     def getAspectRatio(self, region):
@@ -213,15 +213,15 @@ class TdFilter:
 
         return ratio
 
-    def getOccurpiedRatio(self, region, box):
+    def getOccurpiedRatio(self, region, bbox):
         ''' 获取选区占有率
         '''
-        return float(self.getRealArea(region)) / (float(box[2]) * float(box[3]))
+        return float(self.getRealArea(region)) / (float(bbox[2]) * float(bbox[3]))
 
-    def getCompactness(self, region, box):
+    def getCompactness(self, region, bbox):
         ''' 获取选区紧密度
         '''
-        return float(self.getRealArea(region)) / float(self.getPerimeter(box)**2)
+        return float(self.getRealArea(region)) / float(self.getPerimeter(bbox)**2)
 
     def __setConfigItem(self, keystr, config):
         ''' 设置单个参数
@@ -322,3 +322,33 @@ class TdFilter:
         '''
         if self.debug_enable and self.debug_data[key] is not None:
             self.debug_data[key]['result'] = flag
+
+    def validateBoxPoints(self, pbox):
+        ''' 验证单个选区是否满足条件
+        Args:
+            region: MSER 提取的选区所有像素点列表
+            pbox: 矩形角点 box points
+        Returns:
+            True 满足
+            False 不满足
+        '''
+        robox = cv2.minAreaRect(pbox)
+        return self.validateRoRect(robox)
+
+    def validateRoRect(self, robox):
+        ''' 验证单个选区是否满足条件
+        Args:
+            region: MSER 提取的选区所有像素点列表
+            robox: 矩形角点 rotate box
+        Returns:
+            True 满足
+            False 不满足
+        '''
+        cntr_x, cntr_y = robox[0]
+        width, height = robox[1]
+        bbox = (cntr_x-width/2, cntr_y-height/2, width, height)
+        self.flag &= (TdFilterCheckType.AREA.value
+                      | TdFilterCheckType.WIDTH.value
+                      | TdFilterCheckType.HEIGHT.value
+                      | TdFilterCheckType.PERIMETER.value)
+        return self.validate(None, bbox)

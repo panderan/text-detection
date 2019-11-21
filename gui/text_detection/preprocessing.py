@@ -16,6 +16,7 @@ import cv2
 from scipy import signal
 import numpy as np
 import gui.text_detection.common as tcomm
+from conf.config import TdConfig
 
 logger = logging.getLogger(__name__)
 
@@ -99,6 +100,7 @@ class TdPreprocessing:
         ''' 图像预处理
         '''
         self.setConfig(config)
+
         self.printParams("Do preprocessing[%s]"%img_type_name)
         if self.hat == 0:
             logger.error("Hat param is ZERO, invalid.")
@@ -199,12 +201,14 @@ class TdPreprocessing:
                 self.total_pixels = config[keystr]
                 if old_total_pixels != self.total_pixels:
                     self.setImage(self.color_img)
-            elif keystr == "canny":
-                self.canny_max = config[keystr][0]
-                self.canny_min = config[keystr][1]
-            elif keystr == "sigmod":
-                self.sigmod_center = config[keystr][0]
-                self.sigmod_zoom = config[keystr][1]
+            elif keystr == "canny_min":
+                self.canny_min = config[keystr]
+            elif keystr == "canny_max":
+                self.canny_max = config[keystr]
+            elif keystr == "sigmod_center":
+                self.sigmod_center = config[keystr]
+            elif keystr == "sigmod_zoom":
+                self.sigmod_zoom = config[keystr]
             elif keystr == "hat":
                 self.hat = config[keystr]
             elif keystr == "sobel":
@@ -224,8 +228,10 @@ class TdPreprocessing:
         self.__setConfigItem("struct_element_size", config)
         self.__setConfigItem("gauss_blur_size", config)
         self.__setConfigItem("total_pixels", config)
-        self.__setConfigItem("canny", config)
-        self.__setConfigItem("sigmod", config)
+        self.__setConfigItem("canny_min", config)
+        self.__setConfigItem("canny_max", config)
+        self.__setConfigItem("sigmod_center", config)
+        self.__setConfigItem("sigmod_zoom", config)
         self.__setConfigItem("hat", config)
         self.__setConfigItem("sobel", config)
         return

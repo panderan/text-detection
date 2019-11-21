@@ -11,7 +11,7 @@ from PyQt5.QtGui import QIcon
 import gui.ui.extract_control_ui as extract_ctrl_ui
 from gui.text_detection.region_filter import TdFilterCheckType
 from gui.text_detection.extract_connect_domain import ExtractDirection
-from conf.config import TdConfig
+from conf.config import TdConfig, TdExtractConfig, TdFilterConfig
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +44,7 @@ class ExtractDisplayCtrlWidget(QWidget):
         check_flag = True if int(extract_conf['direction']) & ExtractDirection.Negitive.value else False
         self.ui.checkbox_mser_direction_negative.setChecked(check_flag)
 
-        filter_conf = extract_conf['filter_params']
+        filter_conf = TdConfig().getFilterConfig('extract')
         self.ui.spinbox_filter_area_lim.setValue(filter_conf['area_lim'])
         self.ui.spinbox_filter_perimeter_low.setValue(filter_conf['perimeter_lim'][0])
         self.ui.spinbox_filter_perimeter_high.setValue(filter_conf['perimeter_lim'][1])
@@ -60,7 +60,7 @@ class ExtractDisplayCtrlWidget(QWidget):
         self.ui.spinbox_filter_height_low.setValue(filter_conf['height_lim'][0])
         self.ui.spinbox_filter_height_high.setValue(filter_conf['height_lim'][1])
 
-        filter_swt_conf = filter_conf['swt_params']
+        filter_swt_conf = filter_conf['swt']
         self.ui.spinbox_filter_swt_total_points.setValue(filter_swt_conf['total_points'])
         self.ui.dspinbox_filter_swt_mode_lim.setValue(filter_swt_conf['mode_lim'])
         self.ui.dspinbox_filter_swt_mean_low.setValue(filter_swt_conf['mean_lim'][0])
@@ -84,68 +84,67 @@ class ExtractDisplayCtrlWidget(QWidget):
         self.ui.checkbox_filter_height_lim.stateChanged.connect(self.onActionCheckboxFilterHeightLim)
         self.ui.checkbox_filter_swt_filter_enable.stateChanged.connect(self.onActionCheckboxFilterSwtFilterEnable)
 
-    def getConfiguration(self):
+    def getConfiguration(self, flag=0):
         ''' 获得配置信息
         '''
-        config = {}
-        config['delta'] = self.ui.spinbox_mser_delta.value()
-        config['min_area'] = self.ui.spinbox_mser_area_low.value()
-        config['max_area'] = self.ui.spinbox_mser_area_high.value()
-        config['variation'] = self.ui.dspinbox_mser_variation.value()
-        config['debug'] = self.ui.checkbox_mser_debug_enable.isChecked()
-        config['show_verbose'] = self.ui.checkbox_mser_debug_enable.isChecked()
-        chnls = []
-        if self.ui.checkbox_mser_gray.isChecked():
-            chnls.append("Gray")
-        if self.ui.checkbox_mser_blue.isChecked():
-            chnls.append("Blue Channel")
-        if self.ui.checkbox_mser_red.isChecked():
-            chnls.append("Red Channel")
-        if self.ui.checkbox_mser_green.isChecked():
-            chnls.append("Green Channel")
-        config['channels'] = chnls
-        ret = ExtractDirection.Positive.value if self.ui.checkbox_mser_direction_positive.isChecked() else 0
-        ret += ExtractDirection.Negitive.value if self.ui.checkbox_mser_direction_negative.isChecked() else 0
-        config['direction'] = ret
+        if flag == 0:
+            extconf = TdExtractConfig()
+            extconf.setConfigItem('delta', self.ui.spinbox_mser_delta.value())
+            extconf.setConfigItem('min_area', self.ui.spinbox_mser_area_low.value())
+            extconf.setConfigItem('max_area', self.ui.spinbox_mser_area_high.value())
+            extconf.setConfigItem('variation', self.ui.dspinbox_mser_variation.value())
+            extconf.setConfigItem('debug', self.ui.checkbox_mser_debug_enable.isChecked())
+            extconf.setConfigItem('show_verbose', self.ui.checkbox_mser_debug_enable.isChecked()) 
+            chnls = []
+            if self.ui.checkbox_mser_gray.isChecked():
+                chnls.append("Gray")
+            if self.ui.checkbox_mser_blue.isChecked():
+                chnls.append("Blue Channel")
+            if self.ui.checkbox_mser_red.isChecked():
+                chnls.append("Red Channel")
+            if self.ui.checkbox_mser_green.isChecked():
+                chnls.append("Green Channel")
+            extconf.setConfigItem('channels', chnls)
+            ret = ExtractDirection.Positive.value if self.ui.checkbox_mser_direction_positive.isChecked() else 0
+            ret += ExtractDirection.Negitive.value if self.ui.checkbox_mser_direction_negative.isChecked() else 0
+            extconf.setConfigItem('direction', ret)
+            return extconf.ext_configs
+        else:
+            fltconf = TdFilterConfig()
+            fltconf.setConfigItem('default', 'area_lim', self.ui.spinbox_filter_area_lim.value())
+            fltconf.setConfigItem('default', 'perimeter_lim', [self.ui.spinbox_filter_perimeter_low.value(), self.ui.spinbox_filter_perimeter_high.value()])
+            fltconf.setConfigItem('default', 'aspect_ratio_lim', [self.ui.dspinbox_filter_aspect_ratio_low.value(), self.ui.dspinbox_filter_aspect_ratio_high.value()])
+            fltconf.setConfigItem('default', 'aspect_ratio_gt1', self.ui.checkbox_filter_abs_aspect_ratio.isChecked())
+            fltconf.setConfigItem('default', 'occupation_lim', [self.ui.dspinbox_filter_occupation_low.value(), self.ui.dspinbox_filter_occupation_high.value()])
+            fltconf.setConfigItem('default', 'compactness_lim', [self.ui.dspinbox_filter_compactness_low.value(), self.ui.dspinbox_filter_compactness_high.value()])
+            fltconf.setConfigItem('default', 'width_lim', [self.ui.spinbox_filter_width_low.value(), self.ui.spinbox_filter_width_high.value()])
+            fltconf.setConfigItem('default', 'height_lim', [self.ui.spinbox_filter_height_low.value(), self.ui.spinbox_filter_height_high.value()])
+            flt_flag = 0
+            if self.ui.checkbox_filter_area_lim.isChecked():
+                flt_flag += TdFilterCheckType.AREA.value
+            if self.ui.checkbox_filter_width_lim.isChecked():
+                flt_flag += TdFilterCheckType.WIDTH.value
+            if self.ui.checkbox_filter_height_lim.isChecked():
+                flt_flag += TdFilterCheckType.HEIGHT.value
+            if self.ui.checkbox_filter_perimeter_lim.isChecked():
+                flt_flag += TdFilterCheckType.PERIMETER.value
+            if self.ui.checkbox_filter_aspect_ratio_lim.isChecked():
+                flt_flag += TdFilterCheckType.ASPECTRATIO.value
+            if self.ui.checkbox_filter_occupation_lim.isChecked():
+                flt_flag += TdFilterCheckType.OCCUPIEDRATIO.value
+            if self.ui.checkbox_filter_compactness_lim.isChecked():
+                flt_flag += TdFilterCheckType.COMPACTNESS.value
+            if self.ui.checkbox_filter_swt_filter_enable.isChecked():
+                flt_flag += TdFilterCheckType.SWT.value
+            fltconf.setConfigItem('default', 'flag', flt_flag)
 
-        filter_config = {}
-        filter_config['area_lim'] = self.ui.spinbox_filter_area_lim.value()
-        filter_config['perimeter_lim'] = [self.ui.spinbox_filter_perimeter_low.value(), self.ui.spinbox_filter_perimeter_high.value()]
-        filter_config['aspect_ratio_lim'] = [self.ui.dspinbox_filter_aspect_ratio_low.value(), self.ui.dspinbox_filter_aspect_ratio_high.value()]
-        filter_config['aspect_ratio_gt1'] = self.ui.checkbox_filter_abs_aspect_ratio.isChecked()
-        filter_config['occupation_lim'] = [self.ui.dspinbox_filter_occupation_low.value(), self.ui.dspinbox_filter_occupation_high.value()]
-        filter_config['compactness_lim'] = [self.ui.dspinbox_filter_compactness_low.value(), self.ui.dspinbox_filter_compactness_high.value()]
-        filter_config['width_lim'] = [self.ui.spinbox_filter_width_low.value(), self.ui.spinbox_filter_width_high.value()]
-        filter_config['height_lim'] = [self.ui.spinbox_filter_height_low.value(), self.ui.spinbox_filter_height_high.value()]
-        flag = 0
-        if self.ui.checkbox_filter_area_lim.isChecked():
-            flag += TdFilterCheckType.AREA.value
-        if self.ui.checkbox_filter_width_lim.isChecked():
-            flag += TdFilterCheckType.WIDTH.value
-        if self.ui.checkbox_filter_height_lim.isChecked():
-            flag += TdFilterCheckType.HEIGHT.value
-        if self.ui.checkbox_filter_perimeter_lim.isChecked():
-            flag += TdFilterCheckType.PERIMETER.value
-        if self.ui.checkbox_filter_aspect_ratio_lim.isChecked():
-            flag += TdFilterCheckType.ASPECTRATIO.value
-        if self.ui.checkbox_filter_occupation_lim.isChecked():
-            flag += TdFilterCheckType.OCCUPIEDRATIO.value
-        if self.ui.checkbox_filter_compactness_lim.isChecked():
-            flag += TdFilterCheckType.COMPACTNESS.value
-        if self.ui.checkbox_filter_swt_filter_enable.isChecked():
-            flag += TdFilterCheckType.SWT.value
-        filter_config['flag'] = flag
-
-        filter_swt_config = {}
-        filter_swt_config['total_points'] = self.ui.spinbox_filter_swt_total_points.value()
-        filter_swt_config['mode_lim'] = self.ui.dspinbox_filter_swt_mode_lim.value()
-        filter_swt_config['mean_lim'] = [self.ui.dspinbox_filter_swt_mean_low.value(), self.ui.dspinbox_filter_swt_mean_high.value()]
-        filter_swt_config['std_lim'] = [self.ui.dspinbox_filter_swt_std_low.value(), self.ui.dspinbox_filter_swt_std_high.value()]
-        filter_config['filter_swt_params'] = filter_swt_config
-        filter_config['swt_params'] = filter_swt_config
-
-        config['filter_params'] = filter_config
-        return config
+            swt_config = {}
+            swt_config['total_points'] = self.ui.spinbox_filter_swt_total_points.value()
+            swt_config['mode_lim'] = self.ui.dspinbox_filter_swt_mode_lim.value()
+            swt_config['mean_lim'] = [self.ui.dspinbox_filter_swt_mean_low.value(), self.ui.dspinbox_filter_swt_mean_high.value()]
+            swt_config['std_lim'] = [self.ui.dspinbox_filter_swt_std_low.value(), self.ui.dspinbox_filter_swt_std_high.value()]
+            fltconf.setConfigItem('default', 'swt', swt_config)
+            return fltconf.flt_configs
 
     def setEnabledForFilter(self, flag):
         ''' Filter 参数启用/禁用控制

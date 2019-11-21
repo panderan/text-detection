@@ -13,7 +13,14 @@ extract:
     variation: 0.25
     channels: ["Red Channel"]
     direction: 1
-    filter_params: 
+mergetl:
+    combined_area_size_lim: 400000
+    combined_aspect_ratio_lim: [0.0, 99]
+    overlap_ratio: 0.25
+    distance: 2.6
+    strategy: "horizon"
+filters:
+    extract:
         flag: ["width", "height", "perimeter", "aspect_ratio", "occupied_ratio", "compactness"]
         area_lim: 9 
         perimeter_lim: [12, 200]
@@ -23,8 +30,6 @@ extract:
         compactness_lim: [3e-3, 1e-1]
         width_lim: [0, 800]
         height_lim: [0, 800]
-        filter_swt_params:
-            total_points: 30
-            mode_lim: 1.5
-            mean_lim: [2.0, 5.0]
-            std_lim: [0.5, 2.5]
+    morph:
+        flag: ['area']
+        area_lim: 9

@@ -8,6 +8,8 @@ from gui.text_detection.preprocessing import TdPreprocessing
 from gui.app_widgets.preprocess_control_widget import PreprocessDisplayCtrlWidget
 import gui.app_widgets.common as apw_comm
 from gui.app_widgets.verbose_show_widget import VerboseDisplayWidget
+from conf.config import TdConfig
+
 
 class PreprocessDisplayWidget(BasicDisplayWidget):
     ''' 用于显示预处理图像的 Widget 控件
@@ -30,7 +32,8 @@ class PreprocessDisplayWidget(BasicDisplayWidget):
         ''' 进行预处理
         '''
         # 获取参数,进行预处理
-        config = self.control_panel.getConfiguration()
+        config = self.control_panel.getConfiguration() if self.control_panel is not None \
+                 else TdConfig().getPrepConfig()
         preped_images_dict = self.preprocesser.doPreprocessing(config["source"], config)
         # 显示预处理结果
         if config['show_verbose'] and preped_images_dict is not None:

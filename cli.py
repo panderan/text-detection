@@ -14,6 +14,7 @@ from gui.text_detection.extract_connect_domain import TdExtractConnectDomain
 from gui.text_detection.region_filter import TdFilter
 from gui.text_detection.morph_ops import TdMorphOperator
 from gui.text_detection.merging_textline import TdMergingTextLine, debugGenerateElectionImage
+from gui.text_detection.merging_textline import threshold_of_position_ratio_for_idcard
 from conf.config import TdConfig
 
 
@@ -37,8 +38,9 @@ class CliShowOptions(Enum):
     SHOW_EXTRACT = 2
     SHOW_MORPH = 4
     SHOW_MERGE = 8
-    SHOW_FEATURE = 16
-    SHOW_RESULT = 32
+    SHOW_MERGED = 16
+    SHOW_FEATURE = 32
+    SHOW_RESULT = 64
 
 
 class Cli:
@@ -79,25 +81,31 @@ class Cli:
 
         # 连通域提取
         self.extracter.setConfig(self.config.getExtractConfig())
-        tmp_filter = self.filter.setConfig(self.config.getExtractConfig()["filter_params"])
-        _, binarized = self.extracter.extract_with_labels({"name":"Blue", "image":self.preprocessing.blue_channel_preped}, tmp_filter)
+        ext_flt = self.filter.setConfig(self.config.getFilterConfig("extract"))
+        _, binarized = self.extracter.extract_with_labels({"name":"Blue", "image":self.preprocessing.blue_channel_preped}, ext_flt)
         if self.show_opts & CliShowOptions.SHOW_EXTRACT.value:
             plt.imshow(binarized, "gray")
             plt.show()
 
         # 形态学处理
-        regions = self.morpher.morph_operation(binarized)
+        mph_flt = self.filter.setConfig(self.config.getFilterConfig("morph"))
+        regions = self.morpher.morph_operation(binarized, mph_flt)
         if self.show_opts & CliShowOptions.SHOW_MORPH.value:
             verbose_image = self.morpher.getMaskImage(binarized, regions)
             plt.imshow(verbose_image, "gray")
             plt.show()
 
         # 文本行合并
+        self.merger.setConfig(self.config.getMergeTLConfig())
         self.merger.debug.enableDebug(binarized.shape)
+        self.merger.get_position_ratio_threshold = threshold_of_position_ratio_for_idcard
         self.merger.mergeTextLine(regions)
-        image = debugGenerateElectionImage(self.merger.debug, 0)
-        plt.imshow(image)
-        plt.show()
+        if self.show_opts & CliShowOptions.SHOW_MERGED.value:
+            for i in range(self.merger.debug.getTotalElections()):
+                image = debugGenerateElectionImage(self.merger.debug, i)
+                cv2.namedWindow("Merged", 0)
+                cv2.imshow("Merged", image)
+                cv2.waitKey(0)
 
     def parseArgs(self):
         '''
@@ -126,6 +134,8 @@ class Cli:
                     self.show_opts |= CliShowOptions.SHOW_EXTRACT.value
                 if "merge" in options:
                     self.show_opts |= CliShowOptions.SHOW_MERGE.value
+                if "merged" in options:
+                    self.show_opts |= CliShowOptions.SHOW_MERGED.value
                 if "feature" in options:
                     self.show_opts |= CliShowOptions.SHOW_FEATURE.value
                 if "none" in options:

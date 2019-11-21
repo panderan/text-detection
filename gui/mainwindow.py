@@ -11,6 +11,7 @@ import gui.ui.app_ui as ui
 import gui.resources.resources
 from gui.app_widgets.preprocess_display_widget import PreprocessDisplayWidget
 from gui.app_widgets.extract_display_widget import ExtractDisplayWidget
+from gui.app_widgets.merging_display_widget import MergeDisplayWidget
 from conf.config import TdConfig
 
 logger = logging.getLogger(__name__)
@@ -36,6 +37,11 @@ class AppMainWindow(QMainWindow):
 
         self.initConnects()
         self.initResources()
+        self.createPrepDisplayWidget()
+        self.createExtractDisplayWidget()
+        self.createMergeDisplayWidget()
+        self.createIdentifyWithFeatureDisplayWidget()
+
         self.onActionPreprocessing()
         return
 
@@ -101,70 +107,98 @@ class AppMainWindow(QMainWindow):
         self.ui.display_widget.openControlPanel()
         return
 
-    def onActionPreprocessing(self):
+    def _onlyShow(self, tgtname):
+        ''' 只显示某一模块的 widget
         '''
-        Stage->Preprocessing 菜单响应函数，将预处理窗口设置为当前窗口
+        data = [{'name':"prep",
+                 'obj': self.preprocess_display_widget,
+                 'checked_obj':self.ui.action_preprocessing},
+                {'name':"extract",
+                 'obj': self.extract_display_widget,
+                 'checked_obj':self.ui.action_extract_connect_domain},
+                {'name':"merge",
+                 'obj': self.merging_display_widget,
+                 'checked_obj':self.ui.action_merging_text_line},
+                {'name':"feature",
+                 'obj': self.ldp_display_widget,
+                 'checked_obj':self.ui.action_identify_with_feature}]
+        for item in data:
+            if item['name'] == tgtname:
+                item['obj'].show()
+                item['checked_obj'].setChecked(True)
+            else:
+                if item['obj'] is not None:
+                    item['obj'].hide()
+                item['checked_obj'].setChecked(False)
+
+    def createPrepDisplayWidget(self):
+        ''' 创建 Prep Display Widget
         '''
         if self.preprocess_display_widget is None:
             self.preprocess_display_widget = PreprocessDisplayWidget(self)
             self.preprocess_display_widget.setSizePolicy(self.default_display_widget.sizePolicy())
             self.preprocess_display_widget.setObjectName("prep_display_widget")
-        old_display_widget_item = self.ui.verticalLayout.itemAt(0)
-        self.ui.verticalLayout.removeItem(old_display_widget_item)
-        self.ui.verticalLayout.insertWidget(0, self.preprocess_display_widget)
-        self.ui.display_widget = self.preprocess_display_widget
+            self.preprocess_display_widget.hide()
 
-        self.ui.action_preprocessing.setChecked(True)
-        self.preprocess_display_widget.show()
-        self.ui.action_extract_connect_domain.setChecked(False)
-        if self.extract_display_widget is not None:
-            self.extract_display_widget.hide()
-        self.ui.action_merging_text_line.setChecked(False)
-        if self.merging_display_widget is not None:
-            self.merging_display_widget.hide()
-        self.ui.action_identify_with_feature.setChecked(False)
-        if self.ldp_display_widget is not None:
-            self.ldp_display_widget.hide()
-        return
-
-    def onActionExtratConnectDomain(self):
-        '''
-        Stage->Extract Connect Domain 菜单响应函数，将连通域提取窗口设置为当前窗口
+    def createExtractDisplayWidget(self):
+        ''' 创建 Extract Display Widget
         '''
         if self.extract_display_widget is None:
             self.extract_display_widget = ExtractDisplayWidget(self)
             self.extract_display_widget.setSizePolicy(self.default_display_widget.sizePolicy())
             self.extract_display_widget.setObjectName("extract_display_widget")
             self.extract_display_widget.requireData.connect(self.onActionExtractorRequireData, Qt.DirectConnection)
+            self.extract_display_widget.hide()
+
+    def createMergeDisplayWidget(self):
+        ''' 创建 Merge Display Widget
+        '''
+        if self.merging_display_widget is None:
+            self.merging_display_widget = MergeDisplayWidget(self)
+            self.merging_display_widget.setSizePolicy(self.default_display_widget.sizePolicy())
+            self.merging_display_widget.setObjectName("merge_display_widget")
+            self.merging_display_widget.requireData.connect(self.onActionMergerRequireData, Qt.DirectConnection)
+            self.merging_display_widget.hide()
+
+    def createIdentifyWithFeatureDisplayWidget(self):
+        ''' 创建 IdentifyWithFeature 窗体
+        '''
+
+    def onActionPreprocessing(self):
+        '''
+        Stage->Preprocessing 菜单响应函数，将预处理窗口设置为当前窗口
+        '''
+        self.createPrepDisplayWidget()
+        old_display_widget_item = self.ui.verticalLayout.itemAt(0)
+        self.ui.verticalLayout.removeItem(old_display_widget_item)
+        self.ui.verticalLayout.insertWidget(0, self.preprocess_display_widget)
+        self.ui.display_widget = self.preprocess_display_widget
+        self._onlyShow("prep")
+        return
+
+    def onActionExtratConnectDomain(self):
+        '''
+        Stage->Extract Connect Domain 菜单响应函数，将连通域提取窗口设置为当前窗口
+        '''
+        self.createExtractDisplayWidget()
         old_display_widget_item = self.ui.verticalLayout.itemAt(0)
         self.ui.verticalLayout.removeItem(old_display_widget_item)
         self.ui.verticalLayout.insertWidget(0, self.extract_display_widget)
         self.ui.display_widget = self.extract_display_widget
-
-        self.ui.action_extract_connect_domain.setChecked(True)
-        self.extract_display_widget.show()
-        self.ui.action_preprocessing.setChecked(False)
-        if self.preprocess_display_widget is not None:
-            self.preprocess_display_widget.hide()
-        self.ui.action_merging_text_line.setChecked(False)
-        if self.merging_display_widget is not None:
-            self.merging_display_widget.hide()
-        self.ui.action_identify_with_feature.setChecked(False)
-        if self.ldp_display_widget is not None:
-            self.ldp_display_widget.hide()
+        self._onlyShow("extract")
         return
-
 
     def onActionMergingTextLine(self):
         '''
         Stage->Merging Text Line 菜单响应函数，将文本行合并窗口设置为当前窗口
         '''
-        self.ui.action_preprocessing.setChecked(False)
-        self.ui.action_extract_connect_domain.setChecked(False)
-        self.ui.action_merging_text_line.setChecked(True)
-        self.ui.action_identify_with_feature.setChecked(False)
+        self.createMergeDisplayWidget()
+        old_display_widget_item = self.ui.verticalLayout.itemAt(0)
+        self.ui.verticalLayout.removeItem(old_display_widget_item)
+        self.ui.verticalLayout.insertWidget(0, self.merging_display_widget)
+        self.ui.display_widget = self.merging_display_widget
+        self._onlyShow("merge")
         return
-
 
     def onActionIdentifyWithFeature(self):
         '''
@@ -199,4 +233,12 @@ class AppMainWindow(QMainWindow):
         self.extract_display_widget.input_images = datas
 
         msg = "Data is fed for extractor. channels:%s."%chnls
+        logger.info(msg)
+
+    def onActionMergerRequireData(self):
+        ''' 获取 Merger 所需的数据
+        '''
+        self.merging_display_widget.input_image = self.extract_display_widget.last_result
+        self.merging_display_widget.color_image = self.preprocess_display_widget.preprocesser.color_img
+        msg = "Data is fed for merger"
         logger.info(msg)

@@ -4,12 +4,16 @@
     提取连通域边界模块
 '''
 
+import logging
 from enum import Enum
 import bisect
 import math
 import numpy as np
 import cv2
 from gui.text_detection.common import is_in_range
+
+
+logger = logging.getLogger(__name__)
 
 
 class MergingIdxDB(Enum):
@@ -163,9 +167,18 @@ class TdMergingData:
     def isMultiCharRegion(self, idx):
         ''' 指定区域是否是多字符区域
         '''
-        if self.getParamAreaSize(idx) > 2000:
+        if self.getParamAreaSize(idx) > 1200:
             return True
-        if self.getParamWidth(idx) > 60 or self.getParamHeight(idx) > 60:
+        if self.getParamWidth(idx) > 40 or self.getParamHeight(idx) > 40:
+            return True
+        return False
+
+    def isLikelyNoiseRegion(self, idx):
+        ''' 是否是噪声域
+        '''
+        if self.getParamAreaSize(idx) < 200:
+            return True
+        if self.getParamWidth(idx) < 10 and self.getParamHeight(idx) < 10:
             return True
         return False
 
@@ -201,7 +214,7 @@ class TdMergingData:
                 inst_pos = bisect.bisect_left(self.data[keystr][sub_keystr][0], val)
                 self.data[keystr][sub_keystr][0].insert(inst_pos, val)
                 self.data[keystr][sub_keystr][1].insert(inst_pos, [val, len(self.data['regions'])])
-        item = {"region": np.int64(region), "params":None, "private": None}
+        item = {"region": np.int64(region), "params":None, "isValid":True, "private": None}
         self.data['regions'].append(item)
 
     def isRegionVaild(self, idx):
@@ -229,7 +242,7 @@ class TdMergingData:
         else:
             return len(self.data['regions'])
 
-    def getAllRegionIds(self, flag=0):
+    def getAllRegionIds(self, flag=1):
         ''' 获取所有的 region ID
         Args:
             flag 0-所有， 1-仅有效region的ID
@@ -237,9 +250,23 @@ class TdMergingData:
         ret_ids = []
         total = self.getRegionLens()
         for i in range(total):
-            if self.isRegionVaild(i):
-                ret_ids.append(i)
+            if flag == 1 and not self.isRegionVaild(i):
+                continue
+            ret_ids.append(i)
         return ret_ids
+
+    def getAllRegionVertexs(self, flag=1):
+        ''' 获取所有的 region 的顶点
+        Args:
+            flag 0-所有， 1-仅有效region的ID
+        '''
+        ret_vertexs = []
+        total = self.getRegionLens()
+        for i in range(total):
+            if flag == 1 and not self.isRegionVaild(i):
+                continue
+            ret_vertexs.append(self.getRegionVertexs(i))
+        return ret_vertexs
 
     def getNextRgionIdx(self, idx):
         ''' 获取下一个有效的 region ID
@@ -268,25 +295,28 @@ class TdMergingData:
         return region_ids
 
 
-class TdMergingDdebugData:
+class TdMergingDebugData:
     ''' Debug 数据
     '''
     def __init__(self):
         self.enable = False
         self.data = {
-            'original_regions': None,
-            'elections': [{
-                'cur_id': None,
-                'candidate_ids':[0],
-                'satisfied_items':[{
-                    'init_ids': [],
-                    'id': 0,
-                    'compare_params':{
-                        'position_ratio': 0
+            'original_regions': None,           # 原始 Region 数据，来自 TdMergingData
+            'elections': [{                     # 每一轮合并
+                'init_ids': [],                 # 该轮合并的初始所有点 ID，（此 ID 可在 'orignial_regions' 中索引 Region 数据）
+                'cur_id': None,                 # 该轮待合并 Region ID
+                'candidate_ids':[0],            # 该轮所有的候选合并 Region ID
+                'satisfied_items':[{            # 每一个候选合并 Region 与 该轮待合并 Region 的比较
+                    'id': 0,                    # 该候选 Region ID（可在 'orignial_regions' 中索引）
+                    'compare_params':{          # 具体比较项目
+                        'position_ratio': 0     # 位置比率（还有其他，这里只列举一个）
                     }
-                }]
+                }],
+                'chosen_id': None,              # 该轮选举出的 Region ID，该 Region 将与待合并 Region 进行合并
+                'ret_id': None                  # 合并后新 Region 的 ID
             }],
-            'shape': None
+            'shape': None,                      # 原图尺寸，用于绘制 Debug 图像
+            'bg_color_image': None              # 原图，用于呈现最终效果
         }
         self.data['elections'] = []
 
@@ -302,11 +332,20 @@ class TdMergingDdebugData:
         '''
         if not self.enable:
             return
-        self.data['elections'].append({'init_ids':[], 'cur_id': None, 'candidate_ids': [], 'satisfied_items':[]})
+        self.data['elections'].append({'init_ids':[], 'cur_id': None, 'candidate_ids': [], 'satisfied_items':[], 'chosen_id':None, 'ret_id': None})
+
+    def getElectionItem(self, elec_idx):
+        ''' 获取 Election Item
+        '''
+        elecs = self.data['elections']
+        length = len(elecs)
+        return elecs[elec_idx] if elec_idx < length else None
 
     def setLastElection_InitIds(self, list_nums):
         ''' 设置
         '''
+        if not self.enable:
+            return
         self.data['elections'][-1]['init_ids'] = list_nums
 
     def setLastElection_CurId(self, num):
@@ -315,6 +354,20 @@ class TdMergingDdebugData:
         if not self.enable:
             return
         self.data['elections'][-1]['cur_id'] = num
+
+    def setLastElection_RetId(self, idx):
+        ''' 设置最新一次合并结果的 ID
+        '''
+        if not self.enable:
+            return
+        self.data['elections'][-1]['ret_id'] = idx
+
+    def setLastElection_ChosenId(self, idx):
+        ''' 设置选中合并的 Region ID
+        '''
+        if not self.enable:
+            return
+        self.data['elections'][-1]['chosen_id'] = idx
 
     def setLastElection_CandidateIds(self, list_nums):
         ''' 设置最新一次合并的 candidate ids
@@ -336,6 +389,13 @@ class TdMergingDdebugData:
         if not self.enable:
             return
         self.data['elections'][-1]['satisfied_items'][-1]['compare_params'][keyval_pair[0]] = keyval_pair[1]
+
+    def setBgColorImage(self, image):
+        ''' 设置背景图
+        '''
+        if not self.enable:
+            return
+        self.data['bg_color_image'] = image.copy()
 
     def getOriginalRegionData(self):
         ''' 获取原始数据
@@ -373,6 +433,16 @@ class TdMergingDdebugData:
         '''
         return self.data['elections'][elec_id]['cur_id']
 
+    def getElection_ChosenId(self, elec_id):
+        ''' 获取
+        '''
+        return self.data['elections'][elec_id]['chosen_id']
+
+    def getElection_RetId(self, elec_id):
+        ''' 获取
+        '''
+        return self.data['elections'][elec_id]['ret_id']
+
     def getElection_CandidateIds(self, elec_id):
         ''' 获取
         '''
@@ -387,6 +457,11 @@ class TdMergingDdebugData:
         ''' 获取
         '''
         return self.data['elections'][elec_id]['satisfied_items'][sat_id]['id']
+
+    def getElection_SatisfiedItem(self, elec_id, sat_id):
+        ''' 获取
+        '''
+        return self.data['elections'][elec_id]['satisfied_items'][sat_id]
 
 
 class TdMergingTextLine:
@@ -404,7 +479,19 @@ class TdMergingTextLine:
         self.data = TdMergingData()
         self.get_position_ratio_threshold = threshold_of_position_ratio_for_default
         self.get_dirtection_threshold = threshold_of_angle_for_default
-        self.debug = TdMergingDdebugData()
+        self.debug = TdMergingDebugData()
+
+    def setConfig(self, config):
+        ''' 设置参数
+        '''
+        self.t_of_merged_areasize_lim = config.get('combined_area_size_lim', 20000)
+        self.t_of_merged_aspect_lim = config.get('combined_aspect_ratio_lim', [0.0, 0.3])
+        self.t_of_overlap_ratio = config.get('overlap_ratio', 0.25)
+        self.t_of_distance = config.get('distance', 2.6)
+        strategy_dict = {"horizon": MergingStrategy.HORIZON.value,
+                         "vertical": MergingStrategy.VERTICAL.value
+                        }
+        self.strategy = strategy_dict.get(config.get('strategy', "horizon"), 0)
 
     def mergeTextLine(self, regions):
         ''' 合并文本行
@@ -412,28 +499,40 @@ class TdMergingTextLine:
         self.data.initData(regions)
         self.debug.setOrignalRegions(self.data)
 
-        max_loops = 1
+        max_loops = 1000
         start_idx, loop_idx, restart_flag = 0, 0, True
         while max_loops > 0:
+            # 没有可合并的 Region，退出循环
             if not restart_flag and loop_idx == start_idx:
                 break
-            ret_status = self.mergeTextLineOnce(self.data, loop_idx)
-            if ret_status:
-                start_idx = self.data.getRegionLens()
-                loop_idx = start_idx
-                restart_flag = True
-            else:
-                loop_idx = self.data.getNextRgionIdx(loop_idx)
-                if loop_idx < 0:
-                    break
+
+            if not self.data.isLikelyNoiseRegion(loop_idx):
+                ret_status = self.mergeTextLineOnce(self.data, loop_idx)
+                if ret_status:  # 成功合并重新开始检测点
+                    start_idx = self.data.getRegionLens() - 1
+                    loop_idx = start_idx
+                    restart_flag = True
+                    max_loops -= 1
+                    continue
+
+            # 没有合并的检测下一个点
+            loop_idx = self.data.getNextRgionIdx(loop_idx)
+            if loop_idx < 0:    #没有下一个有效 Region
+                break
+            if restart_flag:
                 restart_flag = False
             max_loops -= 1
+
+        return self.data.getAllRegionVertexs(flag=1)
 
     def mergeTextLineOnce(self, data, cur_id):
         ''' 一次合并
         '''
         # 选举出待合并 region
         region_ids = self._selectCandidate(data, cur_id)
+        if len(region_ids) == 0:
+            return False
+
         self.debug.appendNewElection()
         self.debug.setLastElection_InitIds(data.getAllRegionIds(flag=1))
         self.debug.setLastElection_CurId(cur_id)
@@ -454,8 +553,8 @@ class TdMergingTextLine:
         if best_id is None:
             return False
 
-        merged_id = self._mergeTowRegions(data, cur_id, best_id)
-        return merged_id
+        self._mergeTowRegions(data, cur_id, best_id)
+        return True
 
     def _selectCandidate(self, data, idx):
         ''' 产生候选者
@@ -475,7 +574,7 @@ class TdMergingTextLine:
             keystr = "vertex" + str(vtx_idx)
             region_ids = region_ids.union(data.getIdsInRange(keystr, xy_range))
 
-        return list(region_ids)
+        return list(region_ids.difference({idx}))
 
     def _pickUpBestCandidate(self, data, cur_id, ids):
         ''' 选出最合适的候选 region
@@ -504,6 +603,8 @@ class TdMergingTextLine:
         data.deleteRegion(id1)
         data.deleteRegion(id2)
         data.insertRegion(joint_region)
+        self.debug.setLastElection_ChosenId(id2)
+        self.debug.setLastElection_RetId(data.getRegionLens()-1)
         return data.getRegionLens()-1
 
     def _compare2Regions(self, data, id1, id2):
@@ -519,27 +620,29 @@ class TdMergingTextLine:
         # 判断合并后面积
         joint_ro_rect = cv2.minAreaRect(np.vstack((data.getRegionVertexs(id1), data.getRegionVertexs(id2))))
         _, _, joint_area_size = TdMergingData.getRegionGeometry(joint_ro_rect)
-        self.debug.setLastElection_LastSatisfiedItem(('joint_area_size', joint_area_size))
+        self.debug.setLastElection_LastSatisfiedItem(('joint_area_size', (joint_area_size, self.t_of_merged_areasize_lim)))
         if joint_area_size > self.t_of_merged_areasize_lim:
             return False
 
         # 判断合并后宽高比
         joint_aspect_ratio = data.getRegionAspectRatio(joint_ro_rect)
-        self.debug.setLastElection_LastSatisfiedItem(('joint_aspect_ratio', joint_aspect_ratio))
+        self.debug.setLastElection_LastSatisfiedItem(('joint_aspect_ratio', (joint_aspect_ratio, self.t_of_merged_aspect_lim)))
         if not is_in_range(joint_aspect_ratio, self.t_of_merged_aspect_lim):
             return False
 
         # 判断两个 region 的重叠率
         overlap_ratio = self._getOverlapRatio(data, id1, id2)
-        self.debug.setLastElection_LastSatisfiedItem(('overlap_ratio', overlap_ratio))
+        self.debug.setLastElection_LastSatisfiedItem(('overlap_ratio', (overlap_ratio, self.t_of_overlap_ratio)))
         if overlap_ratio > self.t_of_overlap_ratio:
+            data.deleteRegion(id2)
             return False
 
         # 判断两个 region 的位置比率
         position_ratio = (data.getParamAreaSize(id1) + data.getParamAreaSize(id2)) / joint_area_size
         data.savePrivateData(id2, 0, position_ratio)    # id2 为候选者ID
-        self.debug.setLastElection_LastSatisfiedItem(('position_ratio', position_ratio))
-        if position_ratio < self.get_position_ratio_threshold(data, id1, id2):
+        thresval = self.get_position_ratio_threshold(data, id1, id2)
+        self.debug.setLastElection_LastSatisfiedItem(('position_ratio', (position_ratio, thresval)))
+        if position_ratio < thresval:
             return False
 
         if self._judgeDirection(data, id1, id2) \
@@ -551,21 +654,20 @@ class TdMergingTextLine:
     def _getOverlapRatio(self, data, id1, id2):
         ''' 计算两个 region 的重叠率
         '''
-        area_size1 = data.getParamAreaSize(id1)
-        area_size2 = data.getParamAreaSize(id2)
-        min_area_size = area_size1 if area_size1 < area_size2 else area_size2
-
         all_vertexs = np.vstack((data.getRegionVertexs(id1), data.getRegionVertexs(id2)))
         low_x, high_x = min([i[0] for i in all_vertexs]), max([i[0] for i in all_vertexs])
         low_y, high_y = min([i[1] for i in all_vertexs]), max([i[1] for i in all_vertexs])
         shift_vertexs1 = [[v[0]-low_x, v[1]-low_y] for v in data.getRegionVertexs(id1)]
         shift_vertexs2 = [[v[0]-low_x, v[1]-low_y] for v in data.getRegionVertexs(id2)]
 
-        mask_region1 = np.zeros((high_x-low_x, high_y-low_y))
-        mask_region2 = np.zeros((high_x-low_x, high_y-low_y))
-        mask_region1 = np.int64(cv2.drawContours(mask_region1, [np.array(shift_vertexs1)], 0, 255, cv2.FILLED))
-        mask_region2 = np.int64(cv2.drawContours(mask_region2, [np.array(shift_vertexs2)], 0, 255, cv2.FILLED))
-        return np.sum(mask_region1 & mask_region2)/min_area_size
+        mask_region1 = np.zeros((high_y-low_y, high_x-low_x))
+        mask_region2 = np.zeros((high_y-low_y, high_x-low_x))
+        mask_region1 = np.int64(cv2.drawContours(mask_region1, [np.array(shift_vertexs1)], 0, 1, cv2.FILLED))
+        mask_region2 = np.int64(cv2.drawContours(mask_region2, [np.array(shift_vertexs2)], 0, 1, cv2.FILLED))
+        size1 = mask_region1.sum()
+        size2 = mask_region2.sum()
+        min_size = size1 if size1 < size2 else size2
+        return np.sum(mask_region1 & mask_region2)/min_size
 
     def _getCenterLineDirection(self, data, id1, id2):
         ''' 计算两个 region 中心点的连线
@@ -583,14 +685,16 @@ class TdMergingTextLine:
     def _isAngleSatisfy(self, angle, threshold, flag):
         ''' 检测夹角是否满足平行或垂直条件
         '''
-        if flag & MergingFlagDirt.DIRECTION_TYPE_PARALLEL:
+        if flag & MergingFlagDirt.DIRECTION_TYPE_PARALLEL.value:
             if angle > threshold[0]:
-                if flag & MergingFlagDirt.DIRECTION_TYPE_VERTICAL and angle < threshold[1]:
-                    return False
-                else:
-                    return True
-            return False
-        return True
+                if flag & MergingFlagDirt.DIRECTION_TYPE_VERTICAL.value and angle > threshold[1]:
+                    return True     # 不满足平行，但满足垂直
+                return False    # 仅平行判断，但不满足平行
+            return True     # 满足平行
+
+        msg = "Unkown direction flag %d"%flag
+        logger.error(msg)
+        return False    # 未知 Flag
 
     def _judgeDirection(self, data, id1, id2):
         ''' 判断两个 region 的方向是否满足
@@ -606,8 +710,8 @@ class TdMergingTextLine:
         dir1 = data.getParamDirection(id1)
         dir2 = data.getParamDirection(id2)
         centerline_dir = self._getCenterLineDirection(data, id1, id2)
-        test_angle1 = min([abs(centerline_dir-dir1), abs(centerline_dir-((dir1+180)%360))])
-        test_angle2 = min([abs(centerline_dir-dir2), abs(centerline_dir-((dir2+180)%360))])
+        test_angle1 = min([abs((centerline_dir-dir1)%360), abs((centerline_dir-(dir1+180))%360)])
+        test_angle2 = min([abs((centerline_dir-dir2)%360), abs((centerline_dir-(dir2+180))%360)])
         threshold = self.get_dirtection_threshold(data, id1, id2)
         ret1 = self._isAngleSatisfy(test_angle1, threshold, dir_type)
         ret2 = self._isAngleSatisfy(test_angle2, threshold, dir_type)
@@ -671,11 +775,37 @@ class TdMergingTextLine:
             return retval
         return True
 
+    @staticmethod
+    def drawRegions(bg_image, color, draw_type, regions):
+        ''' 在背景图中画出给定region
+        '''
+        for region in regions:
+            bg_image = cv2.drawContours(bg_image, [region], 0, color, draw_type)
+        return bg_image
+
+
 
 def threshold_of_position_ratio_for_default(data, id1, id2):
     ''' 默认 position ratio 的阈值
     '''
     return 0.7
+
+def threshold_of_position_ratio_for_idcard(data, id1, id2):
+    ''' position ratio 阈值 FOR ID CARD
+    '''
+    for idx in [id1, id2]:
+        if not data.isMultiCharRegion(idx):
+            if data.getParamAspectRatio(idx) > 2.0:
+                return 0.55
+            else:
+                return 0.60
+    if data.getParamAspectRatio(id1) > 8.0 or data.getParamAspectRatio(id2) > 8.0:
+        return 0.80
+    if data.getParamAspectRatio(id1) > 5.0 or data.getParamAspectRatio(id2) > 5.0:
+        return 0.76
+    if data.getParamAspectRatio(id1) > 3.0 or data.getParamAspectRatio(id2) > 3.0:
+        return 0.72
+    return 0.70
 
 
 def threshold_of_angle_for_default(data, id1, id2):
@@ -705,6 +835,12 @@ def debugGenerateElectionImage(debug_data, elec_id):
         image = cv2.drawContours(image, [region], 0, (128, 0, 0), cv2.FILLED)
         i += 1
 
+    # 合并结果
+    idx = debug_data.getElection_RetId(elec_id)
+    if idx is not None:
+        region = org_data.getRegionVertexs(idx)
+        image = cv2.drawContours(image, [region], 0, (255, 255, 255), cv2.FILLED)
+
     # 所有满足者
     for i in range(debug_data.getElection_TotalSatisfied(elec_id)):
         region = org_data.getRegionVertexs(debug_data.getElection_SatisfiedId(elec_id, i))
@@ -714,5 +850,35 @@ def debugGenerateElectionImage(debug_data, elec_id):
     idx = debug_data.getElection_CurId(elec_id)
     region = org_data.getRegionVertexs(idx)
     image = cv2.drawContours(image, [region], 0, (0, 0, 255), cv2.FILLED)
+
+    return image
+
+def debugGenerateCompareImage(debug_data, elec_id, sat_id):
+    ''' 在背景图中绘制 ID 为 elec_id 和 sat_id 的 Region
+    '''
+    shape = debug_data.getShape()
+    image = np.uint8(np.zeros((shape[0], shape[1], 3)))
+
+    # 底图
+    org_data = debug_data.getOriginalRegionData()
+    for i in debug_data.getElection_InitRegionIds(elec_id):
+        region = org_data.getRegionVertexs(i)
+        image = cv2.drawContours(image, [region], 0, (128, 128, 128), cv2.FILLED)
+
+    # 合并结果
+    idx = debug_data.getElection_RetId(elec_id)
+    if idx is not None:
+        region = org_data.getRegionVertexs(idx)
+        image = cv2.drawContours(image, [region], 0, (255, 255, 255), cv2.FILLED)
+
+    # 中心者
+    idx = debug_data.getElection_CurId(elec_id)
+    region = org_data.getRegionVertexs(idx)
+    image = cv2.drawContours(image, [region], 0, (0, 0, 255), cv2.FILLED)
+
+    # 当前候选者
+    idx = debug_data.getElection_SatisfiedId(elec_id, sat_id)
+    region = org_data.getRegionVertexs(idx)
+    image = cv2.drawContours(image, [region], 0, (255, 0, 0), cv2.FILLED)
 
     return image
